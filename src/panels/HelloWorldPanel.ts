@@ -115,14 +115,6 @@ export class HelloWorldPanel {
 
 
 <body>
-  <div>
-    <button type="button" onclick="clickedTypeR();">R-Type</button>
-    <button type="button" onclick="clickedTypeI();">I-Type (constant)</button>
-    <button type="button" onclick="clickedTypeILoad();">I-Type (load)</button>
-    <button type="button" onclick="clickedTypeS();">S-Type</button>
-    <button type="button" onclick="clickedTypeB();">B-Type</button>
-    <button type="button" onclick="clickedTypeJ();">J-Type</button>
-  </div>
   <div id="tooltip" display="none" style="position: absolute; display: none;  background: cornsilk;
   border: 1px solid black;
   border-radius: 5px;
@@ -2179,7 +2171,6 @@ export class HelloWorldPanel {
   <!-- Buttons -->
   <script type="module" nonce="${nonce}" src="${webviewUri}"></script>
   <div>
-    <vscode-button id="howdy">Howdy</vscode-button>
     <vscode-button id="r-type">R-Type</vscode-button>
     <vscode-button id="i-type">I-Type</vscode-button>
     <vscode-button id="iload-type">I-Type(load)</vscode-button>
