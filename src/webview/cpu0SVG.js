@@ -3,16 +3,18 @@
  */
 var document = null;
 /*
+  Colors used by the vscode theme. Try to match them with components.
+
+  TODO: is this a good idea?
+*/
+var colors = {};
+/*
  * A CPU animation consists of components and paths.
  * 
  */
 var cpuComponents = {};
 var cpuPaths = {};
 var pathAnimationStyle = null;
-
-function getByID(id) {
-  return document.getElementById(id);
-}
 
 class CPUElement {
   constructor(svgDC, shape, name) {
@@ -166,10 +168,6 @@ function getAnimationStyle() {
   const style = p.getAttributeNS(null, 'style');
   const strokeDashArray = p.getAttributeNS(null, 'stroke-dasharray');
   return {'style': style, 'stroke-dasharray': strokeDashArray}
-}
-
-export function test(document) {
-  console.log("Test");
 }
 
 function initComponents() {
@@ -363,8 +361,15 @@ function initPaths() {
   );
 }
 
-export function init(doc){
+/* 
+  Main function called by the web view constructor. 
+  
+  TODO: Is this the best way to handle things? there are lots of global variables. I am not sure about the design.
+  
+ */
+export function init(doc, vscColors){
   document = doc;
+  colors = vscColors;
   pathAnimationStyle = getAnimationStyle();
   initComponents();
   initPaths();

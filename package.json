@@ -1,6 +1,6 @@
 {
-  "name": "hello-world",
-  "displayName": "hello-world",
+  "name": "rv-simulator",
+  "displayName": "RiscV simulator",
   "description": "A hello world sample extension to show off the Webview UI Toolkit for Visual Studio Code.",
   "version": "0.0.1",
   "engines": {
@@ -10,8 +10,8 @@
   "contributes": {
     "commands": [
       {
-        "command": "hello-world.showHelloWorld",
-        "title": "Hello World: Show"
+        "command": "rv-simulator.showHelloWorld",
+        "title": "RISCV simulator: Show"
       }
     ]
   },

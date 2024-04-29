@@ -26,7 +26,11 @@ const vscode = acquireVsCodeApi();
 window.addEventListener("load", main);
 
 function main() {
-  init(document);
+  // TODO: This is not working yet, i have to figure out which are the color names
+  var vscColors = {
+    'background': 'button.background',
+  }
+  init(document, vscColors);
   /**
    * Bind elements in the webview to their respective functions in the code.
    */ 
@@ -59,37 +63,43 @@ function main() {
 function handleRType() {
   pathTypeR();
   vscode.postMessage(
-    { command: "hello", text: "Highlighting R-Type instruction.",});
+    { command: "hello", text: "Highlighting R-Type instruction.",}
+  );
 }
 
 function handleIType() {
   pathTypeI();
   vscode.postMessage(
-    { command: "hello", text: "Highlighting I-Type instruction.",});
+    { command: "hello", text: "Highlighting I-Type instruction.",}
+  );
 }
 
 function handleILoadType() {
   pathTypeILoad();
   vscode.postMessage(
-    { command: "hello", text: "Highlighting I-LoadType instruction.",});
+    { command: "hello", text: "Highlighting I-LoadType instruction.",}
+  );
 }
 
 function handleSType() {
   pathTypeS();
   vscode.postMessage(
-    { command: "hello", text: "Highlighting S-Type instruction.",});
+    { command: "hello", text: "Highlighting S-Type instruction.",}
+  );
 }
 
 function handleBType() {
   pathTypeB();
   vscode.postMessage(
-    { command: "hello", text: "Highlighting B-Type instruction.",});
+    { command: "hello", text: "Highlighting B-Type instruction.",}
+  );
 }
 
 function handleJType() {
   pathTypeJ();
   vscode.postMessage(
-    { command: "hello", text: "Highlighting J-Type instruction.",});
+    { command: "hello", text: "Highlighting J-Type instruction.",}
+  );
 }
 
 // Callback function that is executed when the howdy button is clicked
