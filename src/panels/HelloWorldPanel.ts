@@ -53,7 +53,7 @@ export class HelloWorldPanel {
         // Panel view type
         "showHelloWorld",
         // Panel title
-        "Hello World",
+        "RISCV simulator",
         // The editor column the panel should be displayed in
         ViewColumn.One,
         // Extra panel configurations
@@ -2168,6 +2168,20 @@ export class HelloWorldPanel {
     </g>
   </svg>
 
+  <script> 
+    window.showTooltip = (evt, text) => {
+      let tooltip = document.getElementById("tooltip");
+      tooltip.innerHTML = text;
+      tooltip.style.display = "block";
+      tooltip.style.left = evt.pageX + 10 + 'px';
+      tooltip.style.top = evt.pageY + 10 + 'px';
+    }
+
+    window.hideTooltip = () => {
+      var tooltip = document.getElementById("tooltip");
+      tooltip.style.display = "none";
+    }
+  </script>
   <!-- Buttons -->
   <script type="module" nonce="${nonce}" src="${webviewUri}"></script>
   <div>
