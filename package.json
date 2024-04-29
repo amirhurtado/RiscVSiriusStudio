@@ -1,8 +1,9 @@
 {
   "name": "rv-simulator",
-  "displayName": "RiscV simulator",
-  "description": "A hello world sample extension to show off the Webview UI Toolkit for Visual Studio Code.",
+  "displayName": "RISCV simulator",
+  "description": "A RISCV simulator.",
   "version": "0.0.1",
+  "repository": "https://github.com/utpgustavogutierrez/vsc-riscv.git",
   "engines": {
     "vscode": "^1.75.0"
   },
