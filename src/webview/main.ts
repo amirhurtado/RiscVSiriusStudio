@@ -26,20 +26,19 @@ const vscode = acquireVsCodeApi();
 window.addEventListener("load", main);
 
 function main() {
-
   const style = getComputedStyle(document.documentElement);
 
   var vscColors = {
     // 'componentBackground': '#005FB8',
     'componentBackground': style.getPropertyValue('--vscode-button-background'),
     'pathBackground': style.getPropertyValue('--vscode-badge-foreground'),
-    
+    'canvasBackground': style.getPropertyValue('--vscode-tab-activeBackground'),
   }
   init(document, vscColors);
   /**
    * Bind elements in the webview to their respective functions in the code.
    */ 
-
+    
   // Button with id=r-type to function handleRType
   const RTypeButton = document.getElementById("r-type") as Button;
   RTypeButton?.addEventListener("click", handleRType);

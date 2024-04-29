@@ -361,6 +361,13 @@ function initPaths() {
   );
 }
 
+function initCanvas() {
+  const canvas = document.getElementsByTagName('svg')[0];
+  // Make the svg canvas fit the available space
+  canvas.setAttributeNS(null, 'width', '100%');
+  canvas.setAttributeNS(null, 'style', `background-color:${colors['canvasBackground']};`)
+}
+
 /* 
   Main function called by the web view constructor. 
   
@@ -371,6 +378,7 @@ export function init(doc, vscColors){
   document = doc;
   colors = vscColors;
   pathAnimationStyle = getAnimationStyle();
+  initCanvas();
   initComponents();
   initPaths();
 }
