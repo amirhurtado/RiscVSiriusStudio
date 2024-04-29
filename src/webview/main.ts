@@ -26,9 +26,14 @@ const vscode = acquireVsCodeApi();
 window.addEventListener("load", main);
 
 function main() {
-  // TODO: This is not working yet, i have to figure out which are the color names
+
+  const style = getComputedStyle(document.documentElement);
+
   var vscColors = {
-    'background': 'button.background',
+    // 'componentBackground': '#005FB8',
+    'componentBackground': style.getPropertyValue('--vscode-button-background'),
+    'pathBackground': style.getPropertyValue('--vscode-badge-foreground'),
+    
   }
   init(document, vscColors);
   /**

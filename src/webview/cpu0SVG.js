@@ -37,7 +37,7 @@ class CPUElement {
       'stroke-width': 2
     };
     this.highlightProp = {
-      'fill': '#cb4b16',
+      'fill': colors['componentBackground'],
       'stroke-width': 2
     };
     this.fadeOutProp = {
