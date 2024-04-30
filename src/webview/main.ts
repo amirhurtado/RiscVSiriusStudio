@@ -1,6 +1,10 @@
-import { provideVSCodeDesignSystem, vsCodeButton, Button } from "@vscode/webview-ui-toolkit";
+import { provideVSCodeDesignSystem, vsCodeButton, Button, TextField } from "@vscode/webview-ui-toolkit";
 
 import { init, pathTypeR, pathTypeI, pathTypeILoad, pathTypeS, pathTypeB, pathTypeJ } from './cpu0SVG.js';
+
+import { parse } from './Parser.js';
+
+import { InputBox } from "vscode";
 
 // In order to use the Webview UI Toolkit web components they
 // must be registered with the browser (i.e. webview) using the
@@ -62,6 +66,21 @@ function main() {
   // Button with id=sload-type to function handleRIype
   const JTypeButton = document.getElementById("j-type") as Button;
   JTypeButton?.addEventListener("click", handleJType);
+
+  // Button with id=run-instruction to function handleRunInstruction
+  const RunInstruction = document.getElementById("run-instruction") as Button;
+  RunInstruction?.addEventListener("click", handleRunInstruction);
+  
+}
+
+function handleRunInstruction() {
+  const RunInstruction = document.getElementById("input-instruction") as TextField;
+
+  const instruction = RunInstruction.value;
+  const result = parse(instruction);
+  vscode.postMessage(
+    { command: "hello", text: "Instruction to run: " + result}
+  );
 }
 
 function handleRType() {

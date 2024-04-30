@@ -2173,12 +2173,18 @@ export class HelloWorldPanel {
   <!-- Buttons -->
   <script type="module" nonce="${nonce}" src="${webviewUri}"></script>
   <section>
+    <p>Input instruction</p>
+    <input type="text" id="input-instruction"/>
+    <vscode-button id="run-instruction">Run</vscode-button>
+  
+
   <div>
     <vscode-button id="r-type">R-Type</vscode-button>
     <vscode-button id="i-type">I-Type</vscode-button>
     <vscode-button id="iload-type">I-Type(load)</vscode-button>
     <vscode-button id="s-type">S-Type</vscode-button>
     <vscode-button id="b-type">B-Type</vscode-button>
+    <vscode-button id="j-type">J-Type</vscode-button>
     <vscode-button id="j-type">J-Type</vscode-button>
   </div>
   </section>
