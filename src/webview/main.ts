@@ -2,7 +2,7 @@ import { provideVSCodeDesignSystem, vsCodeButton, Button, TextField } from "@vsc
 
 import { init, pathTypeR, pathTypeI, pathTypeILoad, pathTypeS, pathTypeB, pathTypeJ } from './cpu0SVG.js';
 
-import { parse } from './Parser.js';
+import { parse } from '../utilities/riscv.js';
 
 import { InputBox } from "vscode";
 
