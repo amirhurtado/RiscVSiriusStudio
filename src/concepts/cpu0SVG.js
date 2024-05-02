@@ -1,3 +1,4 @@
+import {parse} from "./riscv.js";
 /*
  * Reference to the html document
  */
@@ -15,15 +16,8 @@ var colors = {};
 var cpuComponents = {};
 var cpuPaths = {};
 var pathAnimationStyle = null;
-var instrComponents = {};
+var instruction = null;
 
-class InstElement {
-  constructor(svgDC) {
-    this.dc = svgDC;
-    this.shape = thisdc.getElementsByTagName('rect')[0];
-    setAttribute(this.shape, "fill", "#FF0000");
-  }
-}
 class CPUElement {
   constructor(svgDC, shape, name) {
     this.dc = svgDC;
@@ -164,6 +158,68 @@ class CPUPath {
   }
 }
 
+class Instruction {
+  constructor(svgDC, name) {
+    this.dc = svgDC;
+    console.log(this.dc);
+    this.name = name;
+    this.textBin = this.dc.getElementsByTagName('div')[2];
+    console.log(this.textBin);
+
+    this.opcodeText = "XXXXXXX";
+    this.rdText = "XXXXX";
+    this.funct3Text = "XXX";
+    this.rs1Text = "XXXXX";
+    this.rs2Text = "XXXXX";
+    this.funct7Text = "XXXXXXX"; 
+
+    this.baseStyle = colors['instruction']['baseStyle']; 
+    this.highlightStyle = colors['instruction']['highlightStyle']; 
+
+    this.opcodeEvents();
+    // Change displayed value to X's on initialization
+
+    //this.setTooltip();
+    //this.hideTooltip();
+  }
+  loadInstruction(instText) {
+    const result = parse(instText)[0];
+    this.opcodeText = result['opcode'];
+
+    this.setText([]);
+    console.log(result);
+    return "ok";
+  }
+  setText(high) {
+    const ns = this.normalStyle;
+    const hs = this.highlightStyle;
+    this.htmlString = 
+    `<span style="${high.includes("funct7")? hs : ns}">${this.funct7Text}</span>-`+
+    `<span style="${high.includes("rs2")? hs : ns}">${this.rs2Text}</span>-`+
+    `<span style="${high.includes("rs1")? hs : ns}">${this.rs1Text}</span>-`+
+    `<span style="${high.includes("funct3")? hs : ns}">${this.funct3Text}</span>-`+
+    `<span style="${high.includes("rd")? hs : ns}">${this.rdText}</span>-`+
+    `<span style="${high.includes("opcode")? hs : ns}">${this.opcodeText}</span>`;
+    this.textBin.innerHTML = this.htmlString;
+  }
+
+  addEvent(labelId, parts) {
+    const label = getDrawComponent(document, 'cpuName', `${labelId}`);
+    const text = label.getElementsByTagName('div')[2];
+    setAttribute(text, 'onmouseover', `setInstruction('${parts}')`);
+    setAttribute(text, 'onmouseout', `setInstruction([])`);
+  }
+  opcodeEvents() {
+    this.addEvent("opcodeLabel", ["opcode"]);
+    this.addEvent("rdLabel", ["rd"]);
+    this.addEvent("funct3Label", ["funct3"]);
+    this.addEvent("rs1Label", ["rs1"]);
+    this.addEvent("rs2Label", ["rs2"]);
+    this.addEvent("funct7Label", ["funct7"]);
+    this.addEvent("immLabel", ["rd", "funct3", "rs1", "rs2","funct7"]);
+  }
+}
+
 function getDrawComponent(document, attribute,value){
   // The property must be unique!
   const g = document.querySelectorAll(`[data-${attribute}="${value}"]`)[0];
@@ -177,7 +233,6 @@ function getAnimationStyle() {
   const strokeDashArray = p.getAttributeNS(null, 'stroke-dasharray');
   return {'style': style, 'stroke-dasharray': strokeDashArray}
 }
-
 
 function initComponents() {
   cpuComponents['pc'] = new CPUElement(
@@ -370,6 +425,16 @@ function initPaths() {
   );
 }
 
+function initInstruction() {
+  console.log("Initializing instruction view");
+  const element = 
+  instruction = 
+    new Instruction(
+      getDrawComponent(document,"instName","instTextBin"),
+      "Instruction"
+    );
+}
+
 function initCanvas() {
   const canvas = document.getElementsByTagName('svg')[0];
   // Make the svg canvas fit the available space
@@ -383,15 +448,43 @@ function initCanvas() {
   TODO: Is this the best way to handle things? there are lots of global variables. I am not sure about the design.
   
  */
-export function init(doc, vscColors){
+export function init(doc, window, vscColors){
+  console.info("Canvas initialization.");
   document = doc;
   colors = vscColors;
   pathAnimationStyle = getAnimationStyle();
+
+
+  // Add tooltip behavior. These functions must be part of the window because
+  // the tooltip info is activated for each component. Upon activation it is not
+  // possible to specify a function with the right scope. To fix that, we write
+  // a general function that is called from the specific object wit the
+  // appropriate information.
+
+  window.showTooltip = (evt, text) => {
+    let tooltip = document.getElementById("tooltip");
+    tooltip.innerHTML = text;
+    tooltip.style.display = "block";
+    tooltip.style.left = evt.pageX + 10 + 'px';
+    tooltip.style.top = evt.pageY + 10 + 'px';
+  }
+
+  window.hideTooltip = () => {
+    var tooltip = document.getElementById("tooltip");
+    tooltip.style.display = "none";
+  }
+
+  // Same as for the tooltip mechanism. In this case we connect the instruction
+  // view with the onmouse* events of the cpu view.
+  window.setInstruction = (parts) => {
+    instruction.setText(parts);
+  }
+
+  // Init the different components of the view
   initCanvas();
   initComponents();
   initPaths();
   initInstruction();
-
 }
 
 function setAttribute(component, attribute, value) {
@@ -497,7 +590,6 @@ export function pathTypeB() {
   cpuComponents['alub'].showConnection('1');
 }
 
-
 export function pathTypeJ() {
   // Components interacting in a load type instruction
   const typeIComponents = 
@@ -517,3 +609,13 @@ export function pathTypeJ() {
   cpuComponents['wbmux'].showConnection('10');
 }
 
+export function simulateInstruction() {
+  console.log("Processing instruction: ");
+  const instText = document.getElementById("instText").value;
+  if (instText !== "") {
+    const result = instruction.loadInstruction(instText);
+    console.log(result);
+  } else {
+    console.log("empty instruction");
+  }
+}
