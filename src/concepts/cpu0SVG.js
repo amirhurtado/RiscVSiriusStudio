@@ -23,6 +23,7 @@ class CPUElement {
     this.dc = svgDC;
     this.name = name;
     this.shape = null;
+    // console.log("CPUElement",this.dc);
     if (shape == "rect") {
       this.shape = this.dc.getElementsByTagName('rect')[0];
       // register tooltips
@@ -158,43 +159,172 @@ class CPUPath {
   }
 }
 
-class Instruction {
-  constructor(svgDC, name) {
-    this.dc = svgDC;
-    console.log(this.dc);
-    this.name = name;
-    this.textBin = this.dc.getElementsByTagName('div')[2];
-    console.log(this.textBin);
-
-    this.opcodeText = "XXXXXXX";
-    this.rdText = "XXXXX";
-    this.funct3Text = "XXX";
-    this.rs1Text = "XXXXX";
-    this.rs2Text = "XXXXX";
-    this.funct7Text = "XXXXXXX"; 
+class InstructionView {
+  constructor() {
+    console.log("Base class initialized");
+    this.instructionLoaded = false;
+    this.initInstText();    // Assembler view
+    this.initInstTextBin(); // Binary view
+    this.initInstHex();     // Hexadecimal view
+    this.initInstType();    // Type view
 
     this.baseStyle = colors['instruction']['baseStyle']; 
     this.highlightStyle = colors['instruction']['highlightStyle']; 
-
-    this.opcodeEvents();
-    // Change displayed value to X's on initialization
-
-    //this.setTooltip();
-    //this.hideTooltip();
   }
-  loadInstruction(instText) {
-    const result = parse(instText)[0];
-    this.opcodeText = result['opcode'];
 
-    this.setText([]);
-    console.log(result);
-    return "ok";
+  applyProperties(shape, props) {
+    for(var key in props) {
+      setAttribute(shape, key, props[key]);
+    }
   }
-  setText(high) {
-    const ns = this.normalStyle;
+
+  initInstText() {
+    const txt = getDrawComponent(document, "instName", "instTextAssembler");
+    this.textAsm = txt.getElementsByTagName('div')[2];
+    const m = "**No instruction loaded.**";
+    this.textAsm.innerHTML = `<em style='color:#d3d3d3';>${m}</em>`;      
+  }
+
+  initInstTextBin() {
+    const tb = getDrawComponent(document,"instName","instTextBin");
+    this.textBin = tb.getElementsByTagName('div')[2];
+    const m = "--";
+    this.textBin.innerHTML = `<em style='color:#d3d3d3';>${m}</em>`;      
+  }
+
+  initInstHex() {
+    const txt = getDrawComponent(document, "instName", "instTextHex");
+    this.textHex = txt.getElementsByTagName('div')[2];
+    const m = "--";
+    this.textHex.innerHTML = `<em style='color:#d3d3d3';>${m}</em>`;      
+  }
+
+  initInstType() {
+    this.typesView = {};
+    const types = ["R", "I", "S", "B", "U", "J"];
+    for(const t of types) {
+      const dc = getDrawComponent(document,"instName",`instType${t}`);
+      this.typesView[t] = dc.getElementsByTagName('rect')[0];
+      this.applyProperties( // Apply shaded style
+        this.typesView[t],
+        {'fill': '#eee8d5', 'fill-opacity': 0.2, 'stroke-opacity': 0.2,}
+      );
+    }
+  }
+
+  loadInstruction(parseResult) {
+    this.opcodeText = parseResult['opcode'];
+    this.rdText = parseResult['encoding']['rd'];
+    this.asm = parseResult['text'];
+    this.setTextAsm();
+    this.hex = parseResult['encoding']['hexEncoding'];
+    this.setTextHex();
+    this.instType = parseResult['type'].toUpperCase();
+    this.setInstType();
+  }
+
+  setTextAsm() {
+    this.textAsm.innerHTML = this.asm;
+  }
+  setTextHex() {
+    this.textHex.innerHTML = this.hex;
+  }
+
+  setInstType() {
+    const fadeOutProps = {
+      'fill': '#eee8d5',
+      'fill-opacity': 0.1,
+      'stroke-opacity': 0.1,
+    };
+    const activeProps = {
+      'fill': '#eee8d5',
+      'fill-opacity': 0.5,
+      'stroke-opacity': 0.9,
+    };
+    console.log(this.typesView);
+    console.log(this.instType)
+    for (var view in this.typesView) {
+      if (this.instType !== view) {
+        this.applyProperties(this.typesView[view], fadeOutProps);
+      } else {
+        this.applyProperties(this.typesView[view], activeProps);
+      }
+    }
+  }
+
+}
+
+class IInstView extends InstructionView {
+  constructor() {
+    super();
+    this.registerEvents();
+  }
+
+  loadInstruction(parseResult) {
+    console.log("loadInstruction at RInstView");
+    super.loadInstruction(parseResult);
+    this.funct3Text = parseResult['encoding']['funct3'];
+    this.rs1Text = parseResult['encoding']['rs1'];
+    this.imm12Text = parseResult['encoding']['imm12'];
+    this.refresh([]);
+  }
+
+  refresh(high) {
+    const ns = this.baselStyle;
     const hs = this.highlightStyle;
     this.htmlString = 
-    `<span style="${high.includes("funct7")? hs : ns}">${this.funct7Text}</span>-`+
+    `<span style="${high.includes("imm12")? hs : ns}">${this.imm12Text}</span>-`+
+    `<span style="${high.includes("rs1")? hs : ns}">${this.rs1Text}</span>-`+
+    `<span style="${high.includes("funct3")? hs : ns}">${this.funct3Text}</span>-`+
+    `<span style="${high.includes("rd")? hs : ns}">${this.rdText}</span>-`+
+    `<span style="${high.includes("opcode")? hs : ns}">${this.opcodeText}</span>`;
+    this.textBin.innerHTML = this.htmlString;
+  }
+
+  addEvent(labelId, parts) {
+    const label = getDrawComponent(document, 'cpuName', `${labelId}`);
+    const text = label.getElementsByTagName('div')[2];
+    setAttribute(text, 'onmouseover', `setInstruction('${parts}')`);
+    setAttribute(text, 'onmouseout', `setInstruction([])`);
+  }
+  registerEvents() {
+    this.addEvent("opcodeLabel", ["opcode"]);
+    this.addEvent("rdLabel", ["rd"]);
+    this.addEvent("funct3Label", ["funct3"]);
+    this.addEvent("rs1Label", ["rs1"]);
+    // this.addEvent("rs2Label", ["rs2"]);
+    // this.addEvent("funct7Label", ["funct7"]);
+    this.addEvent("immLabel", ["imm12"]);
+  }
+}
+
+class RInstView extends InstructionView {
+  constructor() {
+    super();
+    this.registerEvents();
+  }
+
+  loadInstruction(parseResult) {
+    console.log("loadInstruction at RInstView");
+    super.loadInstruction(parseResult);
+    this.funct3Text = parseResult['encoding']['funct3'];
+    this.rs1Text = parseResult['encoding']['rs1'];
+    this.rs2Text = parseResult['encoding']['rs2'];
+    this.funct7Text = parseResult['encoding']['funct7'];
+    this.refresh([]);
+  }
+
+  refresh(high) {
+    const ns = this.baseStyle;
+    const hs = this.highlightStyle;
+    const f7 = 
+      `<span style="${ns}">${this.funct7Text.toString().at(0)}</span>`+
+      (high.includes("funct7")?
+        `<span style="${hs}">${this.funct7Text.toString().at(1)}</span>`:
+        `<span style="${ns}">${this.funct7Text.toString().at(1)}</span>`) +
+      `<span style="${ns}">${this.funct7Text.toString().substring(2)}</span>-`;
+      
+    this.htmlString = f7 +
     `<span style="${high.includes("rs2")? hs : ns}">${this.rs2Text}</span>-`+
     `<span style="${high.includes("rs1")? hs : ns}">${this.rs1Text}</span>-`+
     `<span style="${high.includes("funct3")? hs : ns}">${this.funct3Text}</span>-`+
@@ -209,14 +339,14 @@ class Instruction {
     setAttribute(text, 'onmouseover', `setInstruction('${parts}')`);
     setAttribute(text, 'onmouseout', `setInstruction([])`);
   }
-  opcodeEvents() {
+  registerEvents() {
     this.addEvent("opcodeLabel", ["opcode"]);
     this.addEvent("rdLabel", ["rd"]);
     this.addEvent("funct3Label", ["funct3"]);
     this.addEvent("rs1Label", ["rs1"]);
     this.addEvent("rs2Label", ["rs2"]);
     this.addEvent("funct7Label", ["funct7"]);
-    this.addEvent("immLabel", ["rd", "funct3", "rs1", "rs2","funct7"]);
+    this.addEvent("immLabel", []);
   }
 }
 
@@ -275,7 +405,6 @@ function initComponents() {
         '1': getDrawComponent(document, 'cpuName', 'ALUAMUXIC1')
       }
     );
-
   cpuComponents['alub'] = 
     new CPUMux(
       getDrawComponent(document,'cpuName','ALUB'),
@@ -426,13 +555,7 @@ function initPaths() {
 }
 
 function initInstruction() {
-  console.log("Initializing instruction view");
-  const element = 
-  instruction = 
-    new Instruction(
-      getDrawComponent(document,"instName","instTextBin"),
-      "Instruction"
-    );
+  instruction = new RInstView(document);
 }
 
 function initCanvas() {
@@ -449,7 +572,6 @@ function initCanvas() {
   
  */
 export function init(doc, window, vscColors){
-  console.info("Canvas initialization.");
   document = doc;
   colors = vscColors;
   pathAnimationStyle = getAnimationStyle();
@@ -467,18 +589,18 @@ export function init(doc, window, vscColors){
     tooltip.style.display = "block";
     tooltip.style.left = evt.pageX + 10 + 'px';
     tooltip.style.top = evt.pageY + 10 + 'px';
-  }
+  };
 
   window.hideTooltip = () => {
     var tooltip = document.getElementById("tooltip");
     tooltip.style.display = "none";
-  }
+  };
 
   // Same as for the tooltip mechanism. In this case we connect the instruction
   // view with the onmouse* events of the cpu view.
   window.setInstruction = (parts) => {
-    instruction.setText(parts);
-  }
+    instruction.refresh(parts);
+  };
 
   // Init the different components of the view
   initCanvas();
@@ -609,11 +731,36 @@ export function pathTypeJ() {
   cpuComponents['wbmux'].showConnection('10');
 }
 
+
+function parseInstruction(instText) {
+  let result = null; 
+  try {
+    result = parse(instText, {'startRule': 'Statement'});
+    console.log("Parser result: ", result);
+  } catch (error) {
+    console.error(error);
+  }
+  console.log("Finished instruction loading");
+  return result;
+}
+
 export function simulateInstruction() {
   console.log("Processing instruction: ");
   const instText = document.getElementById("instText").value;
   if (instText !== "") {
-    const result = instruction.loadInstruction(instText);
+    const result = parseInstruction(instText);
+    switch(result['type']) {
+      case 'R': {
+        instruction = new RInstView();
+        pathTypeR();
+      } break;
+      case 'i': instruction = new IInstView(); break;
+      default : {
+        console.error("There is no view implemented for type: " + result['type']);
+        instruction = null;}
+    }
+    instruction.loadInstruction(result);
+    //const result = instruction.loadInstruction(instText);
     console.log(result);
   } else {
     console.log("empty instruction");

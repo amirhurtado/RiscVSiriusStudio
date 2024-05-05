@@ -1,5 +1,6 @@
   {{
     var instcounter = 0;
+    var instEncoding = {};
     function getInt(val) {
       return parseInt(val,10);
     }
@@ -32,13 +33,27 @@
     function toBinaryString(value, bitlength) {
     	return toRadix(value,2).slice(bitlength * -1);
     }
+    
+    function encodingAsHex(binenc) {
+    	let hexEncoding = binenc.replaceAll("-","");
+        let groups4 = hexEncoding.match(/.{1,8}/g);
+        let enc = groups4.map(
+        			(b8) => {
+        						let hex = parseInt(b8,2).toString(16).toUpperCase();
+                                let padHex = hex.padStart(2,"0");
+            					//return l.reduce((acc, c) => { return acc.concat(c);},"");
+                            	return padHex;
+                            }
+        		  );
+        return enc.toString().replaceAll(",","-");
+    }
 
   }}
   
- Start = Program
+ Start = Statement
  
   
-  Program 
+  Program "Program"
     = head:Statement tail:(_ Statement)* 
     {
 	  const val = [head].concat(tail.map(function(elem){return elem[1];}));
@@ -47,40 +62,35 @@
       return val;
     }
   
-  Statement 
+  Statement "Program statement" 
     = inst:Instruction EOS {
-      return inst;
+      	const binEncoding = inst["encoding"]["binEncoding"].replaceAll("-","");        
+        inst["encoding"]["hexEncoding"] =  encodingAsHex(binEncoding);
+        inst["text"] = text();
+    	return inst;
      }
-    / label:Label 
+/*    / label:Label 
     {
     	return label;
     }
-    
-  Label= [a-z]+":" EOS 
+  */  
+  Label "Label" = [a-z]+":" EOS 
   { 
   	const val = text().split(":")[0]; 
   	return {"type": "label", "name":val, "address":(instcounter)}
   }
   
-  Instruction 
-    = inst:RInstruction 
-    {
-    	const opcode = inst["opcode"]
-        const rd = getInt(inst["rd"]["regenc"]);
-        const funct3 = inst["funct3"];
-        const rs1 = getInt(inst["rs1"]["regenc"]);
-        const rs2 = getInt(inst["rs2"]["regenc"]);
-        const funct7 = inst["funct7"];
-    	var encoding = `${toBinaryString(funct7,5)}-${toBinaryString(rs2,5)}-${toBinaryString(rs1,5)}-${toBinaryString(funct3,3)}-${toBinaryString(rd,5)}-${opcode}`;
-        inst["encoding"] = encoding;
-    	return inst;
-    }
-    / IInstruction 
+  Instruction "Instruction"
+    = inst:RInstruction { return inst; }
+    / inst:IInstruction { return inst; }
     / LInstruction
     / SInstruction
     / BInstruction
+    / a:. .* {
+    	error('Expecting a valid instruction, Got:"' + text() +'"');
+    }
       
-  RInstruction "r-type instruction"
+  RInstruction "R-type instruction"
     = name:RInstName _ rd:RegisterName __ rs1:RegisterName __ rs2:RegisterName
     {
       var funct3;
@@ -97,11 +107,38 @@
         case 'slt'  : funct3 = 2; funct7 = 0;  break;
         case 'sltu' : funct3 = 3; funct7 = 0;  break;
       }
-      return {"ïnst":instcounter++, "type":"r", "instruction": name, "rd":rd, "rs1":rs1, "rs2": rs2, "funct3": funct3, "funct7": funct7, "opcode": "0110011"};
+      const rdVal = getInt(rd["regenc"]);
+      const rdBin = toBinaryString(rdVal,5);
+      
+      const funct3Bin = toBinaryString(funct3,3);
+
+  	  const rs1Val = getInt(rs1["regenc"]);
+      const rs1Bin = toBinaryString(rs1Val,5);
+      
+      const rs2Val = getInt(rs2["regenc"]);
+      const rs2Bin = toBinaryString(rs2Val,5);
+
+      const funct7Bin = toBinaryString(funct7,7);
+
+	  const opcode = "0110011";
+      
+      const binEncoding = `${funct7Bin}-${rs2Bin}-${rs1Bin}-${funct3Bin}-${rdBin}-${opcode}`;
+      
+      var encoding = {};
+      encoding["binEncoding"] = binEncoding;
+	  encoding["funct3"] = funct3Bin;
+      encoding["rs1"] = rs1Bin;
+	  encoding["rs2"] = rs2Bin;
+      encoding["rd"] = rdBin;
+      encoding["funct7"] = funct7Bin;
+
+      return {"ïnst":instcounter++, "type":"R", "instruction": name, "rd":rdVal, "rs1":rs1Val,
+              "rs2": rs2Val, "funct3": funct3, "funct7": funct7, "opcode": opcode, "encoding": encoding
+             };
       
     }
    
-    IInstruction "i-type instruction"
+    IInstruction "I-type instruction"
     = name:IInstName _ rd:RegisterName __ rs1:RegisterName __ imm:Imm12 
     { 
       if (isILogical(name) && !isValidShift(imm)) {
@@ -119,12 +156,31 @@
         case 'srai'  : funct3 = 3; funct7 = 32;  /* 32 = 0x20 */ break;
         case 'slti'  : funct3 = 2; break;
         case 'sltiu' : funct3 = 3; break;
-
       }
-      return {"ïnst":instcounter++, "type":"i", "instruction": name, "rd":rd, "rs1":rs1, "imm12": imm, "funct3": funct3, "funct7": funct7, "opcode": "0010011"};
-    }
+      
+      const rdVal = getInt(rd["regenc"]);
+      const rdBin = toBinaryString(rdVal,5);
+      
+      const funct3Bin = toBinaryString(funct3,3);
+  	  const rs1Val = getInt(rs1["regenc"]);
+      const rs1Bin = toBinaryString(rs1Val,5);
 
-    LInstruction "load instruction"
+
+      const immVal = getInt(imm);
+      const immValBin = toBinaryString(immVal,12);
+      
+      const binEncoding = `${immValBin}-${rs1Bin}-${funct3Bin}-${rdBin}-0010011`;
+
+	  var encoding = {"rd": rdBin, "funct3": funct3Bin, "rs1": rs1Bin, "imm12":immValBin, 
+      			      "binEncoding": binEncoding};
+
+	  return {"ïnst":instcounter++, "type":"i", "instruction": name, "rd":rd, "rs1":rs1, 
+              "imm12": imm, "funct3": funct3,  "opcode": "0010011", "encoding":encoding
+        	 };
+  
+  }
+
+    LInstruction "Load instruction"
       = name:LoadInstName _ rd:RegisterName __ offset:Imm12 _"("_ rs1:RegisterName _")" 
       { 
         var funct3;
@@ -138,7 +194,7 @@
         return {"ïnst":instcounter++, "type":"i", "instruction": name, "rd":rd, "rs1":rs1, "offset": offset, "funct3": funct3, "opcode": "0000011"};
       }
     
-    SInstruction "store instruction"
+    SInstruction "Store instruction"
     = name:StoreInstName _ rs2:RegisterName __ offset:Imm12 _"("_ rs1:RegisterName _")" 
     { 
       var funct3;
@@ -150,7 +206,7 @@
       return {"ïnst":instcounter++, "type":"s", "instruction": name, "rs1":rs1, "rs2":rs2, "offset": offset, "funct3": funct3, "opcode": "0100011"};
     }
 
-    BInstruction "branch instruction"
+    BInstruction "Branch instruction"
     = name:BranchInstName _ rs1:RegisterName __ rs2:RegisterName __ offset:Imm12  
     { 
       var funct3;
@@ -166,7 +222,7 @@
       return {"ïnst":instcounter++, "type":"b", "instruction": name, "rs1":rs1, "rs2":rs2, "offset": offset, "funct3": funct3, "opcode": "1100011"};
     }
 
-    JInstruction "jump instruction"
+    JInstruction "Jump instruction"
     = name:jalToken _ rd:RegisterName __ offset:Imm20  
     { 
       return {"ïnst":instcounter++, "type":"j", "instruction": name, "rd":rd, "offset": offset, "opcode": "1101111"};
@@ -176,7 +232,7 @@
       return {"ïnst":instcounter++, "type":"i", "instruction": name, "rd":rd, "rs1":rs1, "imm12": imm, "funct3": 0, "funct7": 0, "opcode": "1100111"};
     }
 
-  Imm12
+  Imm12 "12 bits immediate"
   = val:Integer
     {
     	const v = getInt(val);
@@ -185,7 +241,7 @@
         return error("Expecting 12 bit representable value. Got " + v, location());
 	}
   
-  Imm20
+  Imm20 "20 bits immediate"
   = val:Integer
     {
     	const v = getInt(val);
@@ -293,7 +349,7 @@
 
   
 
-  ABIRegister "abiregister"
+  ABIRegister "ABI name for register"
     = reg:ZEROToken {return {"regname": reg, "regeq": "x0"};}
     / reg:RAToken   {return {"regname": reg, "regeq": "x1"};}
     / reg:SPToken   {return {"regname": reg, "regeq": "x2"};}
@@ -449,21 +505,21 @@
   A6Token   = "a6"
   A7Token   = "a7"
 
-  Integer "integer"
+  Integer "Integer"
   = _ [\+-]?[0-9]+ 
   { 
     return parseInt(text(), 10); 
   }
 
-  EOS
+  EOS "End of statement"
     = _ x:Comment? (LineTerminator / EOF) {return null;}
     / EOF
   
-  LineTerminator
+  LineTerminator "End of line"
     = "\n"
     / "\r\n"
     
-  EOF
+  EOF "End of file"
     = !.
   __
     = _  "," _

@@ -22,7 +22,7 @@
     "package": "NODE_ENV=production node ./esbuild.js",
     "watch": "node ./esbuild.js --watch",
     "lint": "eslint src --ext ts",
-    "parser": "npx peggy --allowed-start-rules Start,Instruction -o src/concepts/riscv.js --format es src/utilities/riscv.peg"
+    "parser": "npx peggy --allowed-start-rules Start,Instruction,Statement -o src/concepts/riscv.js --format es src/utilities/riscv.peg"
   },
   "devDependencies": {
     "@types/glob": "^8.0.0",
@@ -32,7 +32,7 @@
     "@typescript-eslint/eslint-plugin": "^5.42.0",
     "@typescript-eslint/parser": "^5.42.0",
     "esbuild": "^0.16.10",
-    "eslint": "^8.26.0",
+    "eslint": "^8.57.0",
     "glob": "^8.0.3",
     "peggy": "^4.0.2",
     "prettier": "^2.8.1",
