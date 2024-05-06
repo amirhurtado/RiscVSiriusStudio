@@ -167,6 +167,7 @@ class InstructionView {
     this.initInstTextBin(); // Binary view
     this.initInstHex();     // Hexadecimal view
     this.initInstType();    // Type view
+    this.initInstTextImm(); // Immediate view
 
     this.baseStyle = colors['instruction']['baseStyle']; 
     this.highlightStyle = colors['instruction']['highlightStyle']; 
@@ -212,6 +213,14 @@ class InstructionView {
     }
   }
 
+  initInstTextImm() {
+    const txt = getDrawComponent(document, "instName", "instTextImm");
+    this.textImm = txt.getElementsByTagName('div')[2];
+    const m = " ";
+    this.textImm.innerHTML = `<em style='color:#d3d3d3';>${m}</em>`;      
+  }
+
+
   loadInstruction(parseResult) {
     this.opcodeText = parseResult['opcode'];
     this.rdText = parseResult['encoding']['rd'];
@@ -226,6 +235,7 @@ class InstructionView {
   setTextAsm() {
     this.textAsm.innerHTML = this.asm;
   }
+
   setTextHex() {
     this.textHex.innerHTML = this.hex;
   }
@@ -261,24 +271,39 @@ class IInstView extends InstructionView {
   }
 
   loadInstruction(parseResult) {
-    console.log("loadInstruction at RInstView");
+    console.log("loadInstruction at IInstView");
     super.loadInstruction(parseResult);
+    this.instructionLoaded = true;
     this.funct3Text = parseResult['encoding']['funct3'];
     this.rs1Text = parseResult['encoding']['rs1'];
-    this.imm12Text = parseResult['encoding']['imm12'];
+    this.imm12TextEncoding = parseResult['encoding']['imm12'];
+    this.imm12Text = parseResult['imm12'];
+    this.setTextImm([]);
     this.refresh([]);
   }
 
   refresh(high) {
+    if (!this.instructionLoaded) { return; } 
+    console.log(high);
     const ns = this.baselStyle;
     const hs = this.highlightStyle;
-    this.htmlString = 
-    `<span style="${high.includes("imm12")? hs : ns}">${this.imm12Text}</span>-`+
+    const htmlString = 
+    `<span style="${high.includes("imm12")? hs : ns}">${this.imm12TextEncoding}</span>-`+
     `<span style="${high.includes("rs1")? hs : ns}">${this.rs1Text}</span>-`+
     `<span style="${high.includes("funct3")? hs : ns}">${this.funct3Text}</span>-`+
     `<span style="${high.includes("rd")? hs : ns}">${this.rdText}</span>-`+
     `<span style="${high.includes("opcode")? hs : ns}">${this.opcodeText}</span>`;
-    this.textBin.innerHTML = this.htmlString;
+    this.textBin.innerHTML = htmlString;
+    this.setTextImm(high);
+  }
+
+  setTextImm(high) {
+    const ns = this.baselStyle;
+    const hs = this.highlightStyle;
+    const htmlString = 
+    `<span style="${high.includes("imm12Text")? hs : ns}">${this.imm12Text}</span>`;
+    this.textImm.innerHTML = htmlString;
+
   }
 
   addEvent(labelId, parts) {
@@ -292,9 +317,7 @@ class IInstView extends InstructionView {
     this.addEvent("rdLabel", ["rd"]);
     this.addEvent("funct3Label", ["funct3"]);
     this.addEvent("rs1Label", ["rs1"]);
-    // this.addEvent("rs2Label", ["rs2"]);
-    // this.addEvent("funct7Label", ["funct7"]);
-    this.addEvent("immLabel", ["imm12"]);
+    this.addEvent("immLabel", ["imm12", "imm12Text"]);
   }
 }
 
@@ -307,6 +330,7 @@ class RInstView extends InstructionView {
   loadInstruction(parseResult) {
     console.log("loadInstruction at RInstView");
     super.loadInstruction(parseResult);
+    this.instructionLoaded = true;
     this.funct3Text = parseResult['encoding']['funct3'];
     this.rs1Text = parseResult['encoding']['rs1'];
     this.rs2Text = parseResult['encoding']['rs2'];
@@ -315,6 +339,7 @@ class RInstView extends InstructionView {
   }
 
   refresh(high) {
+    if (!this.instructionLoaded) { return; }
     const ns = this.baseStyle;
     const hs = this.highlightStyle;
     const f7 = 
@@ -614,17 +639,17 @@ function setAttribute(component, attribute, value) {
 }
 
 function dataPath(components, paths) {
-  components.forEach(c => {cpuComponents[c].highlight()});
+  components.forEach(c => {cpuComponents[c].highlight();});
   paths.forEach(p => {cpuPaths[p].animate()});
 
-  const allComponents = Object.keys(cpuComponents)
+  const allComponents = Object.keys(cpuComponents);
   const componentsToFadeOut = 
     allComponents.filter(c => !components.includes(c));
-  componentsToFadeOut.forEach(c => {cpuComponents[c].fadeOut()});
+  componentsToFadeOut.forEach(c => {cpuComponents[c].fadeOut();});
 
-  const allPaths = Object.keys(cpuPaths)
+  const allPaths = Object.keys(cpuPaths);
   const pathsToFadeout = allPaths.filter(p => !paths.includes(p));
-  pathsToFadeout.forEach(p => {cpuPaths[p].fadeOut()});
+  pathsToFadeout.forEach(p => {cpuPaths[p].fadeOut();});
 }
 
 export function pathTypeR() {
