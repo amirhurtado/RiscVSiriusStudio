@@ -50,7 +50,7 @@
 
   }}
   
- Start = Statement
+ Start = BInstruction
  
   
   Program "Program"
@@ -69,11 +69,11 @@
         inst["text"] = text();
     	return inst;
      }
-/*    / label:Label 
+    / label:Label 
     {
     	return label;
     }
-  */  
+    
   Label "Label" = [a-z]+":" EOS 
   { 
   	const val = text().split(":")[0]; 
@@ -171,7 +171,7 @@
       
       const binEncoding = `${immValBin}-${rs1Bin}-${funct3Bin}-${rdBin}-0010011`;
 
-	  var encoding = {"rd": rdBin, "funct3": funct3Bin, "rs1": rs1Bin, "imm12":immValBin, 
+	  const encoding = {"rd": rdBin, "funct3": funct3Bin, "rs1": rs1Bin, "imm12":immValBin, 
       			      "binEncoding": binEncoding};
 
 	  return {"ïnst":instcounter++, "type":"i", "instruction": name, "rd":rd, "rs1":rs1, 
@@ -191,8 +191,28 @@
           case 'lbu' : funct3 = 4; break;
           case 'lhu' : funct3 = 5; break;
         }
-        return {"ïnst":instcounter++, "type":"i", "instruction": name, "rd":rd, "rs1":rs1, "offset": offset, "funct3": funct3, "opcode": "0000011"};
-      }
+
+      const rdVal = getInt(rd["regenc"]);
+      const rdBin = toBinaryString(rdVal,5);
+      
+      const funct3Bin = toBinaryString(funct3,3);
+  	  
+      const rs1Val = getInt(rs1["regenc"]);
+      const rs1Bin = toBinaryString(rs1Val,5);
+
+      const immVal = getInt(offset);
+      const immValBin = toBinaryString(immVal,12);
+
+      const binEncoding = `${immValBin}-${rs1Bin}-${funct3Bin}-${rdBin}-0010011`;
+
+	  const encoding = {"rd": rdBin, "funct3": funct3Bin, "rs1": rs1Bin, "imm12":immValBin, 
+      			      "binEncoding": binEncoding};
+
+	  return {"ïnst":instcounter++, "type":"i", "instruction": name, "rd":rd, "rs1":rs1, 
+              "imm12": offset, "funct3": funct3,  "opcode": "0010011", "encoding":encoding
+        	 };
+
+	}
     
     SInstruction "Store instruction"
     = name:StoreInstName _ rs2:RegisterName __ offset:Imm12 _"("_ rs1:RegisterName _")" 
@@ -203,8 +223,30 @@
         case 'sh'  : funct3 = 1; break;
         case 'sw'  : funct3 = 2; break;
       }
-      return {"ïnst":instcounter++, "type":"s", "instruction": name, "rs1":rs1, "rs2":rs2, "offset": offset, "funct3": funct3, "opcode": "0100011"};
-    }
+     
+  	  const rs1Val = getInt(rs1["regenc"]);
+      const rs1Bin = toBinaryString(rs1Val,5);
+      
+      const rs2Val = getInt(rs2["regenc"]);
+      const rs2Bin = toBinaryString(rs2Val,5);
+
+ 	  const funct3Bin = toBinaryString(funct3,3);
+      
+      const immVal = getInt(offset);
+      const immValBin = toBinaryString(immVal,12);
+      
+      const imm11_5 = immValBin.substring(0,7);
+      const imm4_0 = immValBin.substring(7);
+
+      const binEncoding = `${imm11_5}-${rs2Bin}-${rs1Bin}-${funct3Bin}-${imm4_0}-0100011`;
+ 
+	  const encoding = {"funct3": funct3Bin, "rs1": rs1Bin, "rs2": rs2Bin,
+                      "imm12":immValBin, "binEncoding": binEncoding};
+
+	  return {"ïnst":instcounter++, "type":"s", "instruction": name, "rs1":rs1, "rs2":rs2, 
+              "imm12": offset, "funct3": funct3,  "opcode": "0100011", "encoding":encoding
+        	 };
+}
 
     BInstruction "Branch instruction"
     = name:BranchInstName _ rs1:RegisterName __ rs2:RegisterName __ offset:Imm12  
@@ -219,8 +261,33 @@
         case 'bgeu'  : funct3 = 7; break;
 
       }
-      return {"ïnst":instcounter++, "type":"b", "instruction": name, "rs1":rs1, "rs2":rs2, "offset": offset, "funct3": funct3, "opcode": "1100011"};
-    }
+      
+  	  const rs1Val = getInt(rs1["regenc"]);
+      const rs1Bin = toBinaryString(rs1Val,5);
+      
+      const rs2Val = getInt(rs2["regenc"]);
+      const rs2Bin = toBinaryString(rs2Val,5);
+
+ 	  const funct3Bin = toBinaryString(funct3,3);
+      
+      const immVal = getInt(offset);
+      const immValBin = toBinaryString(immVal,12);
+
+	
+      const imm12 = immValBin.at(11);
+      const imm10_5 = immValBin.substring(5,11);
+      const imm4_1 = immValBin.substring(1,5);
+      const imm11 = immValBin.at(10);
+
+      const binEncoding = `${imm12}${imm10_5}-${rs2Bin}-${rs1Bin}-${funct3Bin}-${imm4_1}${imm11}-1100011`;
+ 
+	  const encoding = {"funct3": funct3Bin, "rs1": rs1Bin, "rs2": rs2Bin,
+                      "imm12":immValBin, "binEncoding": binEncoding};
+
+	  return {"ïnst":instcounter++, "type":"s", "instruction": name, "rs1":rs1, "rs2":rs2, 
+              "imm12": offset, "funct3": funct3,  "opcode": "1100011", "encoding":encoding
+        	 };
+     }
 
     JInstruction "Jump instruction"
     = name:jalToken _ rd:RegisterName __ offset:Imm20  
