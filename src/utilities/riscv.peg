@@ -13,8 +13,8 @@
       return val >= -4096 && val <= 4095;
     }	
 
-    function isImm20(val) {
-      return val >= -524288 && val <= 524287;
+    function isImm21(val) {
+      return val >= -1048576 && val <= 1048575;
     }
     
     function isValidShift(val) {
@@ -297,9 +297,26 @@
      }
 
     JInstruction "Jump instruction"
-    = name:jalToken _ rd:RegisterName __ offset:Imm20  
+    = name:jalToken _ rd:RegisterName __ offset:Imm21 
     { 
-      return {"ïnst":instcounter++, "type":"j", "instruction": name, "rd":rd, "offset": offset, "opcode": "1101111"};
+      const rdVal = getInt(rd["regenc"]);
+      const rdBin = toBinaryString(rdVal,5);
+      
+      const immVal = getInt(offset);
+      const immValBin = toBinaryString(immVal,21);
+
+      const imm20 = immValBin.at(0);
+      const imm11 = immValBin.at(9); 
+      const imm19_12 = immValBin.substring(1,9); 
+      const imm10_1 = immValBin.substring(10,20); 
+      
+      const binEncoding = `${imm20}${imm10_1}${imm11}${imm19_12}${rdBin}1101111`;
+ 
+	  const encoding = {"imm21":immVal, "rd":rd,  "binEncoding": binEncoding, 
+                      "imm[20]": imm20, "imm[11]": imm11, "imm[19:12]":imm19_12, "imm[10:1]":imm10_1};
+
+	  return {"ïnst":instcounter++, "type":"j", "instruction": name, "imm21": offset, "opcode": "1101111", "encoding":encoding
+        	 };             
     }
     / name:jalrToken _ rd:RegisterName __ rs1:RegisterName __ offset:Imm12 
     {
@@ -343,13 +360,13 @@
         return error("Expecting 13 bit representable value [-4096, 4095]. Got " + v, location());
 	}
 
-  Imm20 "20 bits immediate"
+  Imm21 "21 bits immediate"
   = val:Integer
     {
     	const v = getInt(val);
-        if (isImm20(v))
+        if (isImm21(v))
         	return v;
-        return error("Expecting 20 bit representable value. Got " + v, location());
+        return error("Expecting 21 bit representable value [-1048576, 1048575]. Got " + v, location());
 	}
 
 
