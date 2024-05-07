@@ -341,21 +341,23 @@ Program "Program"
       
       const binEncoding = `${immValBin}-${rs1Bin}-${funct3Bin}-${rdBin}-1100111`;
 
-    const encoding = {"rd": rdBin, "funct3": funct3Bin, "rs1": rs1Bin, "imm12":immValBin, 
-                  "binEncoding": binEncoding};
+      const encoding = {"rd": rdBin, "funct3": funct3Bin, "rs1": rs1Bin, 
+                        "imm12":immValBin, "binEncoding": binEncoding
+                      };
 
-    return {"ïnst":instcounter++, "type":"i", "instruction": name, "rd":rd, "rs1":rs1, 
-              "imm12": offset, "funct3": funct3Bin,  "opcode": "0010011", "encoding":encoding
-           };
-     }
-     
+    return {"ïnst":instcounter++, "type":"i", "instruction": name, "rd":rd,
+            "rs1":rs1, "imm12": offset, "funct3": funct3Bin,
+            "opcode": "0010011", "encoding":encoding
+            };
+    }
+
     UInstruction "Upper imm instruction"
     = name:UpperImmInstName _ rd:RegisterName __ offset:Imm32 
     { 
       var opcode = null;
       if (name == "lui") { opcode = "0110111"; } else { opcode = "0010111"; }
 
-    const rdVal = getInt(rd["regenc"]);
+      const rdVal = getInt(rd["regenc"]);
       const rdBin = toBinaryString(rdVal,5);
 
       const immVal = getInt(offset);
@@ -363,11 +365,13 @@ Program "Program"
       
       const binEncoding = `${immValBin}-${rdBin}-${opcode}`;
 
-    const encoding = {"rd": rdBin, "imm32": immValBin, "binEncoding": binEncoding};
+      const encoding = {"rd": rdBin, "imm32": immValBin, 
+                        "binEncoding": binEncoding
+                        };
 
-    return {"ïnst":instcounter++, "type":"u", "instruction": name, "rd":rd,
+      return {"ïnst":instcounter++, "type":"u", "instruction": name, "rd":rd,
               "imm32": offset, "opcode": opcode, "encoding":encoding};
-    }
+            };
 
   EInstruction "E instruction"
     = name:(ecallToken / ebreakToken) 
@@ -379,13 +383,13 @@ Program "Program"
         imm12 = toBinaryString(1,12);
       }
       
-    const binEncoding = `${imm12}${toBinaryString(0,13)}-1110011`;
+      const binEncoding = `${imm12}${toBinaryString(0,13)}-1110011`;
 
-      return {"ïnst":instcounter++, "type":"i", "instruction": name, "rd":0, "rs1":0, "funct3":0,
-              "imm12": imm12,  "opcode": "1110011", 
+      return {"ïnst":instcounter++, "type":"i", "instruction": name, "rd":0,
+              "rs1":0, "funct3":0, "imm12": imm12,  "opcode": "1110011", 
               "encoding":{"binEncoding":binEncoding}
-           };
-   }
+            };
+    }
 
   Imm12 "12 bits immediate"
   = val:Integer
@@ -422,7 +426,6 @@ Program "Program"
           return v;
         return error("Expecting 32 bit representable value [0, 4294967295]. Got " + v, location());
   }
-
 
   InstName "instruction name"
     = RInstName
@@ -490,8 +493,7 @@ Program "Program"
 
 
   Register "register"
-    = // remember pegg format!
-      x10Token
+    = x10Token
     / x11Token
     / x12Token
     / x13Token
@@ -545,21 +547,21 @@ Program "Program"
     /  reg:S2Token  {return {"regname": reg, "regeq": "x18"};}  
     /  reg:S3Token  {return {"regname": reg, "regeq": "x19"};}
     /  reg:S4Token  {return {"regname": reg, "regeq": "x20"};} 
-     /  reg:S5Token   {return {"regname": reg, "regeq": "x21"};} 
-    /  reg:S6Token   {return {"regname": reg, "regeq": "x22"};} 
-    /  reg:S7Token   {return {"regname": reg, "regeq": "x23"};} 
-    /  reg:S8Token   {return {"regname": reg, "regeq": "x24"};} 
-    /  reg:S9Token   {return {"regname": reg, "regeq": "x25"};} 
-    /  reg:S10Token   {return {"regname": reg, "regeq": "x26"};} 
-    /  reg:S11Token   {return {"regname": reg, "regeq": "x27"};} 
-    /  reg:A0Token   {return {"regname": reg, "regeq": "x10"};} 
-    /  reg:A1Token   {return {"regname": reg, "regeq": "x11"};} 
-    /  reg:A2Token   {return {"regname": reg, "regeq": "x12"};} 
-    /  reg:A3Token   {return {"regname": reg, "regeq": "x13"};} 
-    /  reg:A4Token   {return {"regname": reg, "regeq": "x14"};} 
-    /  reg:A5Token   {return {"regname": reg, "regeq": "x15"};} 
-    /  reg:A6Token   {return {"regname": reg, "regeq": "x16"};} 
-    /  reg:A7Token   {return {"regname": reg, "regeq": "x17"};} 
+    /  reg:S5Token  {return {"regname": reg, "regeq": "x21"};} 
+    /  reg:S6Token  {return {"regname": reg, "regeq": "x22"};} 
+    /  reg:S7Token  {return {"regname": reg, "regeq": "x23"};} 
+    /  reg:S8Token  {return {"regname": reg, "regeq": "x24"};} 
+    /  reg:S9Token  {return {"regname": reg, "regeq": "x25"};} 
+    /  reg:S10Token {return {"regname": reg, "regeq": "x26"};} 
+    /  reg:S11Token {return {"regname": reg, "regeq": "x27"};} 
+    /  reg:A0Token  {return {"regname": reg, "regeq": "x10"};} 
+    /  reg:A1Token  {return {"regname": reg, "regeq": "x11"};} 
+    /  reg:A2Token  {return {"regname": reg, "regeq": "x12"};} 
+    /  reg:A3Token  {return {"regname": reg, "regeq": "x13"};} 
+    /  reg:A4Token  {return {"regname": reg, "regeq": "x14"};} 
+    /  reg:A5Token  {return {"regname": reg, "regeq": "x15"};} 
+    /  reg:A6Token  {return {"regname": reg, "regeq": "x16"};} 
+    /  reg:A7Token  {return {"regname": reg, "regeq": "x17"};} 
 
 
   
@@ -693,16 +695,13 @@ Program "Program"
     / EOF
   
   LineTerminator "End of line"
-    = "\n"
-    / "\r\n"
+    = "\n" / "\r\n"
     
-  EOF "End of file"
-    = !.
-  __
-    = _  "," _
- 
- WhiteSpace "whitespace"
-   = "\t"
-   / " "
-  _ 
-  = (WhiteSpace)*
+  EOF "End of file" = !.
+  
+  __ = _ "," _
+
+  WhiteSpace "whitespace"
+  = "\t" / " "
+
+  _ = (WhiteSpace)*
