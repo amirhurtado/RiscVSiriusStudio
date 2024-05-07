@@ -186,7 +186,7 @@
     };
   }
 
-  function handleBInstruction(name, rs1, rs2, offset, location) {
+  function handleBInstruction(name, rs1, rs2, offset, location, pseudo=false) {
     let funct3;
     switch (name) {
       case 'beq'   : funct3 = 0; break;
@@ -225,7 +225,7 @@
     return {
       "ïnst":instcounter++, "type":"b", "instruction": name, "rs1":rs1,
       "rs2":rs2, "imm13": offset, "funct3": funct3, "opcode": "1100011", 
-      "encoding":encoding, "location":location
+      "encoding":encoding, "location":location, "pseudoInst": pseudo
     };
   }
 
@@ -276,6 +276,33 @@
       "location":location
     };
   }
+
+  function handleBPInstruction(name, rs1, rs2, offset, location) {
+    const zeroReg = { regname: 'x0', regeq: 'x0', regenc: '0'};
+    if (rs2 == null) {
+      let op = null;
+      let r1 = null;
+      let r2 = null;
+      switch (name) {
+        case 'beqz': {op = 'beq'; r1 = rs1;     r2 = zeroReg; } break;
+        case 'bnez': {op = 'bne'; r1 = rs1;     r2 = zeroReg; } break;
+        case 'blez': {op = 'bge'; r1 = zeroReg; r2 = rs1;      } break;
+        case 'bgez': {op = 'bge'; r1 = rs1;     r2 = zeroReg; } break;
+        case 'bltz': {op = 'blt'; r1 = rs1;     r2 = zeroReg; } break;
+        case 'bgtz': {op = 'blt'; r1 = zeroReg; r2 = rs1;     } break;
+      }
+      return handleBInstruction(op, r1, r2, offset, location, true);
+    } else {
+      let op = null;
+      switch (name) {
+        case 'bgt' : op = 'blt';  break;
+        case 'ble' : op = 'bge';  break;
+        case 'bgtu': op = 'bltu'; break;
+        case 'bleu': op = 'bgeu'; break;
+      }
+      return handleBInstruction(op, rs2, rs1, offset, location, true);
+    }
+  }
 }}
   
   Start = Program
@@ -317,6 +344,7 @@
     / inst:JInstruction { return inst; }
     / inst:UInstruction { return inst; }
     / inst:EInstruction { return inst; }
+    / inst:PseudoInstruction { return inst; }
     / a:. .* {
       error('Expecting a valid instruction, Got:"' + text() +'"');
     }
@@ -372,6 +400,15 @@
         }
       }
 
+  PseudoInstruction "Pseudo instruction"
+    = BPInstruction
+
+  BPInstruction "Branch pseudo instruction"
+    = name:BPZInstructionName _ rs:RegisterName __ offset:Imm13 
+    { return handleBPInstruction(name, rs, null, offset, location()); }
+    / name:BPInstructionName _ rs1:RegisterName __ rs2:RegisterName __ offset:Imm13 
+    { return handleBPInstruction(name, rs1, rs2, offset, location()); }
+  
   Imm12 "12 bits immediate"
   = val:Integer
     {
@@ -423,6 +460,20 @@
     / bgeToken
     / bltuToken
     / bgeuToken
+  
+  BPZInstructionName "branch zero pseudo instruction name"
+    = beqzToken 
+    / bnezToken
+    / blezToken
+    / bgezToken
+    / bltzToken
+    / bgtzToken 
+
+  BPInstructionName "branch pseudo instruction name"
+    = bgtuToken
+    / bleuToken
+    / bgtToken 
+    / bleToken
 
   StoreInstName "store type instruction name"
   = sbToken
@@ -594,7 +645,19 @@
 
   ecallToken  = "ecall"
   ebreakToken = "ebreak"
-  
+
+  beqzToken = "beqz" 
+  bnezToken = "bnez"
+  blezToken = "blez"
+  bgezToken = "bgez"
+  bltzToken = "bltz"
+  bgtzToken = "bgtz"
+
+  bgtToken  = "bgt"
+  bleToken  = "ble"
+  bgtuToken = "bgtu"
+  bleuToken = "bleu"
+
   x0Token   = "x0"
   x1Token   = "x1"
   x2Token   = "x2"
@@ -672,17 +735,8 @@
     = _ x:Comment? (LineTerminator / EOF) {return null;}
     / EOF
   
-  LineTerminator "End of line"
-    = "\n"
-    / "\r\n"
-    
-  EOF "End of file"
-    = !.
-  __
-    = _  "," _
- 
- WhiteSpace "whitespace"
-   = "\t"
-   / " "
-  _ 
-  = (WhiteSpace)*
+  LineTerminator "End of line" = "\n" / "\r\n"
+  EOF "End of file" = !.
+  __ = _  "," _
+  WhiteSpace "whitespace" = "\t" / " "
+  _  = (WhiteSpace)*
