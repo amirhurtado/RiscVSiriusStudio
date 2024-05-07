@@ -2,8 +2,7 @@
   var instcounter = 0;
   var instEncoding = {};
   /* Support functions */
-  function getInt(val) { return parseInt(val,10); }
-  
+  function getInt(val) { return parseInt(val,10); }  
   function isImm12(val) { return val >= -2048 && val <= 2047; }
   function isImm13(val) { return val >= -4096 && val <= 4095; }
   function isImm21(val) { return val >= -1048576 && val <= 1048575; }
@@ -41,6 +40,11 @@
             );
       return enc.toString().replaceAll(",","-");
   }
+
+  function regEnc(r) {
+    return { regname: 'x'+r, regeq: 'x'+r, regenc: r}; 
+  }
+
   function handleRInstruction(name, rd, rs1, rs2, location) {
     var funct3;
     var funct7;
@@ -415,29 +419,25 @@
   JPInstruction "Jump pseudo instruction"
     = jalrToken _ rs:RegisterName
     {
-      const x1Reg = { regname: 'x1', regeq: 'x1', regenc: '1'}; 
-      return handleIInstruction('jalr', x1Reg, rs, '0', location(), true);
+      return handleIInstruction('jalr', regEnc('1'), rs, '0', location(), true);
     }
     / jalToken _ offset:Imm21
     {
-      const x1Reg = { regname: 'x1', regeq: 'x1', regenc: '1'}; 
-      return handleJInstruction('jal', x1Reg, offset, location(), true);
+      return handleJInstruction('jal', regEnc('1'), offset, location(), true);
     }
     / jrToken _ rs:RegisterName
     {
-      const x0Reg = { regname: 'x0', regeq: 'x0', regenc: '0'}; 
-      return handleIInstruction('jalr', x0Reg, rs, '0', location(), true);
+      return handleIInstruction('jalr', regEnc('0'), rs, '0', location(), true);
     }
     / jToken _ offset:Imm21
     {
-      const x0Reg = { regname: 'x0', regeq: 'x0', regenc: '0'}; 
-      return handleJInstruction('jal', x0Reg, offset, location(), true);
+      return handleJInstruction('jal', regEnc('0'), offset, location(), true);
     }
     / retToken 
     {
-      const x0Reg = { regname: 'x0', regeq: 'x0', regenc: '0'}; 
-      const x1Reg = { regname: 'x1', regeq: 'x1', regenc: '1'}; 
-      return handleIInstruction('jalr', x0Reg, x1Reg, '0', location(), true);
+      return handleIInstruction(
+        'jalr', regEnc('0'), regEnc('1'), '0', location(), true
+      );
     }
     /*
     / name:(callToken / tailToken) _ offset:Imm32
