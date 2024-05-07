@@ -89,9 +89,13 @@
       return error("Expecting valid shift ammount. Got " + imm);
     }
     
-    let funct3;
-    let funct7 = 0;
-    let isLoad = false;
+    let funct3  = 0;
+    let funct7  = 0;
+    let opcode = '0010011';
+    let isLoad  = false;
+    let isJalr  = false;
+    let isEcall = false;
+
     switch (name) {
       case 'addi'  : funct3 = 0; break;
       case 'xori'  : funct3 = 4; break;
@@ -109,10 +113,18 @@
       case 'lw'  : {funct3 = 2; isLoad = true; } break;
       case 'lbu' : {funct3 = 4; isLoad = true; } break;
       case 'lhu' : {funct3 = 5; isLoad = true; } break;
+
+      // Jalr instruction
+      case 'jalr': {funct3 = 0; isJalr = true; opcode = '1100111'; } break;
+
+      // Ecall and ebreak instructions
+      case 'ecall' : {funct3 = 0; isJalr = true; opcode = '1110011'; } break;
+      case 'ebreak': {funct3 = 0; isJalr = true; opcode = '1110011'; } break;
     }
     
-    let opcode = '0010011';
-    if (isLoad) { opcode = "0000011"; }
+    if (isLoad) {
+      opcode = "0000011"; 
+    } 
 
     const rdVal = getInt(rd["regenc"]);
     const rdBin = toBinaryString(rdVal,5);
@@ -138,7 +150,130 @@
     };
   }
 
-  
+  function handleSInstruction(name, rs2, offset, rs1) {
+    var funct3;
+    switch (name) {
+      case 'sb'  : funct3 = 0; break;
+      case 'sh'  : funct3 = 1; break;
+      case 'sw'  : funct3 = 2; break;
+    }
+    const rs1Val = getInt(rs1["regenc"]);
+    const rs1Bin = toBinaryString(rs1Val,5);
+    
+    const rs2Val = getInt(rs2["regenc"]);
+    const rs2Bin = toBinaryString(rs2Val,5);
+
+    const funct3Bin = toBinaryString(funct3,3);
+      
+    const immVal = getInt(offset);
+    const immValBin = toBinaryString(immVal,12);
+      
+    const imm11_5 = immValBin.substring(0,7);
+    const imm4_0 = immValBin.substring(7);
+
+    const binEncoding = `${imm11_5}${rs2Bin}${rs1Bin}${funct3Bin}${imm4_0}0100011`;
+
+    const encoding = {
+      "funct3": funct3Bin, "rs1": rs1Bin, "rs2": rs2Bin, "imm12":immValBin,
+      "binEncoding": binEncoding
+    };
+
+    return {
+      "ïnst":instcounter++, "type":"s", "instruction": name, "rs1":rs1, 
+      "rs2":rs2, "imm12": offset, "funct3": funct3,  "opcode": "0100011", 
+      "encoding":encoding
+    };
+  }
+
+  function handleBInstruction(name, rs1, rs2, offset) {
+    let funct3;
+    switch (name) {
+      case 'beq'   : funct3 = 0; break;
+      case 'bne'   : funct3 = 1; break;
+      case 'blt'   : funct3 = 4; break;
+      case 'bge'   : funct3 = 5; break;
+      case 'bltu'  : funct3 = 6; break;
+      case 'bgeu'  : funct3 = 7; break;
+    }
+      
+    const rs1Val = getInt(rs1["regenc"]);
+    const rs1Bin = toBinaryString(rs1Val,5);
+      
+    const rs2Val = getInt(rs2["regenc"]);
+    const rs2Bin = toBinaryString(rs2Val,5);
+
+    const funct3Bin = toBinaryString(funct3,3);
+      
+    const immVal = getInt(offset);
+    const immValBin = toBinaryString(immVal,13);
+
+    const imm12 = immValBin.at(0);
+    const imm11 = immValBin.at(1); 
+    const imm10_5 = immValBin.substring(2,8); 
+    const imm4_1 = immValBin.substring(8,12); 
+
+    const funct7 = `${imm12}${imm10_5}`;
+    const rd = `${imm4_1}${imm11}`;
+    
+    const encoding = {
+      "binEncoding": `${funct7}${rs2Bin}${rs1Bin}${funct3Bin}${rd}1100011`,
+      "imm[12]": imm12, "imm[10:5]":imm10_5, "imm[4:1]":imm4_1, "imm[11]":imm11,
+      "funct3": funct3Bin, "funct7": funct7, "imm13":immValBin
+    };
+
+    return {
+      "ïnst":instcounter++, "type":"b", "instruction": name, "rs1":rs1,
+      "rs2":rs2, "imm13": offset, "funct3": funct3, "opcode": "1100011", 
+      "encoding":encoding
+    };
+  }
+
+  function handleJInstruction(name, rd, offset) {
+    const rdVal = getInt(rd["regenc"]);
+    const rdBin = toBinaryString(rdVal,5);
+      
+    const immVal = getInt(offset);
+    const immValBin = toBinaryString(immVal,21);
+
+    const imm20 = immValBin.at(0);
+    const imm11 = immValBin.at(9); 
+    const imm19_12 = immValBin.substring(1,9); 
+    const imm10_1 = immValBin.substring(10,20); 
+      
+    const binEncoding = `${imm20}${imm10_1}${imm11}${imm19_12}${rdBin}1101111`;
+
+    const encoding = {
+      "imm21":immVal, "rd":rd,  "binEncoding": binEncoding, "imm[20]": imm20,
+      "imm[11]": imm11, "imm[19:12]":imm19_12, "imm[10:1]":imm10_1
+    };
+
+    return {
+      "ïnst":instcounter++, "type":"j", "instruction": name, "imm21": offset, 
+      "opcode": "1101111", "encoding":encoding
+    };
+  }
+
+  function handleUInstruction(name, rd, offset) {
+    let opcode = null;
+    if (name == "lui") { opcode = "0110111"; } else { opcode = "0010111"; }
+
+    const rdVal = getInt(rd["regenc"]);
+    const rdBin = toBinaryString(rdVal,5);
+
+    const immVal = getInt(offset);
+    const immValBin = toBinaryString(immVal,32);
+      
+    const binEncoding = `${immValBin}-${rdBin}-${opcode}`;
+
+    const encoding = {
+      "rd": rdBin, "imm32": immValBin, "binEncoding": binEncoding
+    };
+
+    return {
+      "ïnst":instcounter++, "type":"u", "instruction": name, "rd":rd,
+      "imm32": offset, "opcode": opcode, "encoding":encoding
+    };
+  }
 }}
   
   Start = Program
@@ -203,167 +338,37 @@
     = name:LoadInstName _ rd:RegisterName __ offset:Imm12 _"("_ rs1:RegisterName _")" 
     { return handleIInstruction(name, rd, rs1, offset); }
     
-    SInstruction "Store instruction"
+  // Parsing rule for store instructions
+  SInstruction "Store instruction"
     = name:StoreInstName _ rs2:RegisterName __ offset:Imm12 _"("_ rs1:RegisterName _")" 
-    { 
-      var funct3;
-      switch (name) {
-        case 'sb'  : funct3 = 0; break;
-        case 'sh'  : funct3 = 1; break;
-        case 'sw'  : funct3 = 2; break;
-      }
-     
-      const rs1Val = getInt(rs1["regenc"]);
-      const rs1Bin = toBinaryString(rs1Val,5);
-      
-      const rs2Val = getInt(rs2["regenc"]);
-      const rs2Bin = toBinaryString(rs2Val,5);
+    { return handleSInstruction(name, rs2, offset, rs1); }
 
-     const funct3Bin = toBinaryString(funct3,3);
-      
-      const immVal = getInt(offset);
-      const immValBin = toBinaryString(immVal,12);
-      
-      const imm11_5 = immValBin.substring(0,7);
-      const imm4_0 = immValBin.substring(7);
-
-      const binEncoding = `${imm11_5}${rs2Bin}${rs1Bin}${funct3Bin}${imm4_0}0100011`;
- 
-    const encoding = {"funct3": funct3Bin, "rs1": rs1Bin, "rs2": rs2Bin,
-                      "imm12":immValBin, "binEncoding": binEncoding};
-
-    return {"ïnst":instcounter++, "type":"s", "instruction": name, "rs1":rs1, "rs2":rs2, 
-              "imm12": offset, "funct3": funct3,  "opcode": "0100011", "encoding":encoding
-           };
-}
-
-    BInstruction "Branch instruction"
+  // Parsing rule for branch instructions
+  BInstruction "Branch instruction"
     = name:BranchInstName _ rs1:RegisterName __ rs2:RegisterName __ offset:Imm13  
-    { 
-      var funct3;
-      switch (name) {
-        case 'beq'   : funct3 = 0; break;
-        case 'bne'   : funct3 = 1; break;
-        case 'blt'   : funct3 = 4; break;
-        case 'bge'   : funct3 = 5; break;
-        case 'bltu'  : funct3 = 6; break;
-        case 'bgeu'  : funct3 = 7; break;
+    {  return handleBInstruction(name, rs1, rs2, offset); }
 
-      }
-      
-      const rs1Val = getInt(rs1["regenc"]);
-      const rs1Bin = toBinaryString(rs1Val,5);
-      
-      const rs2Val = getInt(rs2["regenc"]);
-      const rs2Bin = toBinaryString(rs2Val,5);
-
-     const funct3Bin = toBinaryString(funct3,3);
-      
-      const immVal = getInt(offset);
-      const immValBin = toBinaryString(immVal,13);
-
-      const imm12 = immValBin.at(0);
-      const imm11 = immValBin.at(1); 
-      const imm10_5 = immValBin.substring(2,8); 
-      const imm4_1 = immValBin.substring(8,12); 
-
-    const funct7 = `${imm12}${imm10_5}`;
-      const rd = `${imm4_1}${imm11}`;
-      
-      const binEncoding = `${funct7}${rs2Bin}${rs1Bin}${funct3Bin}${rd}1100011`;
- 
-    const encoding = {"funct3": funct3Bin, "rs1": rs1Bin, "rs2": rs2Bin,
-                      "imm13":immValBin, "funct7": funct7, "rd":rd,  "binEncoding": binEncoding, 
-                      "imm[12]": imm12, "imm[10:5]":imm10_5, "imm[4:1]":imm4_1, "imm[11]":imm11 };
-
-    return {"ïnst":instcounter++, "type":"s", "instruction": name, "rs1":rs1, "rs2":rs2, 
-              "imm12": offset, "funct3": funct3,  "opcode": "1100011", "encoding":encoding
-           };
-     }
-
-    JInstruction "Jump instruction"
+  // Parsing rule for jump instructions: jal and jalr
+  JInstruction "Jump instruction"
     = name:jalToken _ rd:RegisterName __ offset:Imm21 
-    { 
-      const rdVal = getInt(rd["regenc"]);
-      const rdBin = toBinaryString(rdVal,5);
-      
-      const immVal = getInt(offset);
-      const immValBin = toBinaryString(immVal,21);
-
-      const imm20 = immValBin.at(0);
-      const imm11 = immValBin.at(9); 
-      const imm19_12 = immValBin.substring(1,9); 
-      const imm10_1 = immValBin.substring(10,20); 
-      
-      const binEncoding = `${imm20}${imm10_1}${imm11}${imm19_12}${rdBin}1101111`;
- 
-    const encoding = {"imm21":immVal, "rd":rd,  "binEncoding": binEncoding, 
-                      "imm[20]": imm20, "imm[11]": imm11, "imm[19:12]":imm19_12, "imm[10:1]":imm10_1};
-
-    return {"ïnst":instcounter++, "type":"j", "instruction": name, "imm21": offset, "opcode": "1101111", "encoding":encoding
-           };             
-    }
+    { return handleJInstruction(jalToken, rd, offset); }
     / name:jalrToken _ rd:RegisterName __ rs1:RegisterName __ offset:Imm12 
-    {
+    { return handleIInstruction(name, rd, rs1, offset); }
     
-      const rdVal = getInt(rd["regenc"]);
-      const rdBin = toBinaryString(rdVal,5);
-      
-      const funct3Bin = toBinaryString(0,3);
-      const rs1Val = getInt(rs1["regenc"]);
-      const rs1Bin = toBinaryString(rs1Val,5);
-
-
-      const immVal = getInt(offset);
-      const immValBin = toBinaryString(immVal,12);
-      
-      const binEncoding = `${immValBin}-${rs1Bin}-${funct3Bin}-${rdBin}-1100111`;
-
-    const encoding = {"rd": rdBin, "funct3": funct3Bin, "rs1": rs1Bin, "imm12":immValBin, 
-                  "binEncoding": binEncoding};
-
-    return {"ïnst":instcounter++, "type":"i", "instruction": name, "rd":rd, "rs1":rs1, 
-              "imm12": offset, "funct3": funct3Bin,  "opcode": "0010011", "encoding":encoding
-           };
-     }
-     
-    UInstruction "Upper imm instruction"
+  // Parsing rule for upper immediate instructions
+  UInstruction "Upper imm instruction"
     = name:UpperImmInstName _ rd:RegisterName __ offset:Imm32 
-    { 
-      var opcode = null;
-      if (name == "lui") { opcode = "0110111"; } else { opcode = "0010111"; }
-
-    const rdVal = getInt(rd["regenc"]);
-      const rdBin = toBinaryString(rdVal,5);
-
-      const immVal = getInt(offset);
-      const immValBin = toBinaryString(immVal,32);
-      
-      const binEncoding = `${immValBin}-${rdBin}-${opcode}`;
-
-    const encoding = {"rd": rdBin, "imm32": immValBin, "binEncoding": binEncoding};
-
-    return {"ïnst":instcounter++, "type":"u", "instruction": name, "rd":rd,
-              "imm32": offset, "opcode": opcode, "encoding":encoding};
-    }
+    { return handleUInstruction(name, rd, offset); }
 
   EInstruction "E instruction"
-    = name:(ecallToken / ebreakToken) 
-    { 
-      let imm12 = null;
-      if (name == "ecall") {
-        imm12 = toBinaryString(0,12);
-      } else {
-        imm12 = toBinaryString(1,12);
+    = name:(ecallToken / ebreakToken)  {
+        const zeroReg = { regname: 'x0', regeq: 'x0', regenc: '0'};
+        if (name == 'ecall') {
+          return handleIInstruction(name, zeroReg, zeroReg, '0');
+        } else {
+          return handleIInstruction(name, zeroReg, zeroReg, '1');
+        }
       }
-      
-    const binEncoding = `${imm12}${toBinaryString(0,13)}-1110011`;
-
-      return {"ïnst":instcounter++, "type":"i", "instruction": name, "rd":0, "rs1":0, "funct3":0,
-              "imm12": imm12,  "opcode": "1110011", 
-              "encoding":{"binEncoding":binEncoding}
-           };
-   }
 
   Imm12 "12 bits immediate"
   = val:Integer
