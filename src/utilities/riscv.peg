@@ -58,9 +58,8 @@
 
   }}
   
- Start = Program
+ Start = Statement
  
-  
   Program "Program"
     = head:Statement tail:(_ Statement)* 
     {
@@ -96,6 +95,7 @@
     / inst:BInstruction { return inst; }
     / inst:JInstruction { return inst; }
     / inst:UInstruction { return inst; }
+    / inst:EInstruction { return inst; }
     / a:. .* {
     	error('Expecting a valid instruction, Got:"' + text() +'"');
     }
@@ -366,6 +366,24 @@
 	  return {"ïnst":instcounter++, "type":"u", "instruction": name, "rd":rd,
               "imm32": offset, "opcode": opcode, "encoding":encoding};
     }
+
+	EInstruction "E instruction"
+    = name:(ecallToken / ebreakToken) 
+    { 
+      let imm12 = null;
+      if (name == "ecall") {
+        imm12 = toBinaryString(0,12);
+      } else {
+        imm12 = toBinaryString(1,12);
+      }
+      
+	  const binEncoding = `${imm12}${toBinaryString(0,13)}-1110011`;
+
+      return {"ïnst":instcounter++, "type":"i", "instruction": name, "rd":0, "rs1":0, "funct3":0,
+              "imm12": imm12,  "opcode": "1110011", 
+              "encoding":{"binEncoding":binEncoding}
+        	 };
+   }
 
   Imm12 "12 bits immediate"
   = val:Integer
