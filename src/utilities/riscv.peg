@@ -45,7 +45,7 @@
     return { regname: 'x'+r, regeq: 'x'+r, regenc: r}; 
   }
 
-  function handleRInstruction(name, rd, rs1, rs2, location) {
+  function handleRInstruction(name, rd, rs1, rs2, location, pseudo=false) {
     var funct3;
     var funct7;
     switch (name) {
@@ -81,9 +81,10 @@
     };
     
     return {
-      "ïnst":instcounter++, "type":"R", "instruction": name, "rd":rdVal, 
-      "rs1":rs1Val, "rs2": rs2Val, "funct3": funct3, "funct7": funct7, 
-      "opcode": opcode, "encoding": encoding, "location":location
+      "ïnst":instcounter++, "type":"R", "instruction": name, "rd":rd, 
+      "rs1":rs1, "rs2": rs2, "funct3": funct3, "funct7": funct7, 
+      "opcode": opcode, "encoding": encoding, "location":location, 
+      "pseudo":pseudo
     };
     
   }
@@ -409,6 +410,7 @@
   PseudoInstruction "Pseudo instruction"
     = BPInstruction
     / JPInstruction
+    / MiscInstruction
 
   BPInstruction "Branch pseudo instruction"
     = name:BPZInstructionName _ rs:RegisterName __ offset:Imm13 
@@ -465,6 +467,40 @@
     }
     */
     
+    MiscInstruction "Misc. instructions"
+    = "mv" _ rd:RegisterName __ rs:RegisterName
+    { return handleIInstruction('addi', rd, rs, '0', location(), true); }
+    / "nop" 
+    { 
+      return handleIInstruction(
+        'addi', regEnc('0'), regEnc('0'), '0', location(), true
+      ); 
+    }
+    / "not" _ rd:RegisterName __ rs:RegisterName
+    {
+      return handleIInstruction('xori', rd, rs, '-1', location(), true); 
+    }
+    / "neg" _ rd:RegisterName __ rs:RegisterName
+    {
+      return handleRInstruction('sub', rd, regEnc('0'), rs, location(), true); 
+    }
+    / "seqz" _ rd:RegisterName __ rs:RegisterName
+    {
+      return handleIInstruction('sltiu', rd, rs, '1', location(), true); 
+    }
+    / "snez" _ rd:RegisterName __ rs:RegisterName
+    {
+      return handleRInstruction('sltu', rd, regEnc('0'), rs, location(), true);
+    }
+    / "sltz" _ rd:RegisterName __ rs:RegisterName
+    { 
+      return handleRInstruction('slt', rd, rs, regEnc('0'), location(), true); 
+    }
+    / "sgtz" _ rd:RegisterName __ rs:RegisterName
+    { 
+      return handleRInstruction('slt', rd, regEnc('0'), rs, location(), true); 
+    }
+
 
   Imm12 "12 bits immediate"
   = val:Integer
@@ -531,6 +567,17 @@
     / bleuToken
     / bgtToken 
     / bleToken
+
+  MiscInstructionName "misc. pseudo instruction name"
+  = nopToken
+  / liToken
+  / mvToken
+  / notToken
+  / negToken
+  / seqzToken
+  / snezToken
+  / sltzToken
+  / sgtzToken
 
   StoreInstName "store type instruction name"
   = sbToken
@@ -657,7 +704,7 @@
   addToken  = "add"
   subToken  = "sub"
   xorToken  = "xor"
-  orToken  = "xor"
+  orToken  =  "or"
   andToken  = "and"
   sllToken  = "sll"
   srlToken  = "srl"
@@ -713,12 +760,22 @@
   bgtuToken = "bgtu"
   bleuToken = "bleu"
 
-  jrToken = "jr"
-  jToken = "j"
-  retToken = "ret"
+  jrToken =   "jr"
+  jToken =    "j"
+  retToken =  "ret"
   callToken = "call"
   tailToken = "tail"
 
+  nopToken  = "nop"
+  liToken   = "li"
+  mvToken   = "mv"
+  notToken  = "not"
+  negToken  = "neg"
+  seqzToken = "seqz"
+  snezToken = "snez"
+  sltzToken = "sltz"
+  sgtzToken = "sgtz"
+  
   x0Token   = "x0"
   x1Token   = "x1"
   x2Token   = "x2"
