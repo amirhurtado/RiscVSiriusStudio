@@ -29,62 +29,63 @@
       return (name == 'slli'|| name == 'srli' || name == 'srai');
     }
     
-     function toRadix (value, radix) {
-	   if (!Number.isSafeInteger(value)) {
-         throw new TypeError('value must be a safe integer');
-       }
-       const digits = Math.ceil(64 / Math.log2(radix));
-       const twosComplement = value < 0 ? BigInt(radix) ** BigInt(digits) + BigInt(value) : value;
-		return twosComplement.toString(radix).padStart(digits, '0');
-	}
+    function toRadix (value, radix) {
+      if (!Number.isSafeInteger(value)) {
+        throw new TypeError('value must be a safe integer');
+      }
+      const digits = Math.ceil(64 / Math.log2(radix));
+      const twosComplement = 
+        value < 0 ? BigInt(radix) ** BigInt(digits) + BigInt(value) : value;
+      return twosComplement.toString(radix).padStart(digits, '0');
+    }
     
     function toBinaryString(value, bitlength) {
-    	return toRadix(value,2).slice(bitlength * -1);
+      return toRadix(value,2).slice(bitlength * -1);
     }
     
     function encodingAsHex(binenc) {
-    	let hexEncoding = binenc.replaceAll("-","");
-        let groups4 = hexEncoding.match(/.{1,8}/g);
-        let enc = groups4.map(
-        			(b8) => {
-        						let hex = parseInt(b8,2).toString(16).toUpperCase();
-                                let padHex = hex.padStart(2,"0");
-            					//return l.reduce((acc, c) => { return acc.concat(c);},"");
-                            	return padHex;
+      let hexEncoding = binenc.replaceAll("-","");
+      let groups4 = hexEncoding.match(/.{1,8}/g);
+      let enc = 
+        groups4.map((b8) => {
+                              let hex = parseInt(b8,2).toString(16).toUpperCase();
+                              let padHex = hex.padStart(2,"0");
+                              return padHex;
                             }
-        		  );
+                    );
         return enc.toString().replaceAll(",","-");
     }
-
   }}
   
- Start = Statement
- 
-  Program "Program"
+Start = Statement
+
+Program "Program" 
     = head:Statement tail:(_ Statement)* 
     {
-	  const val = [head].concat(tail.map(function(elem){return elem[1];}));
+    const val = [head].concat(tail.map(function(elem){return elem[1];}));
       // Reset the instruction counter when finishing
       instcounter = 0;
       return val;
     }
   
   Statement "Program statement" 
-    = inst:Instruction EOS {
-      	const binEncoding = inst["encoding"]["binEncoding"].replaceAll("-","");        
-        inst["encoding"]["hexEncoding"] =  encodingAsHex(binEncoding);
-        inst["text"] = text();
-    	return inst;
-     }
+    = inst:Instruction EOS 
+    {
+      const binEncoding = inst["encoding"]["binEncoding"].replaceAll("-","");        
+      inst["encoding"]["hexEncoding"] =  encodingAsHex(binEncoding);
+      inst["text"] = text();
+      return inst;
+    }
+    
     / label:Label 
     {
-    	return label;
+      return label;
     }
     
   Label "Label" = [a-z]+":" EOS 
   { 
-  	const val = text().split(":")[0]; 
-  	return {"type": "label", "name":val, "address":(instcounter)}
+    const val = text().split(":")[0]; 
+    return {"type": "label", "name":val, "address":(instcounter)}
   }
   
   Instruction "Instruction"
@@ -97,14 +98,14 @@
     / inst:UInstruction { return inst; }
     / inst:EInstruction { return inst; }
     / a:. .* {
-    	error('Expecting a valid instruction, Got:"' + text() +'"');
+      error('Expecting a valid instruction, Got:"' + text() +'"');
     }
       
   RInstruction "R-type instruction"
     = name:RInstName _ rd:RegisterName __ rs1:RegisterName __ rs2:RegisterName
     {
       var funct3;
-	  var funct7;
+      var funct7;
       switch (name) {
         case 'add'  : funct3 = 0; funct7 = 0;  break;
         case 'sub'  : funct3 = 0; funct7 = 32; /* 32 = 0x20 */  break;
@@ -122,7 +123,7 @@
       
       const funct3Bin = toBinaryString(funct3,3);
 
-  	  const rs1Val = getInt(rs1["regenc"]);
+      const rs1Val = getInt(rs1["regenc"]);
       const rs1Bin = toBinaryString(rs1Val,5);
       
       const rs2Val = getInt(rs2["regenc"]);
@@ -130,32 +131,33 @@
 
       const funct7Bin = toBinaryString(funct7,7);
 
-	  const opcode = "0110011";
+      const opcode = "0110011";
       
       const binEncoding = `${funct7Bin}-${rs2Bin}-${rs1Bin}-${funct3Bin}-${rdBin}-${opcode}`;
       
       var encoding = {};
       encoding["binEncoding"] = binEncoding;
-	  encoding["funct3"] = funct3Bin;
+      encoding["funct3"] = funct3Bin;
       encoding["rs1"] = rs1Bin;
-	  encoding["rs2"] = rs2Bin;
+      encoding["rs2"] = rs2Bin;
       encoding["rd"] = rdBin;
       encoding["funct7"] = funct7Bin;
 
-      return {"ïnst":instcounter++, "type":"R", "instruction": name, "rd":rdVal, "rs1":rs1Val,
-              "rs2": rs2Val, "funct3": funct3, "funct7": funct7, "opcode": opcode, "encoding": encoding
-             };
+      return 
+        { "ïnst":instcounter++, "type":"R", "instruction": name, "rd":rdVal,
+          "rs1":rs1Val, "rs2": rs2Val, "funct3": funct3, "funct7": funct7, "opcode": opcode, "encoding": encoding
+        };
       
     }
-   
+
     IInstruction "I-type instruction"
     = name:IInstName _ rd:RegisterName __ rs1:RegisterName __ imm:Imm12 
     { 
       if (isILogical(name) && !isValidShift(imm)) {
-      	return error("Expecting valid shift ammount. Got " + imm);
+        return error("Expecting valid shift ammount. Got " + imm);
       }
       var funct3;
-	  var funct7 = 0;
+    var funct7 = 0;
       switch (name) {
         case 'addi'  : funct3 = 0; break;
         case 'xori'  : funct3 = 4; break;
@@ -172,7 +174,7 @@
       const rdBin = toBinaryString(rdVal,5);
       
       const funct3Bin = toBinaryString(funct3,3);
-  	  const rs1Val = getInt(rs1["regenc"]);
+      const rs1Val = getInt(rs1["regenc"]);
       const rs1Bin = toBinaryString(rs1Val,5);
 
 
@@ -181,12 +183,12 @@
       
       const binEncoding = `${immValBin}-${rs1Bin}-${funct3Bin}-${rdBin}-0010011`;
 
-	  const encoding = {"rd": rdBin, "funct3": funct3Bin, "rs1": rs1Bin, "imm12":immValBin, 
-      			      "binEncoding": binEncoding};
+    const encoding = {"rd": rdBin, "funct3": funct3Bin, "rs1": rs1Bin, "imm12":immValBin, 
+                  "binEncoding": binEncoding};
 
-	  return {"ïnst":instcounter++, "type":"i", "instruction": name, "rd":rd, "rs1":rs1, 
+    return {"ïnst":instcounter++, "type":"i", "instruction": name, "rd":rd, "rs1":rs1, 
               "imm12": imm, "funct3": funct3,  "opcode": "0010011", "encoding":encoding
-        	 };
+           };
   
   }
 
@@ -206,7 +208,7 @@
       const rdBin = toBinaryString(rdVal,5);
       
       const funct3Bin = toBinaryString(funct3,3);
-  	  
+      
       const rs1Val = getInt(rs1["regenc"]);
       const rs1Bin = toBinaryString(rs1Val,5);
 
@@ -215,13 +217,13 @@
 
       const binEncoding = `${immValBin}-${rs1Bin}-${funct3Bin}-${rdBin}-0010011`;
 
-	  const encoding = {"rd": rdBin, "funct3": funct3Bin, "rs1": rs1Bin, "imm12":immValBin, 
-      			      "binEncoding": binEncoding};
+    const encoding = {"rd": rdBin, "funct3": funct3Bin, "rs1": rs1Bin, "imm12":immValBin, 
+                  "binEncoding": binEncoding};
 
-	  return {"ïnst":instcounter++, "type":"i", "instruction": name, "rd":rd, "rs1":rs1, 
+    return {"ïnst":instcounter++, "type":"i", "instruction": name, "rd":rd, "rs1":rs1, 
               "imm12": offset, "funct3": funct3,  "opcode": "0010011", "encoding":encoding
-        	 };
-	}
+           };
+  }
     
     SInstruction "Store instruction"
     = name:StoreInstName _ rs2:RegisterName __ offset:Imm12 _"("_ rs1:RegisterName _")" 
@@ -233,13 +235,13 @@
         case 'sw'  : funct3 = 2; break;
       }
      
-  	  const rs1Val = getInt(rs1["regenc"]);
+      const rs1Val = getInt(rs1["regenc"]);
       const rs1Bin = toBinaryString(rs1Val,5);
       
       const rs2Val = getInt(rs2["regenc"]);
       const rs2Bin = toBinaryString(rs2Val,5);
 
- 	  const funct3Bin = toBinaryString(funct3,3);
+     const funct3Bin = toBinaryString(funct3,3);
       
       const immVal = getInt(offset);
       const immValBin = toBinaryString(immVal,12);
@@ -249,12 +251,12 @@
 
       const binEncoding = `${imm11_5}${rs2Bin}${rs1Bin}${funct3Bin}${imm4_0}0100011`;
  
-	  const encoding = {"funct3": funct3Bin, "rs1": rs1Bin, "rs2": rs2Bin,
+    const encoding = {"funct3": funct3Bin, "rs1": rs1Bin, "rs2": rs2Bin,
                       "imm12":immValBin, "binEncoding": binEncoding};
 
-	  return {"ïnst":instcounter++, "type":"s", "instruction": name, "rs1":rs1, "rs2":rs2, 
+    return {"ïnst":instcounter++, "type":"s", "instruction": name, "rs1":rs1, "rs2":rs2, 
               "imm12": offset, "funct3": funct3,  "opcode": "0100011", "encoding":encoding
-        	 };
+           };
 }
 
     BInstruction "Branch instruction"
@@ -271,13 +273,13 @@
 
       }
       
-  	  const rs1Val = getInt(rs1["regenc"]);
+      const rs1Val = getInt(rs1["regenc"]);
       const rs1Bin = toBinaryString(rs1Val,5);
       
       const rs2Val = getInt(rs2["regenc"]);
       const rs2Bin = toBinaryString(rs2Val,5);
 
- 	  const funct3Bin = toBinaryString(funct3,3);
+     const funct3Bin = toBinaryString(funct3,3);
       
       const immVal = getInt(offset);
       const immValBin = toBinaryString(immVal,13);
@@ -287,18 +289,18 @@
       const imm10_5 = immValBin.substring(2,8); 
       const imm4_1 = immValBin.substring(8,12); 
 
-	  const funct7 = `${imm12}${imm10_5}`;
+    const funct7 = `${imm12}${imm10_5}`;
       const rd = `${imm4_1}${imm11}`;
       
       const binEncoding = `${funct7}${rs2Bin}${rs1Bin}${funct3Bin}${rd}1100011`;
  
-	  const encoding = {"funct3": funct3Bin, "rs1": rs1Bin, "rs2": rs2Bin,
+    const encoding = {"funct3": funct3Bin, "rs1": rs1Bin, "rs2": rs2Bin,
                       "imm13":immValBin, "funct7": funct7, "rd":rd,  "binEncoding": binEncoding, 
                       "imm[12]": imm12, "imm[10:5]":imm10_5, "imm[4:1]":imm4_1, "imm[11]":imm11 };
 
-	  return {"ïnst":instcounter++, "type":"s", "instruction": name, "rs1":rs1, "rs2":rs2, 
+    return {"ïnst":instcounter++, "type":"s", "instruction": name, "rs1":rs1, "rs2":rs2, 
               "imm12": offset, "funct3": funct3,  "opcode": "1100011", "encoding":encoding
-        	 };
+           };
      }
 
     JInstruction "Jump instruction"
@@ -317,11 +319,11 @@
       
       const binEncoding = `${imm20}${imm10_1}${imm11}${imm19_12}${rdBin}1101111`;
  
-	  const encoding = {"imm21":immVal, "rd":rd,  "binEncoding": binEncoding, 
+    const encoding = {"imm21":immVal, "rd":rd,  "binEncoding": binEncoding, 
                       "imm[20]": imm20, "imm[11]": imm11, "imm[19:12]":imm19_12, "imm[10:1]":imm10_1};
 
-	  return {"ïnst":instcounter++, "type":"j", "instruction": name, "imm21": offset, "opcode": "1101111", "encoding":encoding
-        	 };             
+    return {"ïnst":instcounter++, "type":"j", "instruction": name, "imm21": offset, "opcode": "1101111", "encoding":encoding
+           };             
     }
     / name:jalrToken _ rd:RegisterName __ rs1:RegisterName __ offset:Imm12 
     {
@@ -330,7 +332,7 @@
       const rdBin = toBinaryString(rdVal,5);
       
       const funct3Bin = toBinaryString(0,3);
-  	  const rs1Val = getInt(rs1["regenc"]);
+      const rs1Val = getInt(rs1["regenc"]);
       const rs1Bin = toBinaryString(rs1Val,5);
 
 
@@ -339,12 +341,12 @@
       
       const binEncoding = `${immValBin}-${rs1Bin}-${funct3Bin}-${rdBin}-1100111`;
 
-	  const encoding = {"rd": rdBin, "funct3": funct3Bin, "rs1": rs1Bin, "imm12":immValBin, 
-      			      "binEncoding": binEncoding};
+    const encoding = {"rd": rdBin, "funct3": funct3Bin, "rs1": rs1Bin, "imm12":immValBin, 
+                  "binEncoding": binEncoding};
 
-	  return {"ïnst":instcounter++, "type":"i", "instruction": name, "rd":rd, "rs1":rs1, 
+    return {"ïnst":instcounter++, "type":"i", "instruction": name, "rd":rd, "rs1":rs1, 
               "imm12": offset, "funct3": funct3Bin,  "opcode": "0010011", "encoding":encoding
-        	 };
+           };
      }
      
     UInstruction "Upper imm instruction"
@@ -353,7 +355,7 @@
       var opcode = null;
       if (name == "lui") { opcode = "0110111"; } else { opcode = "0010111"; }
 
-	  const rdVal = getInt(rd["regenc"]);
+    const rdVal = getInt(rd["regenc"]);
       const rdBin = toBinaryString(rdVal,5);
 
       const immVal = getInt(offset);
@@ -361,13 +363,13 @@
       
       const binEncoding = `${immValBin}-${rdBin}-${opcode}`;
 
-	  const encoding = {"rd": rdBin, "imm32": immValBin, "binEncoding": binEncoding};
+    const encoding = {"rd": rdBin, "imm32": immValBin, "binEncoding": binEncoding};
 
-	  return {"ïnst":instcounter++, "type":"u", "instruction": name, "rd":rd,
+    return {"ïnst":instcounter++, "type":"u", "instruction": name, "rd":rd,
               "imm32": offset, "opcode": opcode, "encoding":encoding};
     }
 
-	EInstruction "E instruction"
+  EInstruction "E instruction"
     = name:(ecallToken / ebreakToken) 
     { 
       let imm12 = null;
@@ -377,49 +379,49 @@
         imm12 = toBinaryString(1,12);
       }
       
-	  const binEncoding = `${imm12}${toBinaryString(0,13)}-1110011`;
+    const binEncoding = `${imm12}${toBinaryString(0,13)}-1110011`;
 
       return {"ïnst":instcounter++, "type":"i", "instruction": name, "rd":0, "rs1":0, "funct3":0,
               "imm12": imm12,  "opcode": "1110011", 
               "encoding":{"binEncoding":binEncoding}
-        	 };
+           };
    }
 
   Imm12 "12 bits immediate"
   = val:Integer
     {
-    	const v = getInt(val);
+      const v = getInt(val);
         if (isImm12(v))
-        	return v;
+          return v;
         return error("Expecting 12 bit representable value [-2048,2047]. Got " + v, location());
-	}
+  }
 
   Imm13 "13 bits immediate"
   = val:Integer
     {
-    	const v = getInt(val);
+      const v = getInt(val);
         if (isImm13(v))
-        	return v;
+          return v;
         return error("Expecting 13 bit representable value [-4096, 4095]. Got " + v, location());
-	}
+  }
 
   Imm21 "21 bits immediate"
   = val:Integer
     {
-    	const v = getInt(val);
+      const v = getInt(val);
         if (isImm21(v))
-        	return v;
+          return v;
         return error("Expecting 21 bit representable value [-1048576, 1048575]. Got " + v, location());
-	}
+  }
 
   Imm32 "32 bits immediate"
   = val:Integer
     {
-    	const v = getInt(val);
+      const v = getInt(val);
         if (isImm32(v))
-        	return v;
+          return v;
         return error("Expecting 32 bit representable value [0, 4294967295]. Got " + v, location());
-	}
+  }
 
 
   InstName "instruction name"
@@ -427,11 +429,11 @@
     / IInstName
     
   UpperImmInstName "upper immediate instruction"
-	= luiToken
+  = luiToken
     / auipcToken
     
   BranchInstName "branch type instruction name"
-	= beqToken
+  = beqToken
     / bneToken
     / bltToken
     / bgeToken
@@ -439,12 +441,12 @@
     / bgeuToken
 
   StoreInstName "store type instruction name"
-	= sbToken
+  = sbToken
     / shToken
     / swToken
 
   LoadInstName "load type instruction name"
-	= lbToken
+  = lbToken
     / lhToken
     / lwToken
     / lbuToken
@@ -476,9 +478,9 @@
   RegisterName "register name" 
     = reg:ABIRegister
     {
-    	var r = reg;
+      var r = reg;
         r["regenc"] = reg["regeq"].slice(1);
-    	return r;
+      return r;
     }
     / reg:Register 
     {
@@ -528,36 +530,36 @@
     = reg:ZEROToken {return {"regname": reg, "regeq": "x0"};}
     / reg:RAToken   {return {"regname": reg, "regeq": "x1"};}
     / reg:SPToken   {return {"regname": reg, "regeq": "x2"};}
-  	/  reg:GPToken  {return {"regname": reg, "regeq": "x3"};} 
-  	/  reg:TPToken  {return {"regname": reg, "regeq": "x4"};}
-  	/  reg:T0Token  {return {"regname": reg, "regeq": "x5"};}
-  	/  reg:T1Token  {return {"regname": reg, "regeq": "x6"};}  
-  	/  reg:T2Token  {return {"regname": reg, "regeq": "x7"};}  
-  	/  reg:T3Token  {return {"regname": reg, "regeq": "x28"};}  
-  	/  reg:T4Token  {return {"regname": reg, "regeq": "x29"};} 
-  	/  reg:T5Token  {return {"regname": reg, "regeq": "x30"};}  
-  	/  reg:T6Token  {return {"regname": reg, "regeq": "x31"};}  
-  	/  reg:S0Token  {return {"regname": reg, "regeq": "x8"};}
-  	/  reg:FPToken  {return {"regname": reg, "regeq": "x8"};}  
-  	/  reg:S1Token  {return {"regname": reg, "regeq": "x9"};}  
-  	/  reg:S2Token  {return {"regname": reg, "regeq": "x18"};}  
-  	/  reg:S3Token  {return {"regname": reg, "regeq": "x19"};}
-  	/  reg:S4Token  {return {"regname": reg, "regeq": "x20"};} 
-   	/  reg:S5Token   {return {"regname": reg, "regeq": "x21"};} 
-  	/  reg:S6Token   {return {"regname": reg, "regeq": "x22"};} 
-  	/  reg:S7Token   {return {"regname": reg, "regeq": "x23"};} 
-  	/  reg:S8Token   {return {"regname": reg, "regeq": "x24"};} 
-  	/  reg:S9Token   {return {"regname": reg, "regeq": "x25"};} 
-  	/  reg:S10Token   {return {"regname": reg, "regeq": "x26"};} 
-  	/  reg:S11Token   {return {"regname": reg, "regeq": "x27"};} 
-  	/  reg:A0Token   {return {"regname": reg, "regeq": "x10"};} 
-  	/  reg:A1Token   {return {"regname": reg, "regeq": "x11"};} 
-  	/  reg:A2Token   {return {"regname": reg, "regeq": "x12"};} 
-  	/  reg:A3Token   {return {"regname": reg, "regeq": "x13"};} 
-  	/  reg:A4Token   {return {"regname": reg, "regeq": "x14"};} 
-  	/  reg:A5Token   {return {"regname": reg, "regeq": "x15"};} 
-  	/  reg:A6Token   {return {"regname": reg, "regeq": "x16"};} 
-  	/  reg:A7Token   {return {"regname": reg, "regeq": "x17"};} 
+    /  reg:GPToken  {return {"regname": reg, "regeq": "x3"};} 
+    /  reg:TPToken  {return {"regname": reg, "regeq": "x4"};}
+    /  reg:T0Token  {return {"regname": reg, "regeq": "x5"};}
+    /  reg:T1Token  {return {"regname": reg, "regeq": "x6"};}  
+    /  reg:T2Token  {return {"regname": reg, "regeq": "x7"};}  
+    /  reg:T3Token  {return {"regname": reg, "regeq": "x28"};}  
+    /  reg:T4Token  {return {"regname": reg, "regeq": "x29"};} 
+    /  reg:T5Token  {return {"regname": reg, "regeq": "x30"};}  
+    /  reg:T6Token  {return {"regname": reg, "regeq": "x31"};}  
+    /  reg:S0Token  {return {"regname": reg, "regeq": "x8"};}
+    /  reg:FPToken  {return {"regname": reg, "regeq": "x8"};}  
+    /  reg:S1Token  {return {"regname": reg, "regeq": "x9"};}  
+    /  reg:S2Token  {return {"regname": reg, "regeq": "x18"};}  
+    /  reg:S3Token  {return {"regname": reg, "regeq": "x19"};}
+    /  reg:S4Token  {return {"regname": reg, "regeq": "x20"};} 
+     /  reg:S5Token   {return {"regname": reg, "regeq": "x21"};} 
+    /  reg:S6Token   {return {"regname": reg, "regeq": "x22"};} 
+    /  reg:S7Token   {return {"regname": reg, "regeq": "x23"};} 
+    /  reg:S8Token   {return {"regname": reg, "regeq": "x24"};} 
+    /  reg:S9Token   {return {"regname": reg, "regeq": "x25"};} 
+    /  reg:S10Token   {return {"regname": reg, "regeq": "x26"};} 
+    /  reg:S11Token   {return {"regname": reg, "regeq": "x27"};} 
+    /  reg:A0Token   {return {"regname": reg, "regeq": "x10"};} 
+    /  reg:A1Token   {return {"regname": reg, "regeq": "x11"};} 
+    /  reg:A2Token   {return {"regname": reg, "regeq": "x12"};} 
+    /  reg:A3Token   {return {"regname": reg, "regeq": "x13"};} 
+    /  reg:A4Token   {return {"regname": reg, "regeq": "x14"};} 
+    /  reg:A5Token   {return {"regname": reg, "regeq": "x15"};} 
+    /  reg:A6Token   {return {"regname": reg, "regeq": "x16"};} 
+    /  reg:A7Token   {return {"regname": reg, "regeq": "x17"};} 
 
 
   
