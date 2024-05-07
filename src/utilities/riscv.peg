@@ -84,7 +84,7 @@
     
   }
 
-  function handleIInstruction(name, rd, rs1, imm, location) {
+  function handleIInstruction(name, rd, rs1, imm, location, pseudo=false) {
     if (isILogical(name) && !isValidShift(imm)) {
       return error("Expecting valid shift ammount. Got " + imm);
     }
@@ -147,7 +147,7 @@
     return {
       "ïnst":instcounter++, "type":"i", "instruction": name, "rd":rd, "rs1":rs1,
       "imm12": imm, "funct3": funct3,  "opcode": opcode, "encoding":encoding,
-      "location":location
+      "location":location, "pseudo":pseudo
     };
   }
 
@@ -229,7 +229,7 @@
     };
   }
 
-  function handleJInstruction(name, rd, offset, location) {
+  function handleJInstruction(name, rd, offset, location, pseudo=false) {
     const rdVal = getInt(rd["regenc"]);
     const rdBin = toBinaryString(rdVal,5);
       
@@ -250,11 +250,12 @@
 
     return {
       "ïnst":instcounter++, "type":"j", "instruction": name, "imm21": offset, 
-      "opcode": "1101111", "encoding":encoding, "location":location
+      "opcode": "1101111", "encoding":encoding, "location":location, 
+      "pseudo":pseudo
     };
   }
 
-  function handleUInstruction(name, rd, offset, location) {
+  function handleUInstruction(name, rd, offset, location, pseudo=false) {
     let opcode = null;
     if (name == "lui") { opcode = "0110111"; } else { opcode = "0010111"; }
 
@@ -262,18 +263,18 @@
     const rdBin = toBinaryString(rdVal,5);
 
     const immVal = getInt(offset);
-    const immValBin = toBinaryString(immVal,32);
+    const immValBin = toBinaryString(immVal,21).substring(1,22);
       
     const binEncoding = `${immValBin}-${rdBin}-${opcode}`;
 
     const encoding = {
-      "rd": rdBin, "imm32": immValBin, "binEncoding": binEncoding
+      "rd": rdBin, "imm21": immValBin, "binEncoding": binEncoding
     };
 
     return {
       "ïnst":instcounter++, "type":"u", "instruction": name, "rd":rd,
-      "imm32": offset, "opcode": opcode, "encoding":encoding, 
-      "location":location
+      "imm21": offset, "opcode": opcode, "encoding":encoding, 
+      "location":location, "pseudo":pseudo
     };
   }
 
@@ -381,27 +382,29 @@
   // Parsing rule for jump instructions: jal and jalr
   JInstruction "Jump instruction"
     = name:jalToken _ rd:RegisterName __ offset:Imm21 
-    { return handleJInstruction(jalToken, rd, offset, location()); }
+    { return handleJInstruction(name, rd, offset, location()); }
     / name:jalrToken _ rd:RegisterName __ rs1:RegisterName __ offset:Imm12 
     { return handleIInstruction(name, rd, rs1, offset, location()); }
     
   // Parsing rule for upper immediate instructions
   UInstruction "Upper imm instruction"
-    = name:UpperImmInstName _ rd:RegisterName __ offset:Imm32 
+    = name:UpperImmInstName _ rd:RegisterName __ offset:Imm21 
     { return handleUInstruction(name, rd, offset, location()); }
 
   EInstruction "E instruction"
-    = name:(ecallToken / ebreakToken)  {
-        const zeroReg = { regname: 'x0', regeq: 'x0', regenc: '0'};
-        if (name == 'ecall') {
-          return handleIInstruction(name, zeroReg, zeroReg, '0', location());
-        } else {
-          return handleIInstruction(name, zeroReg, zeroReg, '1', location());
-        }
+    = name:(ecallToken / ebreakToken) 
+    {
+      const zeroReg = { regname: 'x0', regeq: 'x0', regenc: '0'};
+      if (name == 'ecall') {
+        return handleIInstruction(name, zeroReg, zeroReg, '0', location());
+      } else {
+        return handleIInstruction(name, zeroReg, zeroReg, '1', location());
       }
+    }
 
   PseudoInstruction "Pseudo instruction"
     = BPInstruction
+    / JPInstruction
 
   BPInstruction "Branch pseudo instruction"
     = name:BPZInstructionName _ rs:RegisterName __ offset:Imm13 
@@ -409,6 +412,60 @@
     / name:BPInstructionName _ rs1:RegisterName __ rs2:RegisterName __ offset:Imm13 
     { return handleBPInstruction(name, rs1, rs2, offset, location()); }
   
+  JPInstruction "Jump pseudo instruction"
+    = jalrToken _ rs:RegisterName
+    {
+      const x1Reg = { regname: 'x1', regeq: 'x1', regenc: '1'}; 
+      return handleIInstruction('jalr', x1Reg, rs, '0', location(), true);
+    }
+    / jalToken _ offset:Imm21
+    {
+      const x1Reg = { regname: 'x1', regeq: 'x1', regenc: '1'}; 
+      return handleJInstruction('jal', x1Reg, offset, location(), true);
+    }
+    / jrToken _ rs:RegisterName
+    {
+      const x0Reg = { regname: 'x0', regeq: 'x0', regenc: '0'}; 
+      return handleIInstruction('jalr', x0Reg, rs, '0', location(), true);
+    }
+    / jToken _ offset:Imm21
+    {
+      const x0Reg = { regname: 'x0', regeq: 'x0', regenc: '0'}; 
+      return handleJInstruction('jal', x0Reg, offset, location(), true);
+    }
+    / retToken 
+    {
+      const x0Reg = { regname: 'x0', regeq: 'x0', regenc: '0'}; 
+      const x1Reg = { regname: 'x1', regeq: 'x1', regenc: '1'}; 
+      return handleIInstruction('jalr', x0Reg, x1Reg, '0', location(), true);
+    }
+    /*
+    / name:(callToken / tailToken) _ offset:Imm32
+    { 
+      const x1Reg = { regname: 'x1', regeq: 'x1', regenc: '1'}; 
+      const x6Reg = { regname: 'x6', regeq: 'x6', regenc: '6'}; 
+      const x0Reg = { regname: 'x0', regeq: 'x0', regenc: '0'}; 
+
+      const binOffset = toBinaryString(offset,32);
+      const h = binOffset.substring(0,20);
+      const l = binOffset.substring(20);
+      const high = parseInt(h,10);
+      const low = parseInt(l,10);
+
+      const auipc = handleUInstruction('auipc', x6Reg, high, location(), true);
+
+      let jalr = null;
+      if (name == 'call') {
+        jalr = handleIInstruction('jalr', x1Reg, x6Reg, low, location(), true);
+      } else {
+        jalr = handleIInstruction('jalr', x0Reg, x6Reg, low, location(), true);
+      }
+      
+      return jalr;
+    }
+    */
+    
+
   Imm12 "12 bits immediate"
   = val:Integer
     {
@@ -591,8 +648,6 @@
     /  reg:A5Token  {return {"regname": reg, "regeq": "x15"};} 
     /  reg:A6Token  {return {"regname": reg, "regeq": "x16"};} 
     /  reg:A7Token  {return {"regname": reg, "regeq": "x17"};} 
-
-
   
   Comment "comment"
     = "//" (!LineTerminator .)* {return text();}
@@ -637,8 +692,8 @@
   bltuToken = "bltu"
   bgeuToken = "bgeu"
 
-  jalToken  = "jal"
   jalrToken = "jalr"
+  jalToken  = "jal"
 
   luiToken   = "lui"
   auipcToken = "auipc"
@@ -657,6 +712,12 @@
   bleToken  = "ble"
   bgtuToken = "bgtu"
   bleuToken = "bleu"
+
+  jrToken = "jr"
+  jToken = "j"
+  retToken = "ret"
+  callToken = "call"
+  tailToken = "tail"
 
   x0Token   = "x0"
   x1Token   = "x1"
