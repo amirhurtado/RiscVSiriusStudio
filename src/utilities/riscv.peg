@@ -2,7 +2,15 @@
   var instcounter = 0;
   var instEncoding = {};
   /* Support functions */
-  function getInt(val) { return parseInt(val,10); }  
+
+  function extractList(list, index) {
+    return list.map(function(element) { return element[index]; });
+  }
+
+  function buildList(head, tail, index) {
+    return [head].concat(extractList(tail, index));
+  }
+  function getInt(val) { return parseInt(val,10); }
   function isImm12(val) { return val >= -2048 && val <= 2047; }
   function isImm13(val) { return val >= -4096 && val <= 4095; }
   function isImm21(val) { return val >= -1048576 && val <= 1048575; }
@@ -73,7 +81,7 @@
     const opcode = "0110011";
     
     const binEncoding = 
-      `${funct7Bin}-${rs2Bin}-${rs1Bin}-${funct3Bin}-${rdBin}-${opcode}`;
+      `${funct7Bin}${rs2Bin}${rs1Bin}${funct3Bin}${rdBin}${opcode}`;
     
     const encoding = {
       "binEncoding": binEncoding, "funct3": funct3Bin, "rs1": rs1Bin, 
@@ -81,7 +89,7 @@
     };
     
     return {
-      "ïnst":instcounter++, "type":"R", "instruction": name, "rd":rd, 
+      "inst":instcounter++, "type":"R", "instruction": name, "rd":rd, 
       "rs1":rs1, "rs2": rs2, "funct3": funct3, "funct7": funct7, 
       "opcode": opcode, "encoding": encoding, "location":location, 
       "pseudo":pseudo
@@ -150,7 +158,7 @@
     };
 
     return {
-      "ïnst":instcounter++, "type":"i", "instruction": name, "rd":rd, "rs1":rs1,
+      "inst":instcounter++, "type":"i", "instruction": name, "rd":rd, "rs1":rs1,
       "imm12": imm, "funct3": funct3,  "opcode": opcode, "encoding":encoding,
       "location":location, "pseudo":pseudo
     };
@@ -313,6 +321,7 @@
   
   Start = Program
 
+
   Program "Program"
     = head:Statement tail:(_ Statement)* 
     {
@@ -321,18 +330,20 @@
       instcounter = 0;
       return val;
     }
+
   
   Statement "Program statement" 
-    = inst:Instruction EOS 
+    =
+    _ label:Label 
+    {
+      return label;
+    }
+    / _ inst:Instruction EOS 
     {
       const binEncoding = inst["encoding"]["binEncoding"].replace(/-/g,"");
       inst["encoding"]["hexEncoding"] = encodingAsHex(binEncoding);
       inst["text"] = text();
       return inst;
-    }
-    / label:Label 
-    {
-      return label;
     }
     
   Label "Label" = [a-z]+":" EOS 
@@ -342,27 +353,27 @@
   }
   
   Instruction "Instruction"
-    = inst:RInstruction { return inst; }
-    / inst:IInstruction { return inst; }
-    / inst:LInstruction { return inst; }
-    / inst:SInstruction { return inst; }
-    / inst:BInstruction { return inst; }
-    / inst:JInstruction { return inst; }
-    / inst:UInstruction { return inst; }
-    / inst:EInstruction { return inst; }
-    / inst:PseudoInstruction { return inst; }
+    = inst:RInstruction
+    / inst:IInstruction
+    / inst:LInstruction
+    / inst:SInstruction
+    / inst:BInstruction
+    / inst:JInstruction
+    / inst:UInstruction
+    / inst:EInstruction
+    / inst:PseudoInstruction
     / a:. .* {
       error('Expecting a valid instruction, Got:"' + text() +'"');
     }
       
   // Parsing rule for R type instructions
   RInstruction "R-type instruction"
-    = name:RInstName _ rd:RegisterName __ rs1:RegisterName __ rs2:RegisterName
+    = name:RInstName _ rd:RegisterName ___ rs1:RegisterName ___ rs2:RegisterName
     { return handleRInstruction(name, rd, rs1, rs2, location()); }
 
   // Parsing rule for I type instructions
   IInstruction "I-type instruction"
-    = name:IInstName _ rd:RegisterName __ rs1:RegisterName __ imm:Imm12 
+    = name:IInstName _ rd:RegisterName ___ rs1:RegisterName ___ imm:Imm12 
     { return handleIInstruction(name, rd, rs1, imm, location()); }
 
   /* Parsing rule for load instructions.
@@ -371,29 +382,29 @@
    * need a different rule.
    */
   LInstruction "Load instruction"
-    = name:LoadInstName _ rd:RegisterName __ offset:Imm12 _"("_ rs1:RegisterName _")" 
+    = name:LoadInstName _ rd:RegisterName ___ offset:Imm12 _"("_ rs1:RegisterName _")" 
     { return handleIInstruction(name, rd, rs1, offset, location()); }
     
   // Parsing rule for store instructions
   SInstruction "Store instruction"
-    = name:StoreInstName _ rs2:RegisterName __ offset:Imm12 _"("_ rs1:RegisterName _")" 
+    = name:StoreInstName _ rs2:RegisterName ___ offset:Imm12 _"("_ rs1:RegisterName _")" 
     { return handleSInstruction(name, rs2, offset, rs1, location()); }
 
   // Parsing rule for branch instructions
   BInstruction "Branch instruction"
-    = name:BranchInstName _ rs1:RegisterName __ rs2:RegisterName __ offset:Imm13  
+    = name:BranchInstName _ rs1:RegisterName ___ rs2:RegisterName ___ offset:Imm13  
     {  return handleBInstruction(name, rs1, rs2, offset, location()); }
 
   // Parsing rule for jump instructions: jal and jalr
   JInstruction "Jump instruction"
-    = name:jalToken _ rd:RegisterName __ offset:Imm21 
+    = name:jalToken _ rd:RegisterName ___ offset:Imm21 
     { return handleJInstruction(name, rd, offset, location()); }
-    / name:jalrToken _ rd:RegisterName __ rs1:RegisterName __ offset:Imm12 
+    / name:jalrToken _ rd:RegisterName ___ rs1:RegisterName ___ offset:Imm12 
     { return handleIInstruction(name, rd, rs1, offset, location()); }
     
   // Parsing rule for upper immediate instructions
   UInstruction "Upper imm instruction"
-    = name:UpperImmInstName _ rd:RegisterName __ offset:Imm21 
+    = name:UpperImmInstName _ rd:RegisterName ___ offset:Imm21 
     { return handleUInstruction(name, rd, offset, location()); }
 
   EInstruction "E instruction"
@@ -413,9 +424,9 @@
     / MiscInstruction
 
   BPInstruction "Branch pseudo instruction"
-    = name:BPZInstructionName _ rs:RegisterName __ offset:Imm13 
+    = name:BPZInstructionName _ rs:RegisterName ___ offset:Imm13 
     { return handleBPInstruction(name, rs, null, offset, location()); }
-    / name:BPInstructionName _ rs1:RegisterName __ rs2:RegisterName __ offset:Imm13 
+    / name:BPInstructionName _ rs1:RegisterName ___ rs2:RegisterName ___ offset:Imm13 
     { return handleBPInstruction(name, rs1, rs2, offset, location()); }
   
   JPInstruction "Jump pseudo instruction"
@@ -468,7 +479,7 @@
     */
     
     MiscInstruction "Misc. instructions"
-    = "mv" _ rd:RegisterName __ rs:RegisterName
+    = "mv" _ rd:RegisterName ___ rs:RegisterName
     { return handleIInstruction('addi', rd, rs, '0', location(), true); }
     / "nop" 
     { 
@@ -476,27 +487,27 @@
         'addi', regEnc('0'), regEnc('0'), '0', location(), true
       ); 
     }
-    / "not" _ rd:RegisterName __ rs:RegisterName
+    / "not" _ rd:RegisterName ___ rs:RegisterName
     {
       return handleIInstruction('xori', rd, rs, '-1', location(), true); 
     }
-    / "neg" _ rd:RegisterName __ rs:RegisterName
+    / "neg" _ rd:RegisterName ___ rs:RegisterName
     {
       return handleRInstruction('sub', rd, regEnc('0'), rs, location(), true); 
     }
-    / "seqz" _ rd:RegisterName __ rs:RegisterName
+    / "seqz" _ rd:RegisterName ___ rs:RegisterName
     {
       return handleIInstruction('sltiu', rd, rs, '1', location(), true); 
     }
-    / "snez" _ rd:RegisterName __ rs:RegisterName
+    / "snez" _ rd:RegisterName ___ rs:RegisterName
     {
       return handleRInstruction('sltu', rd, regEnc('0'), rs, location(), true);
     }
-    / "sltz" _ rd:RegisterName __ rs:RegisterName
+    / "sltz" _ rd:RegisterName ___ rs:RegisterName
     { 
       return handleRInstruction('slt', rd, rs, regEnc('0'), location(), true); 
     }
-    / "sgtz" _ rd:RegisterName __ rs:RegisterName
+    / "sgtz" _ rd:RegisterName ___ rs:RegisterName
     { 
       return handleRInstruction('slt', rd, regEnc('0'), rs, location(), true); 
     }
@@ -855,6 +866,16 @@
   
   LineTerminator "End of line" = "\n" / "\r\n"
   EOF "End of file" = !.
-  __ = _  "," _
-  WhiteSpace "whitespace" = "\t" / " "
+  
+  // Used to represent instruction registers sepparated by commas.
+  ___ = _  "," _
+
+//  WhiteSpace "whitespace" = "\t" / " "
+
   _  = (WhiteSpace)*
+
+  WhiteSpace "whitespace"
+  = "\t"
+  / "\v"
+  / "\f"
+  / " "
