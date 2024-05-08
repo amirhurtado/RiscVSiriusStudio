@@ -22,7 +22,7 @@
     "package": "NODE_ENV=production node ./esbuild.js",
     "watch": "node ./esbuild.js --watch",
     "lint": "eslint src --ext ts",
-    "parser": "npx peggy --allowed-start-rules Start,Instruction,Statement -o src/concepts/riscv.js --format es src/utilities/riscv.peg"
+    "parser": "npx peggy --allowed-start-rules Start,Instruction,SourceElement -o src/concepts/riscv.js --format es src/utilities/riscv.peg"
   },
   "devDependencies": {
     "@types/glob": "^8.0.0",

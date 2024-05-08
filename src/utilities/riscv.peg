@@ -321,7 +321,8 @@
   
   Start = Program
 
-
+  
+/*
   Program "Program"
     = head:Statement tail:(_ Statement)* 
     {
@@ -330,8 +331,17 @@
       instcounter = 0;
       return val;
     }
-
+*/
   
+  Program = SourceElements?
+
+  SourceElements = __ SourceElement (__ SourceElement)*
+  __
+  = (WhiteSpace / LineTerminatorSequence / Comment)*
+
+  SourceElement = Instruction EOS
+
+  /*
   Statement "Program statement" 
     =
     _ label:Label 
@@ -351,7 +361,7 @@
     const val = text().split(":")[0]; 
     return {"type": "label", "name":val, "address":(instcounter)}
   }
-  
+  */
   Instruction "Instruction"
     = inst:RInstruction
     / inst:IInstruction
@@ -706,12 +716,7 @@
     /  reg:A5Token  {return {"regname": reg, "regeq": "x15"};} 
     /  reg:A6Token  {return {"regname": reg, "regeq": "x16"};} 
     /  reg:A7Token  {return {"regname": reg, "regeq": "x17"};} 
-  
-  Comment "comment"
-    = "//" (!LineTerminator .)* {return text();}
-    / ";" (!LineTerminator .)*  {return text();}
-    / "#" (!LineTerminator .)*  {return text();}
-  
+    
   addToken  = "add"
   subToken  = "sub"
   xorToken  = "xor"
@@ -860,11 +865,26 @@
     return parseInt(text(), 10); 
   }
 
-  EOS "End of statement"
-    = _ x:Comment? (LineTerminator / EOF) {return null;}
-    / EOF
+  EOS
+  = __
+  / _ Comment? LineTerminatorSequence
+  / _ &"}"
+  / __ EOF
   
-  LineTerminator "End of line" = "\n" / "\r\n"
+  
+  Comment "comment"
+  = "//" (!LineTerminator SourceCharacter)*
+
+  SourceCharacter = .
+
+  LineTerminatorSequence "end of line"
+  = "\n"
+  / "\r\n"
+  / "\r"
+
+  LineTerminator
+  = [\n\r]
+
   EOF "End of file" = !.
   
   // Used to represent instruction registers sepparated by commas.
