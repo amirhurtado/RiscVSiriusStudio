@@ -27,7 +27,7 @@
   }
   
   function encodingAsHex(binenc) {
-    let hexEncoding = binenc.replaceAll("-","");
+    let hexEncoding = binenc.replace(/-/g,"");
     let groups4 = hexEncoding.match(/.{1,8}/g);
     
     let enc = groups4.map(
@@ -38,7 +38,7 @@
                             return padHex;
                           }
             );
-      return enc.toString().replaceAll(",","-");
+      return enc.toString().replace(/,/g,"-");
   }
 
   function regEnc(r) {
@@ -325,7 +325,7 @@
   Statement "Program statement" 
     = inst:Instruction EOS 
     {
-      const binEncoding = inst["encoding"]["binEncoding"].replaceAll("-","");
+      const binEncoding = inst["encoding"]["binEncoding"].replace(/-/g,"");
       inst["encoding"]["hexEncoding"] = encodingAsHex(binEncoding);
       inst["text"] = text();
       return inst;
