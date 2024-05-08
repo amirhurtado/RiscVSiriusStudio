@@ -873,7 +873,7 @@
   
   
   Comment "comment"
-  = "//" (!LineTerminator SourceCharacter)*
+  = ("#" / ";") (!LineTerminator SourceCharacter)*
 
   SourceCharacter = .
 
@@ -889,8 +889,6 @@
   
   // Used to represent instruction registers sepparated by commas.
   ___ = _  "," _
-
-//  WhiteSpace "whitespace" = "\t" / " "
 
   _  = (WhiteSpace)*
 
