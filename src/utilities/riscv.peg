@@ -340,12 +340,19 @@
 
   SourceElement 
   = lbl:LabelDeclaration EOS { return lbl;}
+  / dir:Directive EOS { return dir; }
   / inst:Instruction EOS { return inst; }
 
   LabelDeclaration
   = id:IdentifierName _ ":"
   {
     return {identifier:id, instruction:instcounter};
+  }
+
+  Directive
+  = id:DirectiveName _ val:QuotedString
+  {
+    return id;
   }
   /*
   Statement "Program statement" 
@@ -569,29 +576,29 @@
 
   UpperImmInstName "upper immediate instruction"
   = luiToken
-    / auipcToken
+  / auipcToken
     
   BranchInstName "branch type instruction name"
   = beqToken
-    / bneToken
-    / bltToken
-    / bgeToken
-    / bltuToken
-    / bgeuToken
+  / bneToken
+  / bltToken
+  / bgeToken
+  / bltuToken
+  / bgeuToken
   
   BPZInstName "branch zero pseudo instruction name"
-    = beqzToken 
-    / bnezToken
-    / blezToken
-    / bgezToken
-    / bltzToken
-    / bgtzToken 
+  = beqzToken 
+  / bnezToken
+  / blezToken
+  / bgezToken
+  / bltzToken
+  / bgtzToken 
 
   BPInstName "branch pseudo instruction name"
-    = bgtuToken
-    / bleuToken
-    / bgtToken 
-    / bleToken
+  = bgtuToken
+  / bleuToken
+  / bgtToken 
+  / bleToken
 
   MiscInstName "misc. pseudo instruction name"
   = nopToken
@@ -617,114 +624,114 @@
   / lhuToken
     
   RInstName "r-type instruction name"
-    = addToken
-    / subToken
-    / xorToken
-    / orToken
-    / andToken
-    / sllToken
-    / srlToken
-    / sraToken
-    / sltToken
-    / sltuToken
+  = addToken
+  / subToken
+  / xorToken
+  / orToken
+  / andToken
+  / sllToken
+  / srlToken
+  / sraToken
+  / sltToken
+  / sltuToken
   
   IInstName "i-type instruction name"
-    = addiToken
-    / xoriToken
-    / oriToken
-    / andiToken
-    / slliToken
-    / srliToken
-    / sraiToken
-    / sltiToken
-    / sltiuToken
-    
+  = addiToken
+  / xoriToken
+  / oriToken
+  / andiToken
+  / slliToken
+  / srliToken
+  / sraiToken
+  / sltiToken
+  / sltiuToken
+  
   RegisterName "register name" 
-    = reg:ABIRegister
-    {
-      var r = reg;
-      r["regenc"] = reg["regeq"].slice(1);
-      return r;
-    }
-    / reg:Register 
-    {
-      const v = reg.slice(1);
-      return {"regname": reg, "regeq": reg, "regenc":v};
-    }
+  = reg:ABIRegister
+  {
+    var r = reg;
+    r["regenc"] = reg["regeq"].slice(1);
+    return r;
+  }
+  / reg:Register 
+  {
+    const v = reg.slice(1);
+    return {"regname": reg, "regeq": reg, "regenc":v};
+  }
 
   Register "register"
-    = x10Token
-    / x11Token
-    / x12Token
-    / x13Token
-    / x14Token
-    / x15Token
-    / x16Token
-    / x17Token
-    / x18Token
-    / x19Token
-    / x20Token
-    / x21Token
-    / x22Token
-    / x23Token
-    / x24Token
-    / x25Token
-    / x26Token
-    / x27Token
-    / x28Token
-    / x29Token
-    / x30Token
-    / x31Token
-    / x0Token
-    / x1Token
-    / x2Token
-    / x3Token
-    / x4Token
-    / x5Token
-    / x6Token
-    / x7Token
-    / x8Token
-    / x9Token
+  = x10Token
+  / x11Token
+  / x12Token
+  / x13Token
+  / x14Token
+  / x15Token
+  / x16Token
+  / x17Token
+  / x18Token
+  / x19Token
+  / x20Token
+  / x21Token
+  / x22Token
+  / x23Token
+  / x24Token
+  / x25Token
+  / x26Token
+  / x27Token
+  / x28Token
+  / x29Token
+  / x30Token
+  / x31Token
+  / x0Token
+  / x1Token
+  / x2Token
+  / x3Token
+  / x4Token
+  / x5Token
+  / x6Token
+  / x7Token
+  / x8Token
+  / x9Token
 
   ABIRegister "ABI name for register"
-    = reg:ZEROToken {return {"regname": reg, "regeq": "x0"}; }
-    / reg:RAToken   {return {"regname": reg, "regeq": "x1"}; }
-    / reg:SPToken   {return {"regname": reg, "regeq": "x2"}; }
-    /  reg:GPToken  {return {"regname": reg, "regeq": "x3"}; } 
-    /  reg:TPToken  {return {"regname": reg, "regeq": "x4"}; }
-    /  reg:T0Token  {return {"regname": reg, "regeq": "x5"}; }
-    /  reg:T1Token  {return {"regname": reg, "regeq": "x6"}; }  
-    /  reg:T2Token  {return {"regname": reg, "regeq": "x7"}; }  
-    /  reg:T3Token  {return {"regname": reg, "regeq": "x28"};}  
-    /  reg:T4Token  {return {"regname": reg, "regeq": "x29"};} 
-    /  reg:T5Token  {return {"regname": reg, "regeq": "x30"};}  
-    /  reg:T6Token  {return {"regname": reg, "regeq": "x31"};}  
-    /  reg:S0Token  {return {"regname": reg, "regeq": "x8"}; }
-    /  reg:FPToken  {return {"regname": reg, "regeq": "x8"}; }  
-    /  reg:S1Token  {return {"regname": reg, "regeq": "x9"}; }  
-    /  reg:S2Token  {return {"regname": reg, "regeq": "x18"};}  
-    /  reg:S3Token  {return {"regname": reg, "regeq": "x19"};}
-    /  reg:S4Token  {return {"regname": reg, "regeq": "x20"};} 
-    /  reg:S5Token  {return {"regname": reg, "regeq": "x21"};} 
-    /  reg:S6Token  {return {"regname": reg, "regeq": "x22"};} 
-    /  reg:S7Token  {return {"regname": reg, "regeq": "x23"};} 
-    /  reg:S8Token  {return {"regname": reg, "regeq": "x24"};} 
-    /  reg:S9Token  {return {"regname": reg, "regeq": "x25"};} 
-    /  reg:S10Token {return {"regname": reg, "regeq": "x26"};} 
-    /  reg:S11Token {return {"regname": reg, "regeq": "x27"};} 
-    /  reg:A0Token  {return {"regname": reg, "regeq": "x10"};} 
-    /  reg:A1Token  {return {"regname": reg, "regeq": "x11"};} 
-    /  reg:A2Token  {return {"regname": reg, "regeq": "x12"};} 
-    /  reg:A3Token  {return {"regname": reg, "regeq": "x13"};} 
-    /  reg:A4Token  {return {"regname": reg, "regeq": "x14"};} 
-    /  reg:A5Token  {return {"regname": reg, "regeq": "x15"};} 
-    /  reg:A6Token  {return {"regname": reg, "regeq": "x16"};} 
-    /  reg:A7Token  {return {"regname": reg, "regeq": "x17"};} 
+  = reg:ZEROToken {return {"regname": reg, "regeq": "x0"}; }
+  / reg:RAToken   {return {"regname": reg, "regeq": "x1"}; }
+  / reg:SPToken   {return {"regname": reg, "regeq": "x2"}; }
+  / reg:GPToken  {return {"regname": reg, "regeq": "x3"}; } 
+  / reg:TPToken  {return {"regname": reg, "regeq": "x4"}; }
+  / reg:T0Token  {return {"regname": reg, "regeq": "x5"}; }
+  / reg:T1Token  {return {"regname": reg, "regeq": "x6"}; }  
+  / reg:T2Token  {return {"regname": reg, "regeq": "x7"}; }  
+  / reg:T3Token  {return {"regname": reg, "regeq": "x28"};}  
+  / reg:T4Token  {return {"regname": reg, "regeq": "x29"};} 
+  / reg:T5Token  {return {"regname": reg, "regeq": "x30"};}  
+  / reg:T6Token  {return {"regname": reg, "regeq": "x31"};}  
+  / reg:S0Token  {return {"regname": reg, "regeq": "x8"}; }
+  / reg:FPToken  {return {"regname": reg, "regeq": "x8"}; }  
+  / reg:S1Token  {return {"regname": reg, "regeq": "x9"}; }  
+  / reg:S2Token  {return {"regname": reg, "regeq": "x18"};}  
+  / reg:S3Token  {return {"regname": reg, "regeq": "x19"};}
+  / reg:S4Token  {return {"regname": reg, "regeq": "x20"};} 
+  / reg:S5Token  {return {"regname": reg, "regeq": "x21"};} 
+  / reg:S6Token  {return {"regname": reg, "regeq": "x22"};} 
+  / reg:S7Token  {return {"regname": reg, "regeq": "x23"};} 
+  / reg:S8Token  {return {"regname": reg, "regeq": "x24"};} 
+  / reg:S9Token  {return {"regname": reg, "regeq": "x25"};} 
+  / reg:S10Token {return {"regname": reg, "regeq": "x26"};} 
+  / reg:S11Token {return {"regname": reg, "regeq": "x27"};} 
+  / reg:A0Token  {return {"regname": reg, "regeq": "x10"};} 
+  / reg:A1Token  {return {"regname": reg, "regeq": "x11"};} 
+  / reg:A2Token  {return {"regname": reg, "regeq": "x12"};} 
+  / reg:A3Token  {return {"regname": reg, "regeq": "x13"};} 
+  / reg:A4Token  {return {"regname": reg, "regeq": "x14"};} 
+  / reg:A5Token  {return {"regname": reg, "regeq": "x15"};} 
+  / reg:A6Token  {return {"regname": reg, "regeq": "x16"};} 
+  / reg:A7Token  {return {"regname": reg, "regeq": "x17"};} 
     
   addToken  = "add"
   subToken  = "sub"
   xorToken  = "xor"
-  orToken  =  "or"
+  orToken   = "or"
   andToken  = "and"
   sllToken  = "sll"
   srlToken  = "srl"
@@ -780,9 +787,9 @@
   bgtuToken = "bgtu"
   bleuToken = "bleu"
 
-  jrToken =   "jr"
-  jToken =    "j"
-  retToken =  "ret"
+  jrToken   = "jr"
+  jToken    = "j"
+  retToken  = "ret"
   callToken = "call"
   tailToken = "tail"
 
@@ -796,16 +803,16 @@
   sltzToken = "sltz"
   sgtzToken = "sgtz"
   
-  x0Token   = "x0"
-  x1Token   = "x1"
-  x2Token   = "x2"
-  x3Token   = "x3"
-  x4Token   = "x4"
-  x5Token   = "x5"
-  x6Token   = "x6"
-  x7Token   = "x7"
-  x8Token   = "x8"
-  x9Token   = "x9"
+  x0Token    = "x0"
+  x1Token    = "x1"
+  x2Token    = "x2"
+  x3Token    = "x3"
+  x4Token    = "x4"
+  x5Token    = "x5"
+  x6Token    = "x6"
+  x7Token    = "x7"
+  x8Token    = "x8"
+  x9Token    = "x9"
   x10Token   = "x10"
   x11Token   = "x11"
   x12Token   = "x12"
@@ -852,8 +859,8 @@
   S7Token   = "s7"
   S8Token   = "s8"
   S9Token   = "s9"
-  S10Token   = "s10"
-  S11Token   = "s11"
+  S10Token  = "s10"
+  S11Token  = "s11"
   A0Token   = "a0"
   A1Token   = "a1"
   A2Token   = "a2"
@@ -862,6 +869,13 @@
   A5Token   = "a5"
   A6Token   = "a6"
   A7Token   = "a7"
+
+  // Directive names
+  DirectiveName
+  = ascizToken
+  
+  ascizToken= ".asciz"
+
 
   Integer "Integer"
   = _ [\+-]?[0-9]+ 
@@ -890,6 +904,9 @@
   { 
     return {type: "IdentifierName", name:text() }; 
   }
+
+  QuotedString "quoted string"
+  = "\"" (!"\"" SourceCharacter)* "\""
 
   __
   = (WhiteSpace / LineTerminatorSequence / Comment)*
