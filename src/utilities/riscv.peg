@@ -245,10 +245,10 @@
   function handleJInstruction(name, rd, offset, location, pseudo=false) {
     const rdVal = getInt(rd["regenc"]);
     const rdBin = toBinaryString(rdVal,5);
-      
+    
     const immVal = getInt(offset);
     const immValBin = toBinaryString(immVal,21);
-
+    
     const imm20 = immValBin.at(0);
     const imm11 = immValBin.at(9); 
     const imm19_12 = immValBin.substring(1,9); 
@@ -320,7 +320,6 @@
 }}
   
   Start = Program
-
   
 /*
   Program "Program"
@@ -335,12 +334,19 @@
   
   Program = SourceElements?
 
-  SourceElements = __ SourceElement (__ SourceElement)*
-  __
-  = (WhiteSpace / LineTerminatorSequence / Comment)*
+  SourceElements = __ head:SourceElement tail:(__ SourceElement)* {
+    return buildList(head, tail, 1);
+  }
 
-  SourceElement = Instruction EOS
+  SourceElement 
+  = lbl:LabelDeclaration EOS { return lbl;}
+  / inst:Instruction EOS { return inst; }
 
+  LabelDeclaration
+  = id:IdentifierName _ ":"
+  {
+    return {identifier:id, instruction:instcounter};
+  }
   /*
   Statement "Program statement" 
     =
@@ -373,7 +379,7 @@
     / inst:EInstruction
     / inst:PseudoInstruction
     / a:. .* {
-      error('Expecting a valid instruction, Got:"' + text() +'"');
+      return error('Expecting a valid instruction, Got:"' + text() +'"');
     }
       
   // Parsing rule for R type instructions
@@ -434,9 +440,9 @@
     / MiscInstruction
 
   BPInstruction "Branch pseudo instruction"
-    = name:BPZInstructionName _ rs:RegisterName ___ offset:Imm13 
+    = name:BPZInstName _ rs:RegisterName ___ offset:Imm13 
     { return handleBPInstruction(name, rs, null, offset, location()); }
-    / name:BPInstructionName _ rs1:RegisterName ___ rs2:RegisterName ___ offset:Imm13 
+    / name:BPInstName _ rs1:RegisterName ___ rs2:RegisterName ___ offset:Imm13 
     { return handleBPInstruction(name, rs1, rs2, offset, location()); }
   
   JPInstruction "Jump pseudo instruction"
@@ -489,39 +495,38 @@
     */
     
     MiscInstruction "Misc. instructions"
-    = "mv" _ rd:RegisterName ___ rs:RegisterName
+    = mvToken _ rd:RegisterName ___ rs:RegisterName
     { return handleIInstruction('addi', rd, rs, '0', location(), true); }
-    / "nop" 
+    / nopToken 
     { 
       return handleIInstruction(
         'addi', regEnc('0'), regEnc('0'), '0', location(), true
       ); 
     }
-    / "not" _ rd:RegisterName ___ rs:RegisterName
+    / notToken _ rd:RegisterName ___ rs:RegisterName
     {
       return handleIInstruction('xori', rd, rs, '-1', location(), true); 
     }
-    / "neg" _ rd:RegisterName ___ rs:RegisterName
+    / negToken _ rd:RegisterName ___ rs:RegisterName
     {
       return handleRInstruction('sub', rd, regEnc('0'), rs, location(), true); 
     }
-    / "seqz" _ rd:RegisterName ___ rs:RegisterName
+    / seqzToken _ rd:RegisterName ___ rs:RegisterName
     {
       return handleIInstruction('sltiu', rd, rs, '1', location(), true); 
     }
-    / "snez" _ rd:RegisterName ___ rs:RegisterName
+    / snezToken _ rd:RegisterName ___ rs:RegisterName
     {
       return handleRInstruction('sltu', rd, regEnc('0'), rs, location(), true);
     }
-    / "sltz" _ rd:RegisterName ___ rs:RegisterName
+    / sltzToken _ rd:RegisterName ___ rs:RegisterName
     { 
       return handleRInstruction('slt', rd, rs, regEnc('0'), location(), true); 
     }
-    / "sgtz" _ rd:RegisterName ___ rs:RegisterName
+    / sgtzToken _ rd:RegisterName ___ rs:RegisterName
     { 
       return handleRInstruction('slt', rd, regEnc('0'), rs, location(), true); 
     }
-
 
   Imm12 "12 bits immediate"
   = val:Integer
@@ -559,10 +564,9 @@
         return error("Expecting 32 bit representable value [0, 4294967295]. Got " + v, location());
   }
 
-  InstName "instruction name"
-    = RInstName
-    / IInstName
-    
+  JumpInstName "jump instruction"
+  = jalToken
+
   UpperImmInstName "upper immediate instruction"
   = luiToken
     / auipcToken
@@ -575,7 +579,7 @@
     / bltuToken
     / bgeuToken
   
-  BPZInstructionName "branch zero pseudo instruction name"
+  BPZInstName "branch zero pseudo instruction name"
     = beqzToken 
     / bnezToken
     / blezToken
@@ -583,13 +587,13 @@
     / bltzToken
     / bgtzToken 
 
-  BPInstructionName "branch pseudo instruction name"
+  BPInstName "branch pseudo instruction name"
     = bgtuToken
     / bleuToken
     / bgtToken 
     / bleToken
 
-  MiscInstructionName "misc. pseudo instruction name"
+  MiscInstName "misc. pseudo instruction name"
   = nopToken
   / liToken
   / mvToken
@@ -602,15 +606,15 @@
 
   StoreInstName "store type instruction name"
   = sbToken
-    / shToken
-    / swToken
+  / shToken
+  / swToken
 
   LoadInstName "load type instruction name"
   = lbToken
-    / lhToken
-    / lwToken
-    / lbuToken
-    / lhuToken
+  / lhToken
+  / lwToken
+  / lbuToken
+  / lhuToken
     
   RInstName "r-type instruction name"
     = addToken
@@ -865,12 +869,36 @@
     return parseInt(text(), 10); 
   }
 
+  ReservedWord 
+  = RegisterName
+  / RInstName
+  / IInstName
+  / LoadInstName
+  / StoreInstName
+  / BranchInstName
+  / UpperImmInstName
+  / JumpInstName
+  / BPInstName
+  / BPZInstName
+  / MiscInstName
+
+  Identifier
+  = !ReservedWord name:IdentifierName { return name; }
+
+  IdentifierName "identifier"
+  = [\._a-zA-Z0-9]+ 
+  { 
+    return {type: "IdentifierName", name:text() }; 
+  }
+
+  __
+  = (WhiteSpace / LineTerminatorSequence / Comment)*
+
   EOS
   = __
   / _ Comment? LineTerminatorSequence
   / _ &"}"
   / __ EOF
-  
   
   Comment "comment"
   = ("#" / ";") (!LineTerminator SourceCharacter)*
