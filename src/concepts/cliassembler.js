@@ -16,7 +16,7 @@ function encode(ast) {
         const hexEncoding = "--";
         const binEncoding = "--";
         const text = elem['name'];
-        return {"mem":mem, "hex":hexEncoding, "bin": binEncoding, "text": text};;
+        return {"mem":mem, "hex":hexEncoding, "bin": binEncoding, "text": text};
       }
     }
   );
@@ -52,7 +52,7 @@ parserOutput.forEach(elem => {
     console.log({type:"label", line: srcline}); 
     break;
   case "SrcDirective": 
-    console.log({type: elem["type"]});
+    console.log({type: elem["Type"]});
     break;
   case "SrcInstruction":
     //console.log("----> ", elem);
