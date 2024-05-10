@@ -1,7 +1,8 @@
 {{
   var instcounter = 0;
   var instEncoding = {};
-  /* Support functions */
+  let labelTable = {};
+/* Support functions */
 
   function extractList(list, index) {
     return list.map(function(element) { return element[index]; });
@@ -193,7 +194,7 @@
     };
 
     return {
-      "ïnst":instcounter++, "type":"s", "instruction": name, "rs1":rs1, 
+      "inst":instcounter++, "type":"s", "instruction": name, "rs1":rs1, 
       "rs2":rs2, "imm12": offset, "funct3": funct3,  "opcode": "0100011", 
       "encoding":encoding, "location":location
     };
@@ -236,7 +237,7 @@
     };
 
     return {
-      "ïnst":instcounter++, "type":"b", "instruction": name, "rs1":rs1,
+      "inst":instcounter++, "type":"b", "instruction": name, "rs1":rs1,
       "rs2":rs2, "imm13": offset, "funct3": funct3, "opcode": "1100011", 
       "encoding":encoding, "location":location, "pseudoInst": pseudo
     };
@@ -262,7 +263,7 @@
     };
 
     return {
-      "ïnst":instcounter++, "type":"j", "instruction": name, "imm21": offset, 
+      "inst":instcounter++, "type":"j", "instruction": name, "imm21": offset, 
       "opcode": "1101111", "encoding":encoding, "location":location, 
       "pseudo":pseudo
     };
@@ -285,7 +286,7 @@
     };
 
     return {
-      "ïnst":instcounter++, "type":"u", "instruction": name, "rd":rd,
+      "inst":instcounter++, "type":"u", "instruction": name, "rd":rd,
       "imm21": offset, "opcode": opcode, "encoding":encoding, 
       "location":location, "pseudo":pseudo
     };
@@ -332,7 +333,11 @@
     }
 */
   
-  Program = SourceElements?
+  Program = root:SourceElements?
+  {
+    console.table(labelTable);
+    return root;
+  }
 
   SourceElements = __ head:SourceElement tail:(__ SourceElement)* {
     return buildList(head, tail, 1);
@@ -346,6 +351,7 @@
   LabelDeclaration
   = id:IdentifierName _ ":"
   {
+    labelTable[id['name']] = instcounter*4;
     return {identifier:id, instruction:instcounter};
   }
 
