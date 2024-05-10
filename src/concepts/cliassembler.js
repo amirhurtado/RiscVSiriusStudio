@@ -28,8 +28,24 @@ const asm = fs.readFileSync('./'+input, {encoding: 'utf8', flag: 'r'});
 console.log("Reading from file: ", input);
 //console.log(asm);
 
-const ast = parser.parse(asm);
+const result = parser.parse(asm);
+const ast = result["Result"];
+const labels = result["Symbol"];
 //const result = encode(ast);
 
-//console.table(result);
-console.log(ast);
+ast.forEach(elem => {
+  switch ( elem["Type"] ) {
+  case "SrcLabel": 
+    console.log({type:"label"}); 
+    break;
+  case "SrcDirective": 
+    console.log({type: elem["type"]});
+    break;
+  case "SrcInstruction":
+    console.log({type: elem["type"]}); 
+    break;
+  }
+});
+
+console.table(labels);
+//console.log(ast);
