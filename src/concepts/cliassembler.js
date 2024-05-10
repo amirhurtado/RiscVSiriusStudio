@@ -1,5 +1,6 @@
 var fs = require('fs');
 const parser = require('./riscv.js');
+const { ast } = require('peggy');
 
 function encode(ast) {
   return ast.map(
@@ -27,25 +28,38 @@ const asm = fs.readFileSync('./'+input, {encoding: 'utf8', flag: 'r'});
 
 console.log("Reading from file: ", input);
 //console.log(asm);
+let labelTable = {};
 
-const result = parser.parse(asm);
-const ast = result["Result"];
-const labels = result["Symbol"];
-//const result = encode(ast);
+let parserOutput = {};
+try {
+  console.log("First pass:");
+  const parserOutput1 = parser.parse(asm, 
+    {"grammarSource":input, "symbols":labelTable, "pass":1});
+  console.log("Second pass:");
+  parserOutput = parser.parse(asm, 
+    {"grammarSource":input, "symbols":labelTable, "pass":2});
+  } catch ({name, message}) {
+  console.log(name);
+  console.log(message);
+}
 
-ast.forEach(elem => {
-  switch ( elem["Type"] ) {
+
+parserOutput.forEach(elem => {
+  const type = elem["Type"];
+  const srcline = elem["location"]["start"]["line"];
+  switch ( type ) {
   case "SrcLabel": 
-    console.log({type:"label"}); 
+    console.log({type:"label", line: srcline}); 
     break;
   case "SrcDirective": 
     console.log({type: elem["type"]});
     break;
   case "SrcInstruction":
-    console.log({type: elem["type"]}); 
+    //console.log("----> ", elem);
+    console.log({type: elem["type"], line:srcline }); 
     break;
   }
 });
 
-console.table(labels);
+console.table(labelTable);
 //console.log(ast);

@@ -1,7 +1,7 @@
 {{
   var instcounter = 0;
   var instEncoding = {};
-  let labelTable = {};
+  let labelTable = {}
 /* Support functions */
 
   function extractList(list, index) {
@@ -232,7 +232,7 @@
     }
 
     if (val != null) {
-      const immVal = getInt(offset);
+      const immVal = getInt(val);
       const immValBin = toBinaryString(immVal,13);
 
       const imm12 = immValBin.substring(0,1);
@@ -352,7 +352,11 @@
     }
   }
 }}
-  
+
+{
+  labelTable = options["symbols"];
+}
+
   Start = Program 
   
 /*
@@ -368,7 +372,7 @@
   
   Program = root:SourceElements?
   {
-    return {"Result":root, "Symbol":labelTable};
+    return root;
   }
 
   SourceElements = __ head:SourceElement tail:(__ SourceElement)* {
@@ -380,12 +384,14 @@
   { 
     let ret = lbl;
     ret["Type"] = "SrcLabel";
+    ret["location"] = location();
     return ret;
   }
   / dir:Directive EOS 
   {
     let ret = dir;
     ret["Type"] = "SrcDirective"; 
+    ret["location"] = location();
     return dir; 
   }
   / inst:Instruction EOS 
@@ -398,7 +404,10 @@
   LabelDeclaration
   = id:IdentifierName _ ":"
   {
-    labelTable[id['name']] = instcounter*4;
+    if (options["pass"] == 1){
+      // Update only the label information during the first pass
+      labelTable[id['name']] = instcounter*4;
+    }
     return {identifier:id, instruction:instcounter};
   }
 

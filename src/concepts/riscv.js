@@ -8,7 +8,7 @@
 
   var instcounter = 0;
   var instEncoding = {};
-  let labelTable = {};
+  let labelTable = {}
 /* Support functions */
 
   function extractList(list, index) {
@@ -239,7 +239,7 @@
     }
 
     if (val != null) {
-      const immVal = getInt(offset);
+      const immVal = getInt(val);
       const immValBin = toBinaryString(immVal,13);
 
       const imm12 = immValBin.substring(0,1);
@@ -860,7 +860,7 @@ function peg$parse(input, options) {
   var peg$e181 = peg$classExpectation(["\t", ["\v", "\f"], " "], false, false);
 
   var peg$f0 = function(root) {
-    return {"Result":root, "Symbol":labelTable};
+    return root;
   };
   var peg$f1 = function(head, tail) {
     return buildList(head, tail, 1);
@@ -868,11 +868,13 @@ function peg$parse(input, options) {
   var peg$f2 = function(lbl) { 
     let ret = lbl;
     ret["Type"] = "SrcLabel";
+    ret["location"] = location();
     return ret;
   };
   var peg$f3 = function(dir) {
     let ret = dir;
     ret["Type"] = "SrcDirective"; 
+    ret["location"] = location();
     return dir; 
   };
   var peg$f4 = function(inst) {
@@ -881,7 +883,10 @@ function peg$parse(input, options) {
     return ret; 
   };
   var peg$f5 = function(id) {
-    labelTable[id['name']] = instcounter*4;
+    if (options["pass"] == 1){
+      // Update only the label information during the first pass
+      labelTable[id['name']] = instcounter*4;
+    }
     return {identifier:id, instruction:instcounter};
   };
   var peg$f6 = function(id, val) {
@@ -5533,6 +5538,9 @@ function peg$parse(input, options) {
 
     return s0;
   }
+
+
+  labelTable = options["symbols"];
 
   peg$result = peg$startRuleFunction();
 
