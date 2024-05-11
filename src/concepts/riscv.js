@@ -235,7 +235,7 @@
       const v = target["value"];
       if (v in labelTable)  {
         val = labelTable[v];
-      }
+      } 
     }
 
     if (val != null) {
@@ -250,7 +250,7 @@
       const funct7 = `${imm12}${imm10_5}`;
       const rd = `${imm4_1}${imm11}`;
       
-      const encoding = {
+      encoding = {
         "binEncoding": `${funct7}${rs2Bin}${rs1Bin}${funct3Bin}${rd}1100011`,
         "imm[12]": imm12, "imm[10:5]":imm10_5, "imm[4:1]":imm4_1, "imm[11]":imm11,
         "funct3": funct3Bin, "funct7": funct7, "imm13":immValBin
@@ -880,6 +880,16 @@ function peg$parse(input, options) {
   var peg$f4 = function(inst) {
     let ret = inst;
     ret["Type"] = "SrcInstruction";
+    if( inst["encoding"] != null) {
+      const binEncoding = inst["encoding"]["binEncoding"];
+      inst["encoding"]["hexEncoding"] = encodingAsHex(binEncoding);
+    } else {
+      if (options["pass"] == 2){
+        // Something has to be wrong!
+        console.warn("Warning Inst ===>",ret);
+      }
+
+    }
     return ret; 
   };
   var peg$f5 = function(id) {

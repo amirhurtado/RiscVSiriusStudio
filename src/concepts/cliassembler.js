@@ -55,8 +55,14 @@ parserOutput.forEach(elem => {
     console.log({type: elem["Type"]});
     break;
   case "SrcInstruction":
-    //console.log("----> ", elem);
-    console.log({type: elem["type"], line:srcline }); 
+    // console.log("----> ", elem);
+    console.log({
+      type: elem["type"], 
+      line:srcline,
+      binEncoding: elem["encoding"]["binEncoding"],
+      hexEncoding: elem["encoding"]["hexEncoding"],
+
+    }); 
     break;
   }
 });
