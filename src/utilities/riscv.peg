@@ -7,7 +7,7 @@
   function getInstMemPosition() {
     const memIndex = instcounter * 4;
     instcounter = instcounter + 1;
-    console.log("mem ", memIndex);
+    //console.log("mem ", memIndex);
     return memIndex;
   }
 
@@ -227,41 +227,26 @@
     const rs2Bin = toBinaryString(rs2Val,5);
 
     const funct3Bin = toBinaryString(funct3,3);
+    
+    console.log("handleBInstruction", target);
+
+    const tgtVal = getInt(target);
+    const immVal = tgtVal - instMem;
+    const immValBin = toBinaryString(immVal,13);
+
+    const imm12 = immValBin.substring(0,1);
+    const imm11 = immValBin.substring(1,2); 
+    const imm10_5 = immValBin.substring(2,8); 
+    const imm4_1 = immValBin.substring(8,12); 
+
+    const funct7 = `${imm12}${imm10_5}`;
+    const rd = `${imm4_1}${imm11}`;
       
-    let encoding = null;
-    let val = null;
-    if(target["Type"] == "Imm13") {
-      val = target["value"];
-    } else if (target["Type"]=="Label") {
-      const v = target["value"];
-      if (v in labelTable)  {
-        val = labelTable[v];
-      } 
-    }
-
-    if (val != null) {
-      const tgtVal = getInt(val);
-      const immVal = tgtVal - instMem;
-      const immValBin = toBinaryString(immVal,13);
-      console.log("--->binst", tgtVal, tgtVal.toString(16), immVal, immValBin);
-
-      const imm12 = immValBin.substring(0,1);
-      const imm11 = immValBin.substring(1,2); 
-      const imm10_5 = immValBin.substring(2,8); 
-      const imm4_1 = immValBin.substring(8,12); 
-
-      const funct7 = `${imm12}${imm10_5}`;
-      const rd = `${imm4_1}${imm11}`;
-      
-      encoding = {
-        "binEncoding": `${funct7}${rs2Bin}${rs1Bin}${funct3Bin}${rd}1100011`,
-        "imm[12]": imm12, "imm[10:5]":imm10_5, "imm[4:1]":imm4_1, "imm[11]":imm11,
-        "funct3": funct3Bin, "funct7": funct7, "imm13":immValBin
-      };
-    } else {
-         // Target is an unsolved label
-      console.warn("Extra pass required to solve: ", target["value"]);
-    }
+    const encoding = {
+      "binEncoding": `${funct7}${rs2Bin}${rs1Bin}${funct3Bin}${rd}1100011`,
+      "imm[12]": imm12, "imm[10:5]":imm10_5, "imm[4:1]":imm4_1, "imm[11]":imm11,
+      "funct3": funct3Bin, "funct7": funct7, "imm13":immValBin
+    };
 
     return {
       "inst":instMem, "type":"b", "instruction": name, "rs1":rs1,
@@ -275,39 +260,23 @@
     const rdBin = toBinaryString(rdVal,5);
     const instMem = getInstMemPosition();
 
-    let encoding = null;
-    let val = null;
-    if(target["Type"] == "Imm21") {
-      val = target["value"];
-    } else if (target["Type"]=="Label") {
-      const v = target["value"];
-      if (v in labelTable)  {
-        val = labelTable[v];
-      }
-    }
-    if(val != null) {
-      const tgtVal = getInt(val);
-      const immVal = tgtVal - instMem;
-      const immValBin = toBinaryString(immVal,21);
-      console.log("--->jinst", tgtVal, tgtVal.toString(16), immVal, immValBin);
+    console.log("handleJInstruction", target);
+    const tgtVal = getInt(target);
+    const immVal = tgtVal - instMem;
+    const immValBin = toBinaryString(immVal,21);
       
-      const imm20 = immValBin.substring(0,1);
-      const imm11 = immValBin.substring(9,10); 
-      const imm19_12 = immValBin.substring(1,9); 
-      const imm10_1 = immValBin.substring(10,20); 
+    const imm20 = immValBin.substring(0,1);
+    const imm11 = immValBin.substring(9,10); 
+    const imm19_12 = immValBin.substring(1,9); 
+    const imm10_1 = immValBin.substring(10,20); 
 
-      const binEncoding = `${imm20}${imm10_1}${imm11}${imm19_12}${rdBin}1101111`;
+    const binEncoding = `${imm20}${imm10_1}${imm11}${imm19_12}${rdBin}1101111`;
 
-      encoding = {
-        "imm21":immVal, "rd":rd,  "binEncoding": binEncoding, "imm[20]": imm20,
-        "imm[11]": imm11, "imm[19:12]":imm19_12, "imm[10:1]":imm10_1, 
-        "tgtVal": tgtVal
-      };
-    
-    } else {
-      // Target is an unsolved label
-      console.warn("Extra pass required to solve: ", target["value"]);
-    }
+    const encoding = {
+      "imm21":immVal, "rd":rd,  "binEncoding": binEncoding, "imm[20]": imm20,
+      "imm[11]": imm11, "imm[19:12]":imm19_12, "imm[10:1]":imm10_1, 
+      "tgtVal": tgtVal
+    };
 
     return {
       "inst":instMem, "type":"j", "instruction": name,
@@ -413,26 +382,22 @@
   {
     let ret = inst;
     ret["Type"] = "SrcInstruction";
-    if( inst["encoding"] != null) {
-      const binEncoding = inst["encoding"]["binEncoding"];
-      inst["encoding"]["hexEncoding"] = encodingAsHex(binEncoding);
-    } else {
-      if (options["pass"] == 2){
-        // Something has to be wrong!
-        console.warn("Warning Inst ===>",ret);
-      }
-
-    }
+    const binEncoding = inst["encoding"]["binEncoding"];
+    inst["encoding"]["hexEncoding"] = encodingAsHex(binEncoding);
     return ret; 
   }
 
   LabelDeclaration
   = id:IdentifierName _ ":"
   {
-    if (options["pass"] == 1){
-      // Update only the label information during the first pass
-      labelTable[id['name']] = instcounter*4;
+    // During preparsing the labes were transformed into absolute memory
+    // addresses. At this point we only check that everything is ok and every 
+    // label we find is already in labelTable
+
+    if (!id['name'] in labelTable) {
+      console.error("Label not found!");
     }
+
     return {identifier:id, instruction:instcounter};
   }
 
@@ -480,7 +445,12 @@
   RInstruction "R-type instruction"
     = name:RInstName _ rd:RegisterName ___ rs1:RegisterName ___ rs2:RegisterName
     { return handleRInstruction(name, rd, rs1, rs2, location()); }
+  // Special rule to parse addi when used to load 12 bits of a 32 bits value
+  //AILoad "Load 12 bits of a 32 bits value"
+  //  = addiToken _ rd:RegisterName ___ rs1:RegisterName ___ SymbolExpr 
+  //  {
 
+  //  }
   // Parsing rule for I type instructions
   IInstruction "I-type instruction"
     = name:IInstName _ rd:RegisterName ___ rs1:RegisterName ___ imm:Imm12 
@@ -660,12 +630,28 @@
   }
 
   JTarget "target address of a jump instruction"
-  = imm:Imm21 { return {"Type": "Imm21", "value":imm }; }
-  / lbl:Identifier { return {"Type":"Label", "value":lbl["name"] }; }
+  = imm:Imm21 { return imm; }
+  / lbl:Identifier 
+  { const label = lbl["name"];
+    const pointsTo = labelTable[label];
+    const value = pointsTo['memdef'];
+    if (isImm21(value)) {
+        return value;
+    }
+    return error("Expecting 21 bit representable value [-1048576, 1048575]. Got " + value); 
+  }
 
   BTarget "target address of a jump instruction"
-  = imm:Imm13 { return {"Type": "Imm13", "value":imm }; }
-  / lbl:Identifier { return {"Type":"Label", "value":lbl["name"] }; }
+  = imm:Imm13 { return imm; }
+  / lbl:Identifier {
+    const label = lbl["name"];
+    const pointsTo = labelTable[label];
+    const value = pointsTo['memdef'];
+    if (isImm13(value)) {
+        return value;
+    }
+    return error("Expecting 13 bit representable value [-4096, 4095]. Got " + v, location());
+  }
 
   JumpInstName "jump instruction"
   = jalToken
