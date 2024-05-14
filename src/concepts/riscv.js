@@ -11,6 +11,13 @@
   let labelTable = {}
 /* Support functions */
 
+  function getInstMemPosition() {
+    const memIndex = instcounter * 4;
+    instcounter = instcounter + 1;
+    console.log("mem ", memIndex);
+    return memIndex;
+  }
+
   function extractList(list, index) {
     return list.map(function(element) { return element[index]; });
   }
@@ -98,7 +105,7 @@
     };
     
     return {
-      "inst":instcounter++, "type":"R", "instruction": name, "rd":rd, 
+      "inst":getInstMemPosition(), "type":"R", "instruction": name, "rd":rd, 
       "rs1":rs1, "rs2": rs2, "funct3": funct3, "funct7": funct7, 
       "opcode": opcode, "encoding": encoding, "location":location, 
       "pseudo":pseudo
@@ -167,9 +174,9 @@
     };
 
     return {
-      "inst":instcounter++, "type":"i", "instruction": name, "rd":rd, "rs1":rs1,
-      "imm12": imm, "funct3": funct3,  "opcode": opcode, "encoding":encoding,
-      "location":location, "pseudo":pseudo
+      "inst":getInstMemPosition(), "type":"i", "instruction": name, "rd":rd,
+      "rs1":rs1, "imm12": imm, "funct3": funct3,  "opcode": opcode,
+      "encoding":encoding, "location":location, "pseudo":pseudo
     };
   }
 
@@ -202,13 +209,14 @@
     };
 
     return {
-      "inst":instcounter++, "type":"s", "instruction": name, "rs1":rs1, 
+      "inst":getInstMemPosition(), "type":"s", "instruction": name, "rs1":rs1, 
       "rs2":rs2, "imm12": offset, "funct3": funct3,  "opcode": "0100011", 
       "encoding":encoding, "location":location
     };
   }
 
   function handleBInstruction(name, rs1, rs2, target, location, pseudo=false) {
+    const instMem = getInstMemPosition();
     let funct3;
     switch (name) {
       case 'beq'   : funct3 = 0; break;
@@ -239,8 +247,10 @@
     }
 
     if (val != null) {
-      const immVal = getInt(val);
+      const tgtVal = getInt(val);
+      const immVal = tgtVal - instMem;
       const immValBin = toBinaryString(immVal,13);
+      console.log("--->binst", tgtVal, tgtVal.toString(16), immVal, immValBin);
 
       const imm12 = immValBin.substring(0,1);
       const imm11 = immValBin.substring(1,2); 
@@ -261,7 +271,7 @@
     }
 
     return {
-      "inst":instcounter++, "type":"b", "instruction": name, "rs1":rs1,
+      "inst":instMem, "type":"b", "instruction": name, "rs1":rs1,
       "rs2":rs2, "imm13": target, "funct3": funct3, "opcode": "1100011", 
       "encoding":encoding, "location":location, "pseudoInst": pseudo
     };
@@ -270,7 +280,8 @@
   function handleJInstruction(name, rd, target, location, pseudo=false) {
     const rdVal = getInt(rd["regenc"]);
     const rdBin = toBinaryString(rdVal,5);
-    
+    const instMem = getInstMemPosition();
+
     let encoding = null;
     let val = null;
     if(target["Type"] == "Imm21") {
@@ -282,8 +293,10 @@
       }
     }
     if(val != null) {
-      const immVal = getInt(val);
+      const tgtVal = getInt(val);
+      const immVal = tgtVal - instMem;
       const immValBin = toBinaryString(immVal,21);
+      console.log("--->jinst", tgtVal, tgtVal.toString(16), immVal, immValBin);
       
       const imm20 = immValBin.substring(0,1);
       const imm11 = immValBin.substring(9,10); 
@@ -294,7 +307,8 @@
 
       encoding = {
         "imm21":immVal, "rd":rd,  "binEncoding": binEncoding, "imm[20]": imm20,
-        "imm[11]": imm11, "imm[19:12]":imm19_12, "imm[10:1]":imm10_1
+        "imm[11]": imm11, "imm[19:12]":imm19_12, "imm[10:1]":imm10_1, 
+        "tgtVal": tgtVal
       };
     
     } else {
@@ -303,9 +317,9 @@
     }
 
     return {
-      "inst":instcounter++, "type":"j", "instruction": name, "imm21": target, 
-      "opcode": "1101111", "encoding":encoding, "location":location, 
-      "pseudo":pseudo
+      "inst":instMem, "type":"j", "instruction": name,
+      "imm21": target, "opcode": "1101111", "encoding":encoding,
+      "location":location, "pseudo":pseudo
     };
   }
 
@@ -326,7 +340,7 @@
     };
 
     return {
-      "inst":instcounter++, "type":"u", "instruction": name, "rd":rd,
+      "inst":getInstMemPosition(), "type":"u", "instruction": name, "rd":rd,
       "imm21": offset, "opcode": opcode, "encoding":encoding, 
       "location":location, "pseudo":pseudo
     };
@@ -860,6 +874,7 @@ function peg$parse(input, options) {
   var peg$e181 = peg$classExpectation(["\t", ["\v", "\f"], " "], false, false);
 
   var peg$f0 = function(root) {
+    instcounter = 0;
     return root;
   };
   var peg$f1 = function(head, tail) {

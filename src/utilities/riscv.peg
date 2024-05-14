@@ -209,6 +209,7 @@
   }
 
   function handleBInstruction(name, rs1, rs2, target, location, pseudo=false) {
+    const instMem = getInstMemPosition();
     let funct3;
     switch (name) {
       case 'beq'   : funct3 = 0; break;
@@ -239,8 +240,10 @@
     }
 
     if (val != null) {
-      const immVal = getInt(val);
+      const tgtVal = getInt(val);
+      const immVal = tgtVal - instMem;
       const immValBin = toBinaryString(immVal,13);
+      console.log("--->binst", tgtVal, tgtVal.toString(16), immVal, immValBin);
 
       const imm12 = immValBin.substring(0,1);
       const imm11 = immValBin.substring(1,2); 
@@ -261,7 +264,7 @@
     }
 
     return {
-      "inst":getInstMemPosition(), "type":"b", "instruction": name, "rs1":rs1,
+      "inst":instMem, "type":"b", "instruction": name, "rs1":rs1,
       "rs2":rs2, "imm13": target, "funct3": funct3, "opcode": "1100011", 
       "encoding":encoding, "location":location, "pseudoInst": pseudo
     };
