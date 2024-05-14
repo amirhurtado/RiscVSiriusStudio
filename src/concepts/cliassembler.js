@@ -57,6 +57,7 @@ parserOutput.forEach(elem => {
   case "SrcInstruction":
     // console.log("----> ", elem);
     console.log({
+      mem: elem["inst"].toString(16),
       type: elem["type"], 
       line:srcline,
       binEncoding: elem["encoding"]["binEncoding"],
