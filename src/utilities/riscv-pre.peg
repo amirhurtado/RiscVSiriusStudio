@@ -64,7 +64,14 @@
     / inst:JInstruction {getInstMemPosition();}
     / inst:UInstruction {getInstMemPosition();}
     / inst:EInstruction {getInstMemPosition();}
-    / inst:PseudoInstruction {getInstMemPosition();}
+    / inst:PseudoInstruction 
+    { 
+      // This is temporal, there are some pseudo instructions that are 
+      // translated into more than one basic instruction and therefore will 
+      // alter the instruction memory.
+
+      getInstMemPosition();
+    }
     / a:. .* {
       return error('Expecting a valid instruction, Got:"' + text() +'"');
     }
@@ -77,7 +84,10 @@
   IInstruction "I-type instruction"
     = name:IInstName _ rd:RegisterName ___ rs1:RegisterName ___ imm:Imm12 
     {}
-
+    / addiToken _ rd:RegisterName ___ rs1:RegisterName ___ AsmModifier
+    {
+      console.log("Assembler modifier!");
+    }
   /* Parsing rule for load instructions.
    *
    * They are I instructions but are written in a different format and hence
@@ -106,7 +116,9 @@
     
   // Parsing rule for upper immediate instructions
   UInstruction "Upper imm instruction"
-    = name:UpperImmInstName _ rd:RegisterName ___ offset:Imm21 
+    = luiToken _ rd:RegisterName ___  AsmModifier
+    {}
+    / name:UpperImmInstName _ rd:RegisterName ___ offset:Imm21 
     {}
 
   EInstruction "E instruction"
@@ -178,6 +190,12 @@
   BTarget "target address of a jump instruction"
   = imm:Imm13 {}
   / lbl:Identifier {}
+
+  AsmModifier "assembler modifier"
+  = "%" _ "lo" _ "(" _ Identifier _ ")"
+  {}
+  / "%" _ "hi" _ "(" _ Identifier _ ")"
+  {}
 
   JumpInstName "jump instruction"
   = jalToken

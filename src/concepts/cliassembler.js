@@ -42,40 +42,40 @@ console.table(labelTable);
 
 let parserOutput = {};
 
-// try {
+try {
   console.log("Parsing file:");
   parserOutput = 
     parser.parse(asm, {"grammarSource":input, "symbols":labelTable}); 
-// } catch ({name, message}) {
-//   console.log(name);
-//   console.log(message);
-//   console.log(parserOutput);
-// }
+} catch ({name, message}) {
+  console.log(name);
+  console.log(message);
+  console.log(parserOutput);
+}
 
 
-// parserOutput.forEach(elem => {
-//   const type = elem["Type"];
-//   const srcline = elem["location"]["start"]["line"];
-//   switch ( type ) {
-//   case "SrcLabel": 
-//     console.log({type:"label", line: srcline}); 
-//     break;
-//   case "SrcDirective": 
-//     console.log({type: elem["Type"]});
-//     break;
-//   case "SrcInstruction":
-//     // console.log("----> ", elem);
-//     console.log({
-//       mem: elem["inst"].toString(16),
-//       type: elem["type"], 
-//       line:srcline,
-//       binEncoding: elem["encoding"]["binEncoding"],
-//       hexEncoding: elem["encoding"]["hexEncoding"],
+parserOutput.forEach(elem => {
+  const type = elem["Type"];
+  const srcline = elem["location"]["start"]["line"];
+  switch ( type ) {
+  case "SrcLabel": 
+    console.log({type:"label", line: srcline}); 
+    break;
+  case "SrcDirective": 
+    console.log({type: elem["Type"]});
+    break;
+  case "SrcInstruction":
+    // console.log("----> ", elem);
+    console.log({
+      mem: elem["inst"].toString(16),
+      type: elem["type"], 
+      line:srcline,
+      binEncoding: elem["encoding"]["binEncoding"],
+      hexEncoding: elem["encoding"]["hexEncoding"],
 
-//     }); 
-//     break;
-//   }
-// });
+    }); 
+    break;
+  }
+});
 
-console.table(labelTable);
+// console.table(labelTable);
 //console.log(ast);

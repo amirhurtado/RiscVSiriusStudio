@@ -445,17 +445,15 @@
   RInstruction "R-type instruction"
     = name:RInstName _ rd:RegisterName ___ rs1:RegisterName ___ rs2:RegisterName
     { return handleRInstruction(name, rd, rs1, rs2, location()); }
-  // Special rule to parse addi when used to load 12 bits of a 32 bits value
-  //AILoad "Load 12 bits of a 32 bits value"
-  //  = addiToken _ rd:RegisterName ___ rs1:RegisterName ___ SymbolExpr 
-  //  {
-
-  //  }
   // Parsing rule for I type instructions
   IInstruction "I-type instruction"
     = name:IInstName _ rd:RegisterName ___ rs1:RegisterName ___ imm:Imm12 
     { return handleIInstruction(name, rd, rs1, imm, location()); }
-
+    / addiToken _ rd:RegisterName ___ rs1:RegisterName ___ imm:AsmModifier
+    {
+      console.log("Assembler modifier!");
+      return handleIInstruction('addi', rd, rs1, imm, location());
+    }
   /* Parsing rule for load instructions.
    *
    * They are I instructions but are written in a different format and hence
@@ -484,7 +482,12 @@
     
   // Parsing rule for upper immediate instructions
   UInstruction "Upper imm instruction"
-    = name:UpperImmInstName _ rd:RegisterName ___ offset:Imm21 
+    = luiToken _ rd:RegisterName ___  imm:AsmModifier
+    {
+      console.log("assembler identifier");
+      return handleUInstruction('lui', rd, imm, location());
+    }
+    / name:UpperImmInstName _ rd:RegisterName ___ offset:Imm21 
     { return handleUInstruction(name, rd, offset, location()); }
 
   EInstruction "E instruction"
@@ -651,6 +654,36 @@
         return value;
     }
     return error("Expecting 13 bit representable value [-4096, 4095]. Got " + v, location());
+  }
+
+  AsmModifier "assembler modifier"
+  /*
+    The behavior of this part is based on the documentation at:
+    https://sourceware.org/binutils/docs-2.42/as/RISC_002dV_002dModifiers.html
+
+    TODO: Is there any other source?
+  */
+  = "%" _ "lo" _ "(" _ lbl:Identifier _ ")"
+  {
+    /*
+        %lo(symbol): The low 12 bits of absolute address for symbol.
+    */
+    const label = lbl["name"];
+    const pointsTo = labelTable[label];
+    const value = pointsTo['memdef'];
+    const value13 = ((1 << 13) - 1) & value;
+    console.log("lo(symbol): ", value, value13,location());
+    return value13;
+  }
+  / "%" _ "hi" _ "(" _ lbl:Identifier _ ")"
+  {
+    const label = lbl["name"];
+    const pointsTo = labelTable[label];
+    const value = pointsTo['memdef'];
+    const mask = ((1 << 20) - 1) << 12; 
+    const value20 = (mask & value) >> 12;
+    console.log("hi(symbol): ", value, value20, location());
+    return value20;
   }
 
   JumpInstName "jump instruction"
