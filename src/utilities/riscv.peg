@@ -342,17 +342,6 @@
 
   Start = Program 
   
-/*
-  Program "Program"
-    = head:Statement tail:(_ Statement)* 
-    {
-      const val = [head].concat(tail.map(function(elem){return elem[1];}));
-      // Reset the instruction counter when finishing
-      instcounter = 0;
-      return val;
-    }
-*/
-  
   Program = root:SourceElements?
   {
     instcounter = 0;

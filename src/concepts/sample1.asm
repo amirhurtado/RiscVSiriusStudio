@@ -19,31 +19,31 @@ main:                                   # @main
         mv      a0, zero
         sw      a0, -12(s0)
         sw      a0, -16(s0)
-#        lui     a1, %hi(.L.str)
-#        addi    a1, a1, %lo(.L.str)
+        lui     a1, %hi(.L.str)
+        addi    a1, a1, %lo(.L.str)
         sw      a1, -20(s0)
         sw      a0, -24(s0)
         addi    a0, zero, 10
         sw      a0, -28(s0)
         lw      a0, -24(s0)
         sw      a0, -32(s0)
-#        j       .LBB0_1
+        j       .LBB0_1
 .LBB0_1:                                # =>This Inner Loop Header: Depth=1
         lw      a0, -32(s0)
         lw      a1, -28(s0)
-#        bge     a0, a1, .LBB0_4
-#        j       .LBB0_2
+        bge     a0, a1, .LBB0_4
+        j       .LBB0_2
 .LBB0_2:                                #   in Loop: Header=BB0_1 Depth=1
         lw      a0, -16(s0)
         lw      a1, -32(s0)
         add     a0, a0, a1
         sw      a0, -16(s0)
-#        j       .LBB0_3
+        j       .LBB0_3
 .LBB0_3:                                #   in Loop: Header=BB0_1 Depth=1
         lw      a0, -32(s0)
         addi    a0, a0, 1
         sw      a0, -32(s0)
-#        j       .LBB0_1
+        j       .LBB0_1
 .LBB0_4:
         mv      a0, zero
         lw      s0, 24(sp)                      # 4-byte Folded Reload
