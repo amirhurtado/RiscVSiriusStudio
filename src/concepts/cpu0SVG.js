@@ -18,6 +18,788 @@ var cpuPaths = {};
 var pathAnimationStyle = null;
 var instruction = null;
 
+
+const defaultProperties = {
+  "enabledView": {
+    "fill":   "none",
+    "stroke": "rgb(0,0,0)",
+    "stroke-opacity": 1,
+    "stroke-width": 3
+  },
+  "disabledView": {
+    "fill": "none",
+    "stroke": "rgb(204,204,204)",
+    "stroke-opacity": 0.2,
+    "stroke-width": 3
+
+  },
+  "selectedView": {
+    "fill": "none",
+    "stroke": "rgb(204,204,204)",
+    "stroke-opacity": 1,
+    "stroke-width": 3
+  }
+};
+
+const textDefaultProperties = {
+  "enabledView": {
+  'font-size': "16px",
+    "color":     "rgb(0,0,0)"
+  },
+  "disabledView": {
+    "font-size": "16px",
+    "color":     "rgb(204,204,204)"
+  },
+  "selectedView": {
+    "font-size": "16px",
+    "color":     "rgb(204,204,204)"
+  }
+};
+
+const pathDefaultProperties = {
+  "enabledView": {
+    "stroke": "rgb(0,0,0)",
+    "stroke-opacity": 1,
+    "stroke-width": 3
+  },
+  "disabledView": {
+    "stroke": "rgb(204,204,204)",
+    "stroke-opacity": 0.2,
+    "stroke-width": 3
+
+  },
+  "selectedView": {
+    "stroke": "rgb(204,204,204)",
+    "stroke-opacity": 1,
+    "stroke-width": 3
+  }
+};
+
+/**
+ * 
+ * @param {element} element on which the properties will be applied 
+ * @param {properties} properties to apply
+ *
+ * TODO: Test whether the property is supported by the element.
+ */
+function applyElementProperties(element, properties) {
+  for(var key in properties) {
+    //console.log("Applying property ", key);
+    setAttribute(element, key, properties[key]);
+  }
+}
+
+function applyCSSProperties(element, properties) {
+  for(var key in properties) {
+    //console.log("Applying CSS property ", key);
+    element.style[key] = properties[key];
+  }
+}
+
+function showTooltip(evt,text) {
+  let tooltip = document.getElementById("tooltip");
+  tooltip.innerHTML = text;
+  tooltip.style.display = "block";
+  tooltip.style.left = evt.pageX + 10 + 'px';
+  tooltip.style.top = evt.pageY + 10 + 'px';
+}
+
+function showTooltipPos(x,y,text) {
+  let tooltip = document.getElementById("tooltip");
+  tooltip.innerHTML = text;
+  tooltip.style.display = "block";
+  tooltip.style.left = x + 10 + 'px';
+  tooltip.style.top = y + 10 + 'px';
+}
+
+function hideTooltip() {
+  let tooltip = document.getElementById("tooltip");
+  tooltip.style.display = "none";
+}
+
+/**
+ * Node represents the graphical view of a component in the CPU. Moreover, that
+ * component must be a rectangle and must have a text.
+ */
+class Node {
+  constructor(htmldoc, name) {
+    this.dc = getDrawComponent(htmldoc, 'cpuName', name);
+    // TODO: This is weak, is there another way? 
+    // The rectangle
+    this.shape = this.dc.getElementsByTagName('rect')[0];
+    // The text
+    this.text = this.dc.getElementsByTagName('div')[2];
+    this.textBox = this.text.getBoundingClientRect();
+    // Outgoing wires
+    this.outGoingWires = [];
+    this.outGoingSelected = false;
+    // Data
+    //this.dataValue = 42;
+    // Register events
+    setAttribute(this.shape, 'onmousemove', 
+      `setCallback(evt, "${name}","onMouseMove");`);
+    setAttribute(this.shape, 'onmouseout', 
+      `setCallback(evt,"${name}","onMouseOut");`);
+    setAttribute(this.shape, 'onclick', 
+      `setCallback(evt, "${name}","onMouseClick");`);
+    //setAttribute(this.text, 'onmousemove', 
+    //  `setCallbackNoEvt("${name}","onMouseMoveInText");`);
+    setAttribute(this.shape, 'onmouseout', 
+      `setCallbackNoEvt("${name}","onMouseOutOfText");`);
+  }
+  
+  onMouseMove(evt) {
+    this.setSelected();
+    showTooltip(evt, this.info());
+  }
+
+  onMouseOut(evt) {
+    this.setEnabled();
+    hideTooltip();
+  }
+
+  onMouseMoveInText() {
+    this.setSelected();
+    //console.log("Inside text!!! ", this.textBox.left, this.textBox.right);
+    showTooltipPos(this.textBox.left, this.textBox.right, this.info());
+  }
+  onMouseOutOfText() {
+    this.setEnabled();
+    hideTooltip();
+  }
+
+  onMouseClick() {
+    if (this.outGoingSelected) {
+      this.enableOngoingWires();
+    } else {
+      this.selectOngoingWires();
+    }
+    this.outGoingSelected = !this.outGoingSelected;
+  }
+
+  addOutgoingWire(wire) {
+    this.outGoingWires.push(wire);
+  }
+
+  selectOngoingWires() {
+    this.outGoingWires.forEach((wire) => {wire.setSelected();});
+  }
+
+  enableOngoingWires() {
+    this.outGoingWires.forEach((wire) => {wire.setEnabled();});
+  }
+
+
+  setStyle(style) {
+    applyElementProperties(this.shape,defaultProperties[style]);
+    applyCSSProperties(this.text,textDefaultProperties[style]);
+  }
+  setEnabled() { this.setStyle("enabledView"); }
+  // TODO: not sure but this method is not needed at the PC
+  setDisabled() { this.setStyle("disabledView"); }
+
+  setSelected() { this.setStyle("selectedView"); }
+
+  info() {
+    return `<div><b>NOT IMPLEMENTED</b></div>
+      NOT implemented<div><b>Current value</b></div>`;
+  }
+}
+
+class PCView extends Node {
+  constructor(htmldoc) {
+    super(htmldoc, 'PC');
+    // The clock symbol
+    this.clockDC = getDrawComponent(htmldoc, 'cpuName', 'PCCLOCK');
+    this.clock = this.clockDC.getElementsByTagName("path")[0];
+    this.setEnabled();
+    // Data
+    this.dataValue = 42;
+  }
+  setStyle(style) {
+    applyElementProperties(this.clock, defaultProperties[style]);
+    super.setStyle(style);
+  }  
+  info() {
+    return `<div><b>Program Counter</b></div>
+      Contains the memory address of the instruction that is executed
+      <div><b>Current value</b></div>
+      ${this.dataValue}`;
+  }
+
+}
+
+class IMView extends Node {
+  constructor(htmldoc) {
+    super(htmldoc, 'IM');
+    // The address text
+    const dc = getDrawComponent(htmldoc, 'cpuName', 'IMADDRESSTEXT');
+    this.addressText = dc.getElementsByTagName('div')[2];
+    //this.addressTextBox = this.addressText.getBoundingClientRect();
+    const dc2 = getDrawComponent(htmldoc, 'cpuName', 'IMINSTRUCTIONTEXT');
+    this.instructionText = dc2.getElementsByTagName('div')[2];
+    // Data
+    this.dataValue = 42;
+  }
+  setStyle(style) {
+    applyCSSProperties(this.addressText,textDefaultProperties[style]);
+    applyCSSProperties(this.instructionText,textDefaultProperties[style]);
+    super.setStyle(style);
+  }  
+  info() {
+    return `<div><b>Instruction Memory</b></div>
+      Stores the program instructions
+      <div><b>Current value</b></div>
+      ${this.dataValue}`;
+  }
+}
+
+class IMMView extends Node {
+  constructor(htmldoc) {
+    super(htmldoc, 'IMM');
+    // Data
+    this.dataValue = 42;
+  }
+  setStyle(style) {
+    super.setStyle(style);
+  }  
+  info() {
+    return `<div><b>Immediate Generator</b></div>
+      Translates the constants of different lengths into 32 bits constants.
+      <div><b>Current value</b></div>
+      ${this.dataValue}`;
+  }
+}
+
+class BUView extends Node {
+  constructor(htmldoc) {
+    super(htmldoc, 'BU');
+    // Data
+    this.dataValue = 42;
+  }
+  setStyle(style) {
+    super.setStyle(style);
+  }  
+  info() {
+    return `<div><b>Branch Unit</b></div>
+      Decides whether to execute the next instruction or to jump to a different instruction in the code given the result of a comparison.
+      <div><b>Current value</b></div>
+      ${this.dataValue}`;
+  }
+}
+
+class ALUAView extends Node {
+  constructor(htmldoc) {
+    super(htmldoc, 'ALUA');
+    this.ic1 = new MuxIC(htmldoc, 'ALUAMUXIC1');
+    this.ic0 = new MuxIC(htmldoc, 'ALUAMUXIC0');
+    // Data
+    this.dataValue = 42;
+  }
+  setStyle(style) {
+    super.setStyle(style);
+  }
+  info() {
+    return `<div><b>ALUA</b></div>
+      Multiplexor that selects whether the ALU input A is supplied with the program counter (selector=1) or with the value of register 1 (selector=0).
+      <div><b>Current value</b></div>
+      ${this.dataValue}`;
+  }
+}
+
+class ALUBView extends Node {
+  constructor(htmldoc) {
+    super(htmldoc, 'ALUB');
+    this.ic1 = new MuxIC(htmldoc, 'ALUBMUXIC1');
+    this.ic0 = new MuxIC(htmldoc, 'ALUBMUXIC0');
+    // Data
+    this.dataValue = 42;
+  }
+  setStyle(style) {
+    super.setStyle(style);
+  }
+  info() {
+    return `<div><b>ALUB</b></div>
+      Multiplexor that selects whether the ALU input B is supplied with the immediate (selector=1) or with the value of register 2 (selector=0).
+      <div><b>Current value</b></div>
+      ${this.dataValue}`;
+  }
+}
+
+class ALUView {
+  constructor(htmldoc) {
+    const name = 'ALU';
+    this.dc = getDrawComponent(htmldoc, 'cpuName', name);
+    // TODO: This is weak, is there another way? 
+    // The rectangle
+    this.path = this.dc.getElementsByTagName('path')[0];
+
+    // The text (The label that says ALU)
+    let textDC = getDrawComponent(htmldoc, 'cpuName', 'ALUTEXT');
+    this.text = textDC.getElementsByTagName('div')[2];
+    this.textBox = this.text.getBoundingClientRect();
+
+    // The text (The label that says A)
+    textDC = getDrawComponent(htmldoc, 'cpuName', 'ALUTEXTINA');
+    this.textA = textDC.getElementsByTagName('div')[2];
+    this.textABox = this.text.getBoundingClientRect();
+
+    // The text (The label that says B)
+    textDC = getDrawComponent(htmldoc, 'cpuName', 'ALUTEXTINB');
+    this.textB = textDC.getElementsByTagName('div')[2];
+    this.textBBox = this.text.getBoundingClientRect();
+
+    // The text (The label that says ALURes)
+    textDC = getDrawComponent(htmldoc, 'cpuName', 'ALUTEXTRES');
+    this.textRes = textDC.getElementsByTagName('div')[2];
+    this.textResBox = this.text.getBoundingClientRect();
+
+    // Outgoing wires
+    this.outGoingWires = [];
+    this.outGoingSelected = false;
+    // Data
+    //this.dataValue = 42;
+    // Register events
+    setAttribute(this.path, 'onmousemove', 
+      `setCallback(evt, "${name}","onMouseMove");`);
+    setAttribute(this.path, 'onmouseout', 
+      `setCallback(evt,"${name}","onMouseOut");`);
+    setAttribute(this.path, 'onclick', 
+      `setCallback(evt, "${name}","onMouseClick");`);
+    //setAttribute(this.text, 'onmousemove', 
+    //  `setCallbackNoEvt("${name}","onMouseMoveInText");`);
+    //setAttribute(this.path, 'onmouseout', 
+    //  `setCallbackNoEvt("${name}","onMouseOutOfText");`);
+  }
+  
+  onMouseMove(evt) {
+    this.setSelected();
+    showTooltip(evt, this.info());
+  }
+
+  onMouseOut(evt) {
+    this.setEnabled();
+    hideTooltip();
+  }
+
+  onMouseMoveInText() {
+    this.setSelected();
+    console.log("Inside text!!! ", this.textBox.left, this.textBox.right);
+    //showTooltipPos(this.textBox.left, this.textBox.right, this.info());
+  }
+  onMouseOutOfText() {
+    this.setEnabled();
+    hideTooltip();
+  }
+
+  onMouseClick() {
+    if (this.outGoingSelected) {
+      this.enableOngoingWires();
+    } else {
+      this.selectOngoingWires();
+    }
+    this.outGoingSelected = !this.outGoingSelected;
+  }
+
+  addOutgoingWire(wire) {
+    this.outGoingWires.push(wire);
+  }
+
+  selectOngoingWires() {
+    this.outGoingWires.forEach((wire) => {wire.setSelected();});
+  }
+
+  enableOngoingWires() {
+    this.outGoingWires.forEach((wire) => {wire.setEnabled();});
+  }
+
+
+  setStyle(style) {
+    applyElementProperties(this.path,defaultProperties[style]);
+    applyCSSProperties(this.text,textDefaultProperties[style]);
+    applyCSSProperties(this.textA,textDefaultProperties[style]);
+    applyCSSProperties(this.textB,textDefaultProperties[style]);
+    applyCSSProperties(this.textRes,textDefaultProperties[style]);
+  }
+
+  setEnabled() { this.setStyle("enabledView"); }
+
+  setDisabled() { this.setStyle("disabledView"); }
+
+  setSelected() { this.setStyle("selectedView"); }
+
+  info() {
+    return `<div><b>NOT IMPLEMENTED</b></div>
+      NOT implemented<div><b>Current value</b></div>`;
+  }
+}
+
+class RUView extends Node {
+  constructor(htmldoc) {
+    super(htmldoc, 'RU');
+    let dc = getDrawComponent(htmldoc, 'cpuName', 'RUTEXTINRS1');
+    this.textRS1 = dc.getElementsByTagName('div')[2];
+
+    dc = getDrawComponent(htmldoc, 'cpuName', 'RUTEXTINRS2');
+    this.textRS2 = dc.getElementsByTagName('div')[2];
+
+    dc = getDrawComponent(htmldoc, 'cpuName', 'RUTEXTINRD');
+    this.textRD = dc.getElementsByTagName('div')[2];
+
+    dc = getDrawComponent(htmldoc, 'cpuName', 'RUTEXTINDATAWR');
+    this.textDataWr = dc.getElementsByTagName('div')[2];
+
+    dc = getDrawComponent(htmldoc, 'cpuName', 'RUTEXTOUTRD1');
+    this.textRD1 = dc.getElementsByTagName('div')[2];
+
+    dc = getDrawComponent(htmldoc, 'cpuName', 'RUTEXTOUTRD2');
+    this.textRD2 = dc.getElementsByTagName('div')[2];
+
+    dc = getDrawComponent(htmldoc, 'cpuName', 'RUCLOCK');
+    this.clock = dc.getElementsByTagName("path")[0];
+
+    this.setEnabled();
+  }
+
+  setStyle(style) {
+    applyElementProperties(this.clock, defaultProperties[style]);
+    [this.textRS1, this.textRS2, this.textRD, this.textDataWr,
+      this.textRD1, this.textRD2
+    ].forEach((txtattr) => {
+      applyCSSProperties(txtattr,textDefaultProperties[style]);
+    });
+    super.setStyle(style);
+  }  
+}
+
+class DMView extends Node {
+  constructor(htmldoc) {
+    super(htmldoc, 'DM');
+    let dc = getDrawComponent(htmldoc, 'cpuName', 'DMTEXTINADDRESS');
+    this.textAddress = dc.getElementsByTagName('div')[2];
+
+    dc = getDrawComponent(htmldoc, 'cpuName', 'DMTEXTINDATAWR');
+    this.textDataWr = dc.getElementsByTagName('div')[2];
+
+    dc = getDrawComponent(htmldoc, 'cpuName', 'DMTEXTDATARD');
+    this.textDataRD = dc.getElementsByTagName('div')[2];
+
+    dc = getDrawComponent(htmldoc, 'cpuName', 'MEMCLOCK');
+    this.clock = dc.getElementsByTagName("path")[0];
+
+    this.setEnabled();
+  }
+
+  setStyle(style) {
+    applyElementProperties(this.clock, defaultProperties[style]);
+    [this.textAddress, this.textDataWr, this.textDataRD].forEach((txtattr) => {
+      applyCSSProperties(txtattr,textDefaultProperties[style]);
+    });
+    super.setStyle(style);
+  }  
+}
+
+class RUDataWrSrcMUXView extends Node {
+  constructor(htmldoc) {
+    super(htmldoc, 'RUDataWrSrcMUX');
+    this.ic10 = new MuxIC(htmldoc, 'WBMUXIC10');
+    this.ic01 = new MuxIC(htmldoc, 'WBMUXIC01');
+    this.ic00 = new MuxIC(htmldoc, 'WBMUXIC00');
+    // Data
+    this.dataValue = 42;
+  }
+  setStyle(style) {
+    super.setStyle(style);
+  }
+  info() {
+    return `<div><b>WBMUX</b></div>
+      Multiplexor that selects whether the ALU input A is supplied with the program counter (selector=1) or with the value of register 1 (selector=0).
+      <div><b>Current value</b></div>
+      ${this.dataValue}`;
+  }
+}
+
+class ADD4View extends Node {
+  constructor(htmldoc) {
+    super(htmldoc, 'ADD4');
+    // Data
+    this.dataValue = 42;
+  }
+  setStyle(style) {
+    super.setStyle(style);
+  }  
+  info() {
+    return `<div><b>Immediate Generator</b></div>
+      Translates the constants of different lengths into 32 bits constants.
+      <div><b>Current value</b></div>
+      ${this.dataValue}`;
+  }
+}
+
+class BUMUXView extends Node {
+  constructor(htmldoc) {
+    super(htmldoc, 'BUMUX');
+    this.ic1 = new MuxIC(htmldoc, 'BUMUXIC1');
+    this.ic0 = new MuxIC(htmldoc, 'BUMUXIC0');
+    // Data
+    this.dataValue = 42;
+  }
+  setStyle(style) {
+    super.setStyle(style);
+  }
+  info() {
+    return `<div><b>ALUB</b></div>
+      Multiplexor that selects whether the ALU input B is supplied with the immediate (selector=1) or with the value of register 2 (selector=0).
+      <div><b>Current value</b></div>
+      ${this.dataValue}`;
+  }
+}
+
+
+class Edge {
+  constructor(htmldoc, name) {
+    this.dc = getDrawComponent(htmldoc, 'cpuName', name);
+    const tags = this.dc.getElementsByTagName('path');
+    this.edge = tags[0];
+    this.arrow = tags[1]; 
+    
+    // Register events
+    setAttribute(this.edge, 'onmousemove', 
+      `setCallback(evt, "${name}","onMouseMove");`);
+    setAttribute(this.edge, 'onmouseout', 
+      `setCallback(evt,"${name}","onMouseOut");`);
+  }
+
+  onMouseMove(evt) {
+    this.setSelected();
+
+    this.showTooltip(evt);
+  }
+  onMouseOut(evt) {
+    this.setEnabled();
+    this.hideTooltip();
+  }
+  
+  setStyle(style) {
+    applyElementProperties(this.edge, pathDefaultProperties[style]);
+    applyElementProperties(this.arrow, pathDefaultProperties[style]);
+  }
+
+  setEnabled() { this.setStyle("enabledView"); }
+  setDisabled() { this.setStyle("disabledView"); }
+  setSelected() { this.setStyle("selectedView"); }
+
+  showTooltip(evt) { showTooltip(evt, this.info()); }
+
+  hideTooltip(evt) { hideTooltip(); }
+
+  info() {
+    return `<div><b>PATH</b></div>
+            <div>value: NOT IMPLEMENTED </div>`;
+  }
+}
+
+class BUMUXPC extends Edge {
+  constructor(htmldoc) {
+    super(htmldoc, 'BUMUXPC');
+    // Data
+    this.data = 42;
+  }
+  
+  info() {
+    return `<div><b>Branch MUX to PC</b></div>
+            <div>value: ${this.data} </div>`;
+  }
+}
+
+class PCADD4 extends Edge {
+  constructor(htmldoc) {
+    super(htmldoc,'PCADD4');
+  }
+}
+
+class PCALUA extends Edge {
+  constructor(htmldoc) {
+    super(htmldoc,'PCALUA');
+  }
+}
+
+class PCIM extends Edge {
+  constructor(htmldoc) {
+    super(htmldoc,'PCIM');
+  }
+}
+
+class ADD4WBMUX extends Edge {
+  constructor(htmldoc) {
+    super(htmldoc,'ADD4WBMUX');
+  }
+}
+
+class ADD4BUMUX extends Edge {
+  constructor(htmldoc) {
+    super(htmldoc,'ADD4BUMUX');
+  }
+}
+
+class IMCUOPCODE extends Edge {
+  constructor(htmldoc) {
+    super(htmldoc,'IMCUOPCODE');
+  }
+}
+
+class IMCUFUNCT3 extends Edge {
+  constructor(htmldoc) {
+    super(htmldoc,'IMCUFUNCT3');
+  }
+}
+
+class IMCUFUNCT7 extends Edge {
+  constructor(htmldoc) {
+    super(htmldoc,'IMCUFUNCT7');
+  }
+}
+
+class IMRURS1 extends Edge {
+  constructor(htmldoc) {
+    super(htmldoc,'IMRURS1');
+  }
+}
+
+class IMRURS2 extends Edge {
+  constructor(htmldoc) {
+    super(htmldoc,'IMRURS2');
+  }
+}
+
+class IMRURDEST extends Edge {
+  constructor(htmldoc) {
+    super(htmldoc,'IMRURDEST');
+  }
+}
+
+class IMIMM extends Edge {
+  constructor(htmldoc) {
+    super(htmldoc,'IMIMM');
+  }
+}
+
+class IMMALUB extends Edge {
+  constructor(htmldoc) {
+    super(htmldoc,'IMMALUB');
+  }
+}
+
+class RUALUA extends Edge {
+  constructor(htmldoc) {
+    super(htmldoc,'RUALUA');
+  }
+}
+
+class RUALUB extends Edge {
+  constructor(htmldoc) {
+    super(htmldoc,'RUALUB');
+  }
+}
+
+class RURS1BU extends Edge {
+  constructor(htmldoc) {
+    super(htmldoc,'RURS1BU');
+  }
+}
+
+class RURS2BU extends Edge {
+  constructor(htmldoc) {
+    super(htmldoc,'RURS2BU');
+  }
+}
+
+class RUDM extends Edge {
+  constructor(htmldoc) {
+    super(htmldoc,'RUDM');
+  }
+}
+
+class ALUAALU extends Edge {
+  constructor(htmldoc) {
+    super(htmldoc,'ALUAALU');
+  }
+}
+
+class ALUBALU extends Edge {
+  constructor(htmldoc) {
+    super(htmldoc,'ALUBALU');
+  }
+}
+
+class MuxIC  {
+  constructor(htmldoc, name) {
+    this.dc = getDrawComponent(htmldoc, 'cpuName', name);
+    this.edge = this.dc.getElementsByTagName('path')[0];
+    console.log("MUX1 ");
+    setAttribute(this.edge, 'onmousemove', 
+    `setCallback(evt, "${name}","onMouseMove");`);
+    setAttribute(this.edge, 'onmouseout', 
+    `setCallback(evt,"${name}","onMouseOut");`);
+    
+    this.disabled = true;
+    this.setDisabled();
+  }
+  onMouseMove(evt) {
+    console.log("mouse movement detected");
+  }
+  onMouseOut(evt) {
+    console.log("mouse movement out detected");
+  }
+  
+  setDisabled() {
+    applyElementProperties(this.edge, {"stroke-width":0}); 
+    this.disabled = true;
+  }
+  setEnabled() {
+    applyElementProperties(this.edge, {"stroke-width":2});
+    this.disabled = false;
+  }
+}
+
+class ALUDM extends Edge {
+  constructor(htmldoc) {
+    super(htmldoc,'ALUDM');
+  }
+}
+
+class ALUBUMUX extends Edge {
+  constructor(htmldoc) {
+    super(htmldoc,'ALUBUMUX');
+  }
+}
+
+class ALUWBMUX extends Edge {
+  constructor(htmldoc) {
+    super(htmldoc,'ALUWBMUX');
+  }
+}
+
+class DMWBMUX extends Edge {
+  constructor(htmldoc) {
+    super(htmldoc,'DMWBMUX');
+  }
+}
+
+class BUBUMUX extends Edge {
+  constructor(htmldoc) {
+    super(htmldoc,'BUBUMUX');
+  }
+}
+
+class WBMUXRU extends Edge {
+  constructor(htmldoc) {
+    super(htmldoc,'WBMUXRU');
+  }
+}
+
+// ----------------------------------------------------
+
 class CPUElement {
   constructor(svgDC, shape, name) {
     this.dc = svgDC;
@@ -49,9 +831,9 @@ class CPUElement {
       'stroke-opacity': 0.2,
     };
   }
-  applyProperties(props) {
-    for(var key in props) {
-      setAttribute(this.shape, key, props[key]);
+  applyProperties(properties) {
+    for(var key in properties) {
+      setAttribute(this.shape, key, properties[key]);
     }
   }
 
@@ -390,193 +1172,105 @@ function getAnimationStyle() {
 }
 
 function initComponents() {
-  cpuComponents['pc'] = new CPUElement(
-    getDrawComponent(document,'cpuName','PC'), 'rect',
-    'Program Counter'
-  ); 
-  cpuComponents['im'] = new CPUElement(
-    getDrawComponent(document,'cpuName','IM'), 'rect',
-    'Instruction memory'
-  ); 
-  cpuComponents['add4'] = new CPUElement(
-    getDrawComponent(document,'cpuName','ADD4'),'rect',
-    'Adder of 4'
-  );
-  cpuComponents['cu'] = new CPUElement(
-    getDrawComponent(document,'cpuName','CU'),'rect',
-    'Control unit'
-  );
-  cpuComponents['ru'] = new CPUElement(
-    getDrawComponent(document,'cpuName','RU'),'rect',
-    'Registers unit'  
-  );
-  cpuComponents['imm'] = new CPUElement(
-    getDrawComponent(document,'cpuName','IMM'),'rect',
-    'Immediate unit'
-  );
+  cpuComponents['PC'] = new PCView(document);
+  const PC = cpuComponents['PC'];
 
+  cpuComponents['BUMUXPC'] = new BUMUXPC(document);
+  cpuComponents['PCADD4'] = new PCADD4(document);
+  cpuComponents['PCALUA'] = new PCALUA(document);
+  cpuComponents['PCIM'] = new PCIM(document);
+
+  PC.addOutgoingWire(cpuComponents['PCALUA']);
+  PC.addOutgoingWire(cpuComponents['PCADD4']);
+  PC.addOutgoingWire(cpuComponents['PCIM']);
+
+  cpuComponents['IMCUOPCODE'] = new IMCUOPCODE(document);
+  cpuComponents['IMCUFUNCT3'] = new IMCUFUNCT3(document);
+  cpuComponents['IMCUFUNCT7'] = new IMCUFUNCT7(document);
+  cpuComponents['IMRURS1'] = new IMRURS1(document);
+  cpuComponents['IMRURS2'] = new IMRURS2(document);
+  cpuComponents['IMRURDEST'] = new IMRURDEST(document);
+  cpuComponents['IMIMM'] = new IMIMM(document);
+
+  cpuComponents['IM'] = new IMView(document);
+  const IM = cpuComponents['IM'];
+  IM.addOutgoingWire(cpuComponents['IMCUOPCODE']);
+  IM.addOutgoingWire(cpuComponents['IMCUFUNCT3']);
+  IM.addOutgoingWire(cpuComponents['IMCUFUNCT7']);
+  IM.addOutgoingWire(cpuComponents['IMRURS1']);
+  IM.addOutgoingWire(cpuComponents['IMRURS2']);
+  IM.addOutgoingWire(cpuComponents['IMRURDEST']);
+  IM.addOutgoingWire(cpuComponents['IMIMM']);
+
+  cpuComponents['IMMALUB'] = new IMMALUB(document);
+
+  cpuComponents['IMM'] = new IMMView(document);
+  const IMM = cpuComponents['IMM'];
+  IMM.addOutgoingWire(cpuComponents['IMMALUB']);
+
+  cpuComponents['BUBUMUX'] = new BUBUMUX(document);
+
+  cpuComponents['BU'] = new BUView(document);
+  const BU = cpuComponents['BU'];
+  BU.addOutgoingWire(cpuComponents['BUBUMUX']);
+
+  cpuComponents['ALUAALU'] = new ALUAALU(document);
+
+  cpuComponents['ALUA'] = new ALUAView(document);
+  const ALUA = cpuComponents['ALUA'];
+  ALUA.addOutgoingWire(cpuComponents['ALUAALU']);
+
+  cpuComponents['ALUBALU'] = new ALUBALU(document);
   
-  cpuComponents['bu'] = new CPUElement(
-    getDrawComponent(document,'cpuName','BU'),'rect',
-    'Branch unit'
-  );
-
-  cpuComponents['alua'] = 
-    new CPUMux(
-      getDrawComponent(document,'cpuName','ALUA'),
-      'ALUAsrc driven multiplexor',
-      {
-        '0': getDrawComponent(document, 'cpuName', 'ALUAMUXIC0'), 
-        '1': getDrawComponent(document, 'cpuName', 'ALUAMUXIC1')
-      }
-    );
-  cpuComponents['alub'] = 
-    new CPUMux(
-      getDrawComponent(document,'cpuName','ALUB'),
-      'ALUBsrc driven multiplexor',
-      {
-        '0': getDrawComponent(document, 'cpuName', 'ALUBMUXIC0'), 
-        '1': getDrawComponent(document, 'cpuName', 'ALUBMUXIC1'), 
-      }
-  );
-
-  cpuComponents['alu'] = new CPUElement(
-    getDrawComponent(document,'cpuName','ALU'), 'path',
-    'Arithmetic-logic unit'
-  );
-
-  cpuComponents['dm'] = new CPUElement(
-    getDrawComponent(document,'cpuName','DM'),'rect',
-    'Data memory'
-  );
-
-  cpuComponents['bumux'] = 
-    new CPUMux(
-      getDrawComponent(document,'cpuName','BUMUX'),
-      'Branch unit driven multiplexor',
-      {
-        '0': getDrawComponent(document, 'cpuName', 'BUMUXIC0'), 
-        '1': getDrawComponent(document, 'cpuName', 'BUMUXIC1'), 
-      }
-    );
-    
-  cpuComponents['wbmux'] = 
-    new CPUMux(
-      getDrawComponent(document,'cpuName','RUDataWrSrcMUX'),
-      'Write back multiplexor',
-      {
-        '10': getDrawComponent(document, 'cpuName', 'WBMUXIC10'), 
-        '01': getDrawComponent(document, 'cpuName', 'WBMUXIC01'), 
-        '00': getDrawComponent(document, 'cpuName', 'WBMUXIC00'), 
-      }
-    );
-}
-
-function initPaths() {
-  cpuPaths['PCIM'] = new CPUPath(
-    getDrawComponent(document,'cpuName','PCIM'), 'PC <-> IM', true
-  );
-
-  cpuPaths['PCADD4'] = new CPUPath(
-    getDrawComponent(document,'cpuName','PCADD4'), 'PC <-> Adder of four', true
-  );
-
-  cpuPaths['IMCUOPCODE'] = new CPUPath(
-    getDrawComponent(document,'cpuName','IMCUOPCODE'), 'IM <->  Control Unit (OpCode)', true
-  );
-
-  cpuPaths['IMCUFUNCT3'] = new CPUPath(
-    getDrawComponent(document,'cpuName','IMCUFUNCT3'), 'IM <->  Control Unit (Funct3)', true
-  );
-
-  cpuPaths['IMCUFUNCT7'] = new CPUPath(
-    getDrawComponent(document,'cpuName','IMCUFUNCT7'), 'IM <->  Control Unit (Funct7)', true
-  );
-
-  cpuPaths['IMRURS1'] = new CPUPath(
-    getDrawComponent(document,'cpuName','IMRURS1'), 'IM <->  Registers unit (rs1)', true
-  );
+  cpuComponents['ALUB'] = new ALUBView(document);
+  const ALUB = cpuComponents['ALUB'];
+  ALUB.addOutgoingWire(cpuComponents['ALUBALU']);
   
-  cpuPaths['IMRURS2'] = new CPUPath(
-    getDrawComponent(document,'cpuName','IMRURS2'), 'IM <->  Registers unit (rs2)', true
-  );
-
-  cpuPaths['IMRURDEST'] = new CPUPath(
-    getDrawComponent(document,'cpuName','IMRURDEST'), 'IM <->  Registers unit (rd)', true
-  );
+  cpuComponents['ALUDM'] = new ALUDM(document);
+  cpuComponents['ALUWBMUX'] = new ALUWBMUX(document);
+  cpuComponents['ALUBUMUX'] = new ALUBUMUX(document);
   
-  cpuPaths['IMIMM'] = new CPUPath(
-    getDrawComponent(document,'cpuName','IMIMM'), 'IM <->  Immediate unit', true
-  );
+  cpuComponents['ALU'] = new ALUView(document);
+  const ALU = cpuComponents['ALU'];
+  ALU.addOutgoingWire(cpuComponents['ALUDM']);
+  ALU.addOutgoingWire(cpuComponents['ALUWBMUX']);
+  ALU.addOutgoingWire(cpuComponents['ALUBUMUX']);
   
+  cpuComponents['RURS1BU'] = new RURS1BU(document);
+  cpuComponents['RURS2BU'] = new RURS2BU(document);
+  cpuComponents['RUALUA'] = new RUALUA(document);
+  cpuComponents['RUALUB'] = new RUALUB(document);
+  cpuComponents['RUDM'] = new RUDM(document);
   
-  cpuPaths['RUALUA'] = new CPUPath(
-    getDrawComponent(document,'cpuName','RUALUA'), 'RU <->  ALUASrc mux.', true
-  );
+  cpuComponents['RU'] = new RUView(document);
+  const RU = cpuComponents['RU'];
+  RU.addOutgoingWire(cpuComponents['RURS1BU']);
+  RU.addOutgoingWire(cpuComponents['RURS2BU']);
+  RU.addOutgoingWire(cpuComponents['RUALUA']);
+  RU.addOutgoingWire(cpuComponents['RUALUB']);
+  RU.addOutgoingWire(cpuComponents['RUDM']);
 
-  cpuPaths['PCALUA'] = new CPUPath(
-    getDrawComponent(document,'cpuName','PCALUA'), 'PC <->  ALUASrc mux.', true
-  );
+  cpuComponents['DMWBMUX'] = new DMWBMUX(document);
+  cpuComponents['DM'] = new DMView(document);
+  const DM = cpuComponents['DM'];
+  DM.addOutgoingWire(cpuComponents['DMWBMUX']);
 
-  cpuPaths['RUALUB'] = new CPUPath(
-    getDrawComponent(document,'cpuName','RUALUB'), 'RU <->  ALUBSrc mux.', true
-  );
+  cpuComponents['WBMUXRU'] = new WBMUXRU(document);
+  cpuComponents['RUDataWrSrcMUX'] = new RUDataWrSrcMUXView(document);
+  const WBMUX = cpuComponents['RUDataWrSrcMUX'];
+  WBMUX.addOutgoingWire(cpuComponents['WBMUXRU']);
+  
 
-  cpuPaths['IMMALUB'] = new CPUPath(
-    getDrawComponent(document,'cpuName','IMMALUB'), 'IMM <->  ALUBSrc mux.', true
-  );
+  cpuComponents['ADD4WBMUX'] = new ADD4WBMUX(document);
+  cpuComponents['ADD4BUMUX'] = new ADD4BUMUX(document);
+  cpuComponents['ADD4'] = new ADD4View(document);
+  const ADD4 = cpuComponents['ADD4'];
+  ADD4.addOutgoingWire(cpuComponents['ADD4WBMUX']);
+  ADD4.addOutgoingWire(cpuComponents['ADD4BUMUX']);
 
-  cpuPaths['RU[RS1]BU'] = new CPUPath(
-    getDrawComponent(document,'cpuName','RU[RS1]BU'), 'RU[rs1] <->  branch unit', true
-  );
-
-  cpuPaths['RU[RS2]BU'] = new CPUPath(
-    getDrawComponent(document,'cpuName','RU[RS2]BU'), 'RU[rs2] <->  branch unit',true
-  );
-
-  cpuPaths['ALUAALU'] = new CPUPath(
-    getDrawComponent(document,'cpuName','ALUAALU'), 'RU[rs2] <->  branch unit', true
-  );
-
-  cpuPaths['ALUBALU'] = new CPUPath(
-    getDrawComponent(document,'cpuName','ALUBALU'), 'RU[rs2] <->  branch unit', true
-  );
-
-  cpuPaths['ALUDM'] = new CPUPath(
-    getDrawComponent(document,'cpuName','ALUDM'), 'RU[rs2] <->  branch unit', true
-  );
-
-  cpuPaths['ALUWBMUX'] = new CPUPath(
-    getDrawComponent(document,'cpuName','ALUWBMUX'), 'RU[rs2] <->  branch unit', true
-  );
-
-  cpuPaths['ALUBUMUX'] = new CPUPath(
-    getDrawComponent(document,'cpuName','ALUBUMUX'), 'RU[rs2] <->  branch unit', true
-  );
-
-  cpuPaths['WBMUXRU'] = new CPUPath(
-    getDrawComponent(document,'cpuName','WBMUXRU'), 'RU[rs2] <->  branch unit', true
-  );
-
-  cpuPaths['ADD4WBMUX'] = new CPUPath(
-    getDrawComponent(document,'cpuName','ADD4WBMUX'), 'RU[rs2] <->  branch unit', true
-  );
-
-  cpuPaths['ADD4BUMUX'] = new CPUPath(
-    getDrawComponent(document,'cpuName','ADD4BUMUX'), 'RU[rs2] <->  branch unit', true
-  );
-
-  cpuPaths['BUBUMUX'] = new CPUPath(
-    getDrawComponent(document,'cpuName','BUBUMUX'), 'RU[rs2] <->  branch unit' , true
-  );
-
-  cpuPaths['DMWBMUX'] = new CPUPath(
-    getDrawComponent(document,'cpuName','DMWBMUX'), 'RU[rs2] <->  branch unit', true
-  );
-
-  cpuPaths['BUMUXPC'] = new CPUPath(
-    getDrawComponent(document,'cpuName','BUMUXPC'), 'RU[rs2] <->  branch unit', true
-  );
+  cpuComponents['BUMUX'] = new BUMUXView(document);
+  const BUMUX = cpuComponents['BUMUX'];
+  BUMUX.addOutgoingWire(cpuComponents['BUMUXPC']);
 }
 
 function initInstruction() {
@@ -621,6 +1315,14 @@ export function init(doc, window, vscColors){
     tooltip.style.display = "none";
   };
 
+  window.setCallback = (evt, object,method) => {
+    cpuComponents[object][method](evt);
+  };
+
+  window.setCallbackNoEvt = (object,method) => {
+    cpuComponents[object][method]();
+  };
+
   // Same as for the tooltip mechanism. In this case we connect the instruction
   // view with the onmouse* events of the cpu view.
   window.setInstruction = (parts) => {
@@ -630,8 +1332,8 @@ export function init(doc, window, vscColors){
   // Init the different components of the view
   initCanvas();
   initComponents();
-  initPaths();
   initInstruction();
+
 }
 
 function setAttribute(component, attribute, value) {
@@ -760,7 +1462,7 @@ export function pathTypeJ() {
 function parseInstruction(instText) {
   let result = null; 
   try {
-    result = parse(instText, {'startRule': 'Statement'});
+    result = parse(instText, {'startRule': 'Instruction'});
     console.log("Parser result: ", result);
   } catch (error) {
     console.error(error);

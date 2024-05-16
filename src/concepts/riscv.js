@@ -2,8 +2,6 @@
 //
 // https://peggyjs.org/
 
-"use strict";
-
 
 
   var instcounter = 0;
@@ -511,7 +509,7 @@ function peg$parse(input, options) {
   var peg$FAILED = {};
   var peg$source = options.grammarSource;
 
-  var peg$startRuleFunctions = { Start: peg$parseStart };
+  var peg$startRuleFunctions = { Start: peg$parseStart, Instruction: peg$parseInstruction, SourceElement: peg$parseSourceElement };
   var peg$startRuleFunction = peg$parseStart;
 
   var peg$c0 = ":";
@@ -873,6 +871,7 @@ function peg$parse(input, options) {
     ret["Type"] = "SrcInstruction";
     const binEncoding = inst["encoding"]["binEncoding"];
     inst["encoding"]["hexEncoding"] = encodingAsHex(binEncoding);
+    console.log("Instruction rule", ret);
     return ret; 
   };
   var peg$f5 = function(id) {
@@ -5819,8 +5818,14 @@ function peg$parse(input, options) {
   }
 }
 
-module.exports = {
-  StartRules: ["Start"],
-  SyntaxError: peg$SyntaxError,
-  parse: peg$parse
+const peg$allowedStartRules = [
+  "Start",
+  "Instruction",
+  "SourceElement"
+];
+
+export {
+  peg$allowedStartRules as StartRules,
+  peg$SyntaxError as SyntaxError,
+  peg$parse as parse
 };
