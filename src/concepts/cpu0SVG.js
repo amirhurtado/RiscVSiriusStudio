@@ -18,7 +18,6 @@ var cpuPaths = {};
 var pathAnimationStyle = null;
 var instruction = null;
 
-
 const defaultProperties = {
   "enabledView": {
     "fill":   "none",
@@ -94,27 +93,6 @@ function applyCSSProperties(element, properties) {
     //console.log("Applying CSS property ", key);
     element.style[key] = properties[key];
   }
-}
-
-function showTooltip(evt,text) {
-  let tooltip = document.getElementById("tooltip");
-  tooltip.innerHTML = text;
-  tooltip.style.display = "block";
-  tooltip.style.left = evt.pageX + 10 + 'px';
-  tooltip.style.top = evt.pageY + 10 + 'px';
-}
-
-function showTooltipPos(x,y,text) {
-  let tooltip = document.getElementById("tooltip");
-  tooltip.innerHTML = text;
-  tooltip.style.display = "block";
-  tooltip.style.left = x + 10 + 'px';
-  tooltip.style.top = y + 10 + 'px';
-}
-
-function hideTooltip() {
-  let tooltip = document.getElementById("tooltip");
-  tooltip.style.display = "none";
 }
 
 class Tooltip {
@@ -236,6 +214,10 @@ class Node {
     return `<div><b>NOT IMPLEMENTED</b></div>
       NOT implemented<div><b>Current value</b></div>`;
   }
+
+  loadInstruction(parseResult) {
+    console.log("loadIstruction is not implemented!!!");
+  }
 }
 
 class PCView extends Node {
@@ -317,7 +299,7 @@ class IMView extends Node {
   }
 
   instructionInfo() {
-    return `<b>Address</b>`;
+    return `<b>Instruction</b>`;
   }
 
   onMouseMoveInAddressText() {
@@ -328,7 +310,6 @@ class IMView extends Node {
     this.addressTooltip.hide();
   }
 
-  
   onMouseMoveInInstructionText() {
     this.instructionTooltip.show(this.instructionInfo());
   }
@@ -509,7 +490,6 @@ class ALUView {
     this.outGoingWires.forEach((wire) => {wire.setEnabled();});
   }
 
-
   setStyle(style) {
     applyElementProperties(this.path,defaultProperties[style]);
     applyCSSProperties(this.text,textDefaultProperties[style]);
@@ -527,6 +507,10 @@ class ALUView {
   info() {
     return `<div><b>NOT IMPLEMENTED</b></div>
       NOT implemented<div><b>Current value</b></div>`;
+  }
+
+  loadInstruction(parseResult) {
+    console.log("loadIstruction is not implemented!!!");
   }
 }
 
@@ -692,6 +676,10 @@ class Edge {
   info() {
     return `<div><b>PATH</b></div>
             <div>value: NOT IMPLEMENTED </div>`;
+  }
+  
+  loadInstruction(parseResult) {
+    console.log("loadIstruction is not implemented!!!");
   }
 }
 
@@ -1356,7 +1344,6 @@ function initComponents() {
   const WBMUX = cpuComponents['RUDataWrSrcMUX'];
   WBMUX.addOutgoingWire(cpuComponents['WBMUXRU']);
   
-
   cpuComponents['ADD4WBMUX'] = new ADD4WBMUX(document);
   cpuComponents['ADD4BUMUX'] = new ADD4BUMUX(document);
   cpuComponents['ADD4'] = new ADD4View(document);
@@ -1368,6 +1355,7 @@ function initComponents() {
   const BUMUX = cpuComponents['BUMUX'];
   BUMUX.addOutgoingWire(cpuComponents['BUMUXPC']);
 }
+
 
 function initInstruction() {
   instruction = new RInstView(document);
@@ -1391,26 +1379,6 @@ export function init(doc, window, vscColors){
   colors = vscColors;
   pathAnimationStyle = getAnimationStyle();
 
-
-  // Add tooltip behavior. These functions must be part of the window because
-  // the tooltip info is activated for each component. Upon activation it is not
-  // possible to specify a function with the right scope. To fix that, we write
-  // a general function that is called from the specific object wit the
-  // appropriate information.
-
-  window.showTooltip = (evt, text) => {
-    let tooltip = document.getElementById("tooltip");
-    tooltip.innerHTML = text;
-    tooltip.style.display = "block";
-    tooltip.style.left = evt.pageX + 10 + 'px';
-    tooltip.style.top = evt.pageY + 10 + 'px';
-  };
-
-  window.hideTooltip = () => {
-    var tooltip = document.getElementById("tooltip");
-    tooltip.style.display = "none";
-  };
-
   window.setCallback = (evt, object,method) => {
     cpuComponents[object][method](evt);
   };
@@ -1428,9 +1396,7 @@ export function init(doc, window, vscColors){
   // Init the different components of the view
   initCanvas();
   initComponents();
-  initInstruction();
-
-  
+  initInstruction();  
 }
 
 function setAttribute(component, attribute, value) {
@@ -1568,23 +1534,20 @@ function parseInstruction(instText) {
   return result;
 }
 
+
 export function simulateInstruction() {
   console.log("Processing instruction: ");
   const instText = document.getElementById("instText").value;
   if (instText !== "") {
     const result = parseInstruction(instText);
-    switch(result['type']) {
-      case 'R': {
-        instruction = new RInstView();
-        pathTypeR();
-      } break;
-      case 'i': instruction = new IInstView(); break;
-      default : {
-        console.error("There is no view implemented for type: " + result['type']);
-        instruction = null;}
-    }
-    instruction.loadInstruction(result);
-    //const result = instruction.loadInstruction(instText);
+    // Provide all the components with the instrution and the current state of
+    // the CPU. Every coponent should know what to do.
+    Object.entries(cpuComponents).forEach(
+      ([key, value]) => {
+        //console.log(key);
+        value.loadInstruction(result);
+      }
+    );
     console.log(result);
   } else {
     console.log("empty instruction");
