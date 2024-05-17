@@ -117,12 +117,35 @@ function hideTooltip() {
   tooltip.style.display = "none";
 }
 
+class Tooltip {
+  constructor(htmldoc, name) {
+    this.tooltipDC = getDrawComponent(htmldoc, "cpuTooltip", name);
+    this.boxDiv = this.tooltipDC.getElementsByTagName('div')[2];
+    this.boxPath = this.tooltipDC.getElementsByTagName('path')[0];
+  }
+  hide() {
+    applyCSSProperties(this.boxDiv, {"display": "none"});
+    applyElementProperties(this.boxPath, {"visibility":"hidden"});
+  }
+  show(text) {
+    applyCSSProperties(this.boxDiv, {"display": "inline-block"});
+    applyElementProperties(this.boxPath, {"visibility":"visible"});
+    this.boxDiv.innerHTML = text;
+  }
+  setStyle(style, text) {
+    if (style === "selectedView") {
+      this.show(text); 
+    } else {
+      this.hide();
+    }
+  }
+}
 /**
  * Node represents the graphical view of a component in the CPU. Moreover, that
  * component must be a rectangle and must have a text.
  */
 class Node {
-  constructor(htmldoc, name) {
+  constructor(htmldoc, name, tooltipName=null) {
     this.dc = getDrawComponent(htmldoc, 'cpuName', name);
     // TODO: This is weak, is there another way? 
     // The rectangle
@@ -130,11 +153,15 @@ class Node {
     // The text
     this.text = this.dc.getElementsByTagName('div')[2];
     this.textBox = this.text.getBoundingClientRect();
+    // The tooltip
+    this.tooltip = null;
+    if (tooltipName) {
+      this.tooltip = new Tooltip(htmldoc, tooltipName);
+      this.tooltip.hide();
+    }
     // Outgoing wires
     this.outGoingWires = [];
     this.outGoingSelected = false;
-    // Data
-    //this.dataValue = 42;
     // Register events
     setAttribute(this.shape, 'onmousemove', 
       `setCallback(evt, "${name}","onMouseMove");`);
@@ -144,28 +171,34 @@ class Node {
       `setCallback(evt, "${name}","onMouseClick");`);
     //setAttribute(this.text, 'onmousemove', 
     //  `setCallbackNoEvt("${name}","onMouseMoveInText");`);
-    setAttribute(this.shape, 'onmouseout', 
-      `setCallbackNoEvt("${name}","onMouseOutOfText");`);
+    //setAttribute(this.text, 'onmouseout', 
+    //  `setCallbackNoEvt("${name}","onMouseOutOfText");`);
   }
   
   onMouseMove(evt) {
     this.setSelected();
-    showTooltip(evt, this.info());
+    if (this.tooltip) {
+      this.tooltip.show("holaaaa");
+    }
   }
 
   onMouseOut(evt) {
     this.setEnabled();
-    hideTooltip();
+    if (this.tooltip) {
+      this.tooltip.hide();
+    }
   }
 
   onMouseMoveInText() {
+    console.log("class Node ", "onMouseMoveInOfText" );
     this.setSelected();
-    //console.log("Inside text!!! ", this.textBox.left, this.textBox.right);
-    showTooltipPos(this.textBox.left, this.textBox.right, this.info());
   }
   onMouseOutOfText() {
+    console.log("class Node ", "onMouseOutOfText" );
     this.setEnabled();
-    hideTooltip();
+    if (this.tooltip) {
+      this.tooltip.hide();
+    }
   }
 
   onMouseClick() {
@@ -189,7 +222,6 @@ class Node {
     this.outGoingWires.forEach((wire) => {wire.setEnabled();});
   }
 
-
   setStyle(style) {
     applyElementProperties(this.shape,defaultProperties[style]);
     applyCSSProperties(this.text,textDefaultProperties[style]);
@@ -208,36 +240,62 @@ class Node {
 
 class PCView extends Node {
   constructor(htmldoc) {
-    super(htmldoc, 'PC');
+    super(htmldoc, 'PC', 'PCTT');
     // The clock symbol
     this.clockDC = getDrawComponent(htmldoc, 'cpuName', 'PCCLOCK');
     this.clock = this.clockDC.getElementsByTagName("path")[0];
     this.setEnabled();
+    //this.tooltip.hide();
     // Data
     this.dataValue = 42;
   }
   setStyle(style) {
-    applyElementProperties(this.clock, defaultProperties[style]);
     super.setStyle(style);
+    //this.tooltip.setStyle(style, this.info());
+    applyElementProperties(this.clock, defaultProperties[style]);
   }  
   info() {
-    return `<div><b>Program Counter</b></div>
-      Contains the memory address of the instruction that is executed
-      <div><b>Current value</b></div>
-      ${this.dataValue}`;
+  return `<b>PC value:</b>
+          ${this.dataValue}`;
+  }
+  
+  onMouseMove(evt) {
+    super.onMouseMove(evt);
+    this.tooltip.show(this.info());
+  }
+
+  onMouseOut() {
+    this.tooltip.hide();
+    super.onMouseOut();
   }
 
 }
 
 class IMView extends Node {
   constructor(htmldoc) {
-    super(htmldoc, 'IM');
+    super(htmldoc, 'IM', 'IMTT');
+
     // The address text
     const dc = getDrawComponent(htmldoc, 'cpuName', 'IMADDRESSTEXT');
     this.addressText = dc.getElementsByTagName('div')[2];
+    this.addressTooltip = new Tooltip(htmldoc, 'IMTTADDRESS');
+    this.addressTooltip.hide();
+    setAttribute(this.addressText, 'onmousemove', 
+      `setCallbackNoEvt("IM","onMouseMoveInAddressText");`);
+    setAttribute(this.addressText, 'onmouseout', 
+      `setCallbackNoEvt("IM","onMouseOutOfAddressText");`);
+
     //this.addressTextBox = this.addressText.getBoundingClientRect();
     const dc2 = getDrawComponent(htmldoc, 'cpuName', 'IMINSTRUCTIONTEXT');
     this.instructionText = dc2.getElementsByTagName('div')[2];
+    this.instructionTooltip = new Tooltip(htmldoc, 'IMTTINSTRUCTION');
+    this.instructionTooltip.hide();
+    setAttribute(this.instructionText, 'onmousemove', 
+      `setCallbackNoEvt("IM","onMouseMoveInInstructionText");`);
+    setAttribute(this.instructionText, 'onmouseout', 
+      `setCallbackNoEvt("IM","onMouseOutOfInstructionText");`);
+    // Tooltip
+    this.tooltip.hide();
     // Data
     this.dataValue = 42;
   }
@@ -246,12 +304,50 @@ class IMView extends Node {
     applyCSSProperties(this.instructionText,textDefaultProperties[style]);
     super.setStyle(style);
   }  
-  info() {
+
+  info2() {
     return `<div><b>Instruction Memory</b></div>
       Stores the program instructions
       <div><b>Current value</b></div>
       ${this.dataValue}`;
   }
+
+  addressInfo() {
+    return `<b>Address</b>`;
+  }
+
+  instructionInfo() {
+    return `<b>Address</b>`;
+  }
+
+  onMouseMoveInAddressText() {
+    this.addressTooltip.show(this.addressInfo());
+  }
+
+  onMouseOutOfAddressText() {
+    this.addressTooltip.hide();
+  }
+
+  
+  onMouseMoveInInstructionText() {
+    this.instructionTooltip.show(this.instructionInfo());
+  }
+
+  onMouseOutOfInstructionText() {
+    this.instructionTooltip.hide();
+  }
+
+  onMouseMove(evt) {
+    super.onMouseMove();
+    // Do not display tooltip
+    this.tooltip.hide();
+  }
+
+  onMouseOut() {
+    this.tooltip.hide();
+    super.onMouseOut();
+  }
+
 }
 
 class IMMView extends Node {
@@ -1334,6 +1430,7 @@ export function init(doc, window, vscColors){
   initComponents();
   initInstruction();
 
+  
 }
 
 function setAttribute(component, attribute, value) {
