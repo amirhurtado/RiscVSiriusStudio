@@ -7,6 +7,7 @@ import {
 import { defaultProperties, textDefaultProperties } from "./styles.js";
 import { Tooltip } from "./tooltip.js";
 import { Node } from "./Node.js";
+import { Signal } from "./Control.js";
 import {
   BUMUXPC,
   CTADD4,
@@ -74,7 +75,12 @@ export function initComponents(document) {
   IM.addOutgoingWire(cpuComponents["IMIMM"]);
 
   cpuComponents["IMMALUB"] = new IMMALUB(document);
-
+  cpuComponents["SGNIMMSRC"] = new Signal(
+    document,
+    "SGNIMMSRC",
+    "SgnIMMRrcTXT",
+    "SgnIMMSrcPTH"
+  );
   cpuComponents["IMM"] = new IMMView(document);
   const IMM = cpuComponents["IMM"];
   IMM.addOutgoingWire(cpuComponents["IMMALUB"]);
@@ -86,12 +92,24 @@ export function initComponents(document) {
   BU.addOutgoingWire(cpuComponents["BUBUMUX"]);
 
   cpuComponents["ALUAALU"] = new ALUAALU(document);
+  cpuComponents["SGNALUA"] = new Signal(
+    document,
+    "SGNALUA",
+    "SgnALUASrcTXT",
+    "SgnALUASrcPTH"
+  );
 
   cpuComponents["ALUA"] = new ALUAView(document);
   const ALUA = cpuComponents["ALUA"];
   ALUA.addOutgoingWire(cpuComponents["ALUAALU"]);
 
   cpuComponents["ALUBALU"] = new ALUBALU(document);
+  cpuComponents["SGNALUB"] = new Signal(
+    document,
+    "SGNALUB",
+    "SgnALUBSrcTXT",
+    "SgnALUBSrcPTH"
+  );
 
   cpuComponents["ALUB"] = new ALUBView(document);
   const ALUB = cpuComponents["ALUB"];
@@ -100,7 +118,12 @@ export function initComponents(document) {
   cpuComponents["ALUDM"] = new ALUDM(document);
   cpuComponents["ALUWBMUX"] = new ALUWBMUX(document);
   cpuComponents["ALUBUMUX"] = new ALUBUMUX(document);
-
+  cpuComponents["SGNALU"] = new Signal(
+    document,
+    "SGNALU",
+    "SgnALUOPTXT",
+    "SgnALUOPPTH"
+  );
   cpuComponents["ALU"] = new ALUView(document);
   const ALU = cpuComponents["ALU"];
   ALU.addOutgoingWire(cpuComponents["ALUDM"]);
@@ -112,7 +135,12 @@ export function initComponents(document) {
   cpuComponents["RUALUA"] = new RUALUA(document);
   cpuComponents["RUALUB"] = new RUALUB(document);
   cpuComponents["RUDM"] = new RUDM(document);
-
+  cpuComponents["SGNRUWR"] = new Signal(
+    document,
+    "SGNRUWR",
+    "SgnRUWRTXT",
+    "SgnRUWRPTH"
+  );
   cpuComponents["RU"] = new RUView(document);
   const RU = cpuComponents["RU"];
   RU.addOutgoingWire(cpuComponents["RURS1BU"]);
@@ -122,11 +150,29 @@ export function initComponents(document) {
   RU.addOutgoingWire(cpuComponents["RUDM"]);
 
   cpuComponents["DMWBMUX"] = new DMWBMUX(document);
+  cpuComponents["SGNDMWR"] = new Signal(
+    document,
+    "SGNDMWR",
+    "SgnDMWRTXT",
+    "SgnDMWRPTH"
+  );
+  cpuComponents["SGNDMCTRL"] = new Signal(
+    document,
+    "SGNDMCTRL",
+    "SgnDMCTRLTXT",
+    "SgnDMCTRLPTH"
+  );
   cpuComponents["DM"] = new DMView(document);
   const DM = cpuComponents["DM"];
   DM.addOutgoingWire(cpuComponents["DMWBMUX"]);
 
   cpuComponents["WBMUXRU"] = new WBMUXRU(document);
+  cpuComponents["SGNWBMUX"] = new Signal(
+    document,
+    "SGNWBMUX",
+    "SgnWBTXT",
+    "SgnWBPTH"
+  );
   cpuComponents["RUDataWrSrcMUX"] = new RUDataWrSrcMUXView(document);
   const WBMUX = cpuComponents["RUDataWrSrcMUX"];
   WBMUX.addOutgoingWire(cpuComponents["WBMUXRU"]);

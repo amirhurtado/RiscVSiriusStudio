@@ -40,7 +40,7 @@ class CPU {
   }
 
   executeInstruction(inst) {
-    // Provide all the components with the instrution and the current state
+    // Provide all the components with the instruction and the current state
     // of the CPU. Every component should know what to do.
     Object.entries(this.components).forEach(([key, component]) => {
       //console.log(key);
@@ -110,7 +110,7 @@ class InstructionView {
       this.applyProperties(
         // Apply shaded style
         this.typesView[t],
-        { "fill": "#eee8d5", "fill-opacity": 0.2, "stroke-opacity": 0.2 }
+        { fill: "#eee8d5", "fill-opacity": 0.2, "stroke-opacity": 0.2 }
       );
     }
   }
@@ -143,12 +143,12 @@ class InstructionView {
 
   setInstType() {
     const fadeOutProps = {
-      "fill": "#eee8d5",
+      fill: "#eee8d5",
       "fill-opacity": 0.1,
       "stroke-opacity": 0.1,
     };
     const activeProps = {
-      "fill": "#eee8d5",
+      fill: "#eee8d5",
       "fill-opacity": 0.5,
       "stroke-opacity": 0.9,
     };
@@ -190,11 +190,19 @@ class IInstView extends InstructionView {
     const ns = this.baselStyle;
     const hs = this.highlightStyle;
     const htmlString =
-      `<span style="${high.includes("imm12") ? hs : ns}">${this.imm12TextEncoding}</span>-` +
-      `<span style="${high.includes("rs1") ? hs : ns}">${this.rs1Text}</span>-` +
-      `<span style="${high.includes("funct3") ? hs : ns}">${this.funct3Text}</span>-` +
+      `<span style="${high.includes("imm12") ? hs : ns}">${
+        this.imm12TextEncoding
+      }</span>-` +
+      `<span style="${high.includes("rs1") ? hs : ns}">${
+        this.rs1Text
+      }</span>-` +
+      `<span style="${high.includes("funct3") ? hs : ns}">${
+        this.funct3Text
+      }</span>-` +
       `<span style="${high.includes("rd") ? hs : ns}">${this.rdText}</span>-` +
-      `<span style="${high.includes("opcode") ? hs : ns}">${this.opcodeText}</span>`;
+      `<span style="${high.includes("opcode") ? hs : ns}">${
+        this.opcodeText
+      }</span>`;
     this.textBin.innerHTML = htmlString;
     this.setTextImm(high);
   }
@@ -255,11 +263,19 @@ class RInstView extends InstructionView {
 
     this.htmlString =
       f7 +
-      `<span style="${high.includes("rs2") ? hs : ns}">${this.rs2Text}</span>-` +
-      `<span style="${high.includes("rs1") ? hs : ns}">${this.rs1Text}</span>-` +
-      `<span style="${high.includes("funct3") ? hs : ns}">${this.funct3Text}</span>-` +
+      `<span style="${high.includes("rs2") ? hs : ns}">${
+        this.rs2Text
+      }</span>-` +
+      `<span style="${high.includes("rs1") ? hs : ns}">${
+        this.rs1Text
+      }</span>-` +
+      `<span style="${high.includes("funct3") ? hs : ns}">${
+        this.funct3Text
+      }</span>-` +
       `<span style="${high.includes("rd") ? hs : ns}">${this.rdText}</span>-` +
-      `<span style="${high.includes("opcode") ? hs : ns}">${this.opcodeText}</span>`;
+      `<span style="${high.includes("opcode") ? hs : ns}">${
+        this.opcodeText
+      }</span>`;
     this.textBin.innerHTML = this.htmlString;
   }
 
@@ -285,7 +301,7 @@ function getAnimationStyle() {
   const p = g.getElementsByTagName("path")[0];
   const style = p.getAttributeNS(null, "style");
   const strokeDashArray = p.getAttributeNS(null, "stroke-dasharray");
-  return { "style": style, "stroke-dasharray": strokeDashArray };
+  return { style: style, "stroke-dasharray": strokeDashArray };
 }
 
 function initInstruction() {
@@ -296,7 +312,11 @@ function initCanvas() {
   const canvas = document.getElementsByTagName("svg")[0];
   // Make the svg canvas fit the available space
   canvas.setAttributeNS(null, "width", "100%");
-  canvas.setAttributeNS(null, "style", `background-color:${colors["canvasBackground"]};`);
+  canvas.setAttributeNS(
+    null,
+    "style",
+    `background-color:${colors["canvasBackground"]};`
+  );
 }
 
 /*

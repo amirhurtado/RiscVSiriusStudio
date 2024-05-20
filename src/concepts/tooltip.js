@@ -6,7 +6,6 @@ import {
 
 export class Tooltip {
   constructor(htmldoc, name) {
-    console.log("Name: ", name);
     this.tooltipDC = getDrawComponent(htmldoc, "cpuTooltip", name);
     this.boxDiv = this.tooltipDC.getElementsByTagName("div")[2];
     this.boxPath = this.tooltipDC.getElementsByTagName("path")[0];
