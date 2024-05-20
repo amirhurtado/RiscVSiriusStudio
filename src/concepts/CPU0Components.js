@@ -7,7 +7,16 @@ import {
 import { defaultProperties, textDefaultProperties } from "./styles.js";
 import { Tooltip } from "./tooltip.js";
 import { Node } from "./Node.js";
-import { Signal } from "./Control.js";
+import {
+  ALUASgn,
+  ALUBSgn,
+  DMWrSgn,
+  DMCtrlSgn,
+  IMMSrcSgn,
+  ALUOpSgn,
+  RUWrSgn,
+  WBMUXSgn,
+} from "./Control.js";
 import {
   BUMUXPC,
   CTADD4,
@@ -75,7 +84,7 @@ export function initComponents(document) {
   IM.addOutgoingWire(cpuComponents["IMIMM"]);
 
   cpuComponents["IMMALUB"] = new IMMALUB(document);
-  cpuComponents["SGNIMMSRC"] = new Signal(
+  cpuComponents["SGNIMMSRC"] = new IMMSrcSgn(
     document,
     "SGNIMMSRC",
     "SgnIMMRrcTXT",
@@ -92,7 +101,7 @@ export function initComponents(document) {
   BU.addOutgoingWire(cpuComponents["BUBUMUX"]);
 
   cpuComponents["ALUAALU"] = new ALUAALU(document);
-  cpuComponents["SGNALUA"] = new Signal(
+  cpuComponents["SGNALUA"] = new ALUASgn(
     document,
     "SGNALUA",
     "SgnALUASrcTXT",
@@ -104,7 +113,7 @@ export function initComponents(document) {
   ALUA.addOutgoingWire(cpuComponents["ALUAALU"]);
 
   cpuComponents["ALUBALU"] = new ALUBALU(document);
-  cpuComponents["SGNALUB"] = new Signal(
+  cpuComponents["SGNALUB"] = new ALUBSgn(
     document,
     "SGNALUB",
     "SgnALUBSrcTXT",
@@ -118,7 +127,7 @@ export function initComponents(document) {
   cpuComponents["ALUDM"] = new ALUDM(document);
   cpuComponents["ALUWBMUX"] = new ALUWBMUX(document);
   cpuComponents["ALUBUMUX"] = new ALUBUMUX(document);
-  cpuComponents["SGNALU"] = new Signal(
+  cpuComponents["SGNALU"] = new ALUOpSgn(
     document,
     "SGNALU",
     "SgnALUOPTXT",
@@ -135,7 +144,7 @@ export function initComponents(document) {
   cpuComponents["RUALUA"] = new RUALUA(document);
   cpuComponents["RUALUB"] = new RUALUB(document);
   cpuComponents["RUDM"] = new RUDM(document);
-  cpuComponents["SGNRUWR"] = new Signal(
+  cpuComponents["SGNRUWR"] = new RUWrSgn(
     document,
     "SGNRUWR",
     "SgnRUWRTXT",
@@ -150,13 +159,13 @@ export function initComponents(document) {
   RU.addOutgoingWire(cpuComponents["RUDM"]);
 
   cpuComponents["DMWBMUX"] = new DMWBMUX(document);
-  cpuComponents["SGNDMWR"] = new Signal(
+  cpuComponents["SGNDMWR"] = new DMWrSgn(
     document,
     "SGNDMWR",
     "SgnDMWRTXT",
     "SgnDMWRPTH"
   );
-  cpuComponents["SGNDMCTRL"] = new Signal(
+  cpuComponents["SGNDMCTRL"] = new DMCtrlSgn(
     document,
     "SGNDMCTRL",
     "SgnDMCTRLTXT",
@@ -167,7 +176,7 @@ export function initComponents(document) {
   DM.addOutgoingWire(cpuComponents["DMWBMUX"]);
 
   cpuComponents["WBMUXRU"] = new WBMUXRU(document);
-  cpuComponents["SGNWBMUX"] = new Signal(
+  cpuComponents["SGNWBMUX"] = new WBMUXSgn(
     document,
     "SGNWBMUX",
     "SgnWBTXT",

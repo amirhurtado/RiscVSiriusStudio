@@ -6,7 +6,7 @@ import {
 
 import { textDefaultProperties, pathDefaultProperties } from "./styles.js";
 
-export class Signal {
+class Signal {
   constructor(htmldoc, callBackName, textName, pathName) {
     console.log("Here!");
     // The text
@@ -17,12 +17,6 @@ export class Signal {
     const tags = dc.getElementsByTagName("path");
     this.edge = tags[0];
     this.arrow = tags[1];
-
-    this.setDisabled();
-    /*
-    
-    */
-    // The arrow
   }
 
   setStyle(style) {
@@ -41,5 +35,61 @@ export class Signal {
   }
   setSelected() {
     this.setStyle("selectedView");
+  }
+}
+
+export class ALUASgn extends Signal {
+  constructor(htmldoc, callBackName, textName, pathName) {
+    super(htmldoc, callBackName, textName, pathName);
+    this.setDisabled();
+  }
+}
+
+export class ALUBSgn extends Signal {
+  constructor(htmldoc, callBackName, textName, pathName) {
+    super(htmldoc, callBackName, textName, pathName);
+    this.setDisabled();
+  }
+}
+
+export class DMWrSgn extends Signal {
+  constructor(htmldoc, callBackName, textName, pathName) {
+    super(htmldoc, callBackName, textName, pathName);
+    this.setDisabled();
+  }
+}
+
+export class DMCtrlSgn extends Signal {
+  constructor(htmldoc, callBackName, textName, pathName) {
+    super(htmldoc, callBackName, textName, pathName);
+    this.setDisabled();
+  }
+}
+
+export class IMMSrcSgn extends Signal {
+  constructor(htmldoc, callBackName, textName, pathName) {
+    super(htmldoc, callBackName, textName, pathName);
+    this.setDisabled();
+  }
+}
+
+export class ALUOpSgn extends Signal {
+  constructor(htmldoc, callBackName, textName, pathName) {
+    super(htmldoc, callBackName, textName, pathName);
+    this.setDisabled();
+  }
+}
+
+export class RUWrSgn extends Signal {
+  constructor(htmldoc, callBackName, textName, pathName) {
+    super(htmldoc, callBackName, textName, pathName);
+    this.setDisabled();
+  }
+}
+
+export class WBMUXSgn extends Signal {
+  constructor(htmldoc, callBackName, textName, pathName) {
+    super(htmldoc, callBackName, textName, pathName);
+    this.setDisabled();
   }
 }
