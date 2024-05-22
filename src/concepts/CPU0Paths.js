@@ -4,6 +4,7 @@ import {
   applyElementProperties,
   applyCSSProperties,
 } from "./misc.js";
+import { pathDefaultProperties } from "./styles.js";
 import { Edge } from "./Edge.js";
 
 export class BUMUXPC extends Edge {
@@ -310,7 +311,8 @@ export class MuxIC {
     this.disabled = true;
   }
   setEnabled() {
-    applyElementProperties(this.edge, { "stroke-width": 3 });
+    //applyElementProperties(this.edge, { "stroke-width": 3 });
+    applyElementProperties(this.edge, pathDefaultProperties.enabledView);
     this.disabled = false;
   }
 }

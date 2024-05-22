@@ -4,7 +4,10 @@ import {
   applyCSSProperties,
 } from "./misc.js";
 
-import { textDefaultProperties, pathDefaultProperties } from "./styles.js";
+import {
+  signalTextDefaultProperties,
+  pathDefaultProperties,
+} from "./styles.js";
 
 class Signal {
   constructor(htmldoc, callBackName, textName, pathName) {
@@ -20,7 +23,7 @@ class Signal {
   }
 
   setStyle(style) {
-    applyCSSProperties(this.text, textDefaultProperties[style]);
+    applyCSSProperties(this.text, signalTextDefaultProperties[style]);
     applyElementProperties(this.edge, pathDefaultProperties[style]);
     applyElementProperties(this.arrow, pathDefaultProperties[style]);
     const v = pathDefaultProperties[style]["stroke"];
@@ -36,6 +39,10 @@ class Signal {
   setSelected() {
     this.setStyle("selectedView");
   }
+
+  loadInstruction(inst) {
+    console.log("load instruction not implemented");
+  }
 }
 
 export class ALUASgn extends Signal {
@@ -43,12 +50,26 @@ export class ALUASgn extends Signal {
     super(htmldoc, callBackName, textName, pathName);
     this.setDisabled();
   }
+  loadInstruction(inst) {
+    const type = inst.type;
+    if (type === "R") {
+      this.setEnabled();
+    } else {
+    }
+  }
 }
 
 export class ALUBSgn extends Signal {
   constructor(htmldoc, callBackName, textName, pathName) {
     super(htmldoc, callBackName, textName, pathName);
     this.setDisabled();
+  }
+  loadInstruction(inst) {
+    const type = inst.type;
+    if (type === "R") {
+      this.setEnabled();
+    } else {
+    }
   }
 }
 
@@ -78,6 +99,13 @@ export class ALUOpSgn extends Signal {
     super(htmldoc, callBackName, textName, pathName);
     this.setDisabled();
   }
+  loadInstruction(inst) {
+    const type = inst.type;
+    if (type === "R") {
+      this.setEnabled();
+    } else {
+    }
+  }
 }
 
 export class RUWrSgn extends Signal {
@@ -85,11 +113,25 @@ export class RUWrSgn extends Signal {
     super(htmldoc, callBackName, textName, pathName);
     this.setDisabled();
   }
+  loadInstruction(inst) {
+    const type = inst.type;
+    if (type === "R") {
+      this.setEnabled();
+    } else {
+    }
+  }
 }
 
 export class WBMUXSgn extends Signal {
   constructor(htmldoc, callBackName, textName, pathName) {
     super(htmldoc, callBackName, textName, pathName);
     this.setDisabled();
+  }
+  loadInstruction(inst) {
+    const type = inst.type;
+    if (type === "R") {
+      this.setEnabled();
+    } else {
+    }
   }
 }
