@@ -30,53 +30,43 @@ const hideTooltip = () => {
   tooltip.style.display = "none";
 };
 
-let mOver = function (name, compL, compProp, textL, textProp, e) {
+function applyProps(compL, compProp, textL, textProp) {
+  applyElementProperties(compL, properties[compProp]);
+  applyCSSProperties(textL, properties[textProp]);
+}
+
+function evt(name, compL, compProp, textL, textProp, e) {
   const state = window.cpuElements.state[name];
   if (state["enabled"]) {
-    applyElementProperties(compL, properties[compProp]);
-    applyCSSProperties(textL, properties[textProp]);
+    applyProps(compL, compProp, textL, textProp);
   }
-};
+}
 
-let mOverCLK = _.curry(mOver);
+let onEvt = _.curry(evt);
+
+function onEvtText(name, textL, textProp) {
+  return onEvt(name, [], "", textL, textProp);
+}
 
 export function CLK(window, document, element) {
-  // Reference the UI elements
   const rect = element.getElementsByTagName("rect")[0];
   const clk = window.cpuElements.CLKCLK.getElementsByTagName("path")[0];
   const text = element.getElementsByTagName("div")[2];
 
   // Set initialization style
-  applyElementProperties([rect, clk], properties.disabledShapeView);
-  applyCSSProperties([text], properties.disabledText);
+  applyProps([rect, clk], "disabledShapeView", [text], "disabledText");
   // Add event listeners
-  // element.addEventListener("mouseover", (e) => {
-  //   const state = window.cpuElements.state.CLK;
-  //   if (state.enabled) {
-  //     applyElementProperties([rect, clk], properties.selectedShapeView);
-  //     applyCSSProperties([text], properties.selectedText);
-  //   }
-  // });
-  // element.addEventListener("mouseout", (e) => {
-  //   // CLK is enabled on all instructions
-  //   const state = window.cpuElements.state.CLK;
-  //   if (state.enabled) {
-  //     applyElementProperties([rect, clk], properties.enabledShapeView);
-  //     applyCSSProperties([text], properties.enabledText);
-  //   }
-  // });
   element.addEventListener(
     "mouseover",
-    mOverCLK("CLK", [rect, clk], "selectedShapeView", [text], "selectedText")
+    onEvt("CLK", [rect, clk], "selectedShapeView", [text], "selectedText")
   );
   element.addEventListener(
     "mouseout",
-    mOverCLK("CLK", [rect, clk], "enabledShapeView", [text], "enabledText")
+    onEvt("CLK", [rect, clk], "enabledShapeView", [text], "enabledText")
   );
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // PC is enabled on all instructions
-    applyElementProperties([rect, clk], properties.enabledShapeView);
-    applyCSSProperties([text], properties.enabledText);
+    applyProps([rect, clk], "enabledShapeView", [text], "enabledText");
     window.cpuElements.state.CLK.enabled = true;
     console.log("[CLK] new instruction: ", " enabling.");
   });
@@ -89,8 +79,7 @@ export function PC(window, document, element) {
   const clk = window.cpuElements.PCCLOCK.getElementsByTagName("path")[0];
 
   // Set initialization style
-  applyElementProperties([rect, clk], properties.disabledShapeView);
-  applyCSSProperties([text], properties.disabledText);
+  applyProps([rect, clk], "disabledShapeView", [text], "disabledText");
   // Add event listeners
   element.addEventListener("mousemove", (e) => {
     const state = window.cpuElements.state.PC;
@@ -99,30 +88,20 @@ export function PC(window, document, element) {
       showTooltip(e, `<b>Current address:</b><div>${instParsed.inst}</div>`);
     }
   });
-  element.addEventListener("mouseover", (e) => {
-    const state = window.cpuElements.state.PC;
-    if (state.enabled) {
-      applyElementProperties([rect, clk], properties.selectedShapeView);
-      applyCSSProperties([text], properties.selectedText);
-    }
-  });
-  element.addEventListener("mouseout", (e) => {
-    const state = window.cpuElements.state.PC;
-    if (state.enabled) {
-      applyElementProperties([rect, clk], properties.enabledShapeView);
-      applyCSSProperties([text], properties.enabledText);
-      hideTooltip();
-    }
-  });
+  element.addEventListener(
+    "mouseover",
+    onEvt("PC", [rect, clk], "selectedShapeView", [text], "selectedText")
+  );
+  element.addEventListener(
+    "mouseout",
+    onEvt("PC", [rect, clk], "enabledShapeView", [text], "enabledText")
+  );
   // Every new instruction the following function is executed.
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    //const instSrc = window.cpuData.instruction;
-    //const instParsed = window.cpuData.parseResult;
-    applyElementProperties([rect, clk], properties.enabledShapeView);
-    applyCSSProperties([text], properties.enabledText);
+    applyProps([rect, clk], "enabledShapeView", [text], "enabledText");
     // PC is enabled on all instructions
-    console.log("[PC] new instruction: ", " enabling.");
     window.cpuElements.state.PC.enabled = true;
+    console.log("[PC] new instruction: ", " enabling.");
   });
 }
 
@@ -132,26 +111,18 @@ export function ADD4(window, document, element) {
   const text = element.getElementsByTagName("div")[2];
 
   // Set initialization style
-  applyElementProperties([rect], properties.disabledShapeView);
-  applyCSSProperties([text], properties.disabledText);
+  applyProps([rect], "disabledShapeView", [text], "disabledText");
   // Add event listeners
-  element.addEventListener("mouseover", () => {
-    const state = window.cpuElements.state.ADD4;
-    if (state.enabled) {
-      applyElementProperties([rect], properties.selectedShapeView);
-      applyCSSProperties([text], properties.selectedText);
-    }
-  });
-  element.addEventListener("pointerleave", () => {
-    const state = window.cpuElements.state.ADD4;
-    if (state.enabled) {
-      applyElementProperties([rect], properties.enabledShapeView);
-      applyCSSProperties([text], properties.enabledText);
-    }
-  });
+  element.addEventListener(
+    "mouseover",
+    onEvt("ADD4", [rect], "selectedShapeView", [text], "selectedText")
+  );
+  element.addEventListener(
+    "pointerleave",
+    onEvt("ADD4", [rect], "enabledShapeView", [text], "enabledText")
+  );
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    applyElementProperties([rect], properties.enabledShapeView);
-    applyCSSProperties([text], properties.enabledText);
+    applyProps([rect], "enabledShapeView", [text], "enabledText");
     // ADD4 is enabled on all instructions
     window.cpuElements.state.ADD4.enabled = true;
     console.log("[ADD4] new instruction: ", " enabling.");
@@ -164,14 +135,15 @@ export function IM(window, document, element) {
   const text = element.getElementsByTagName("div")[2];
   const addressText =
     window.cpuElements.IMADDRESSTEXT.getElementsByTagName("div")[2];
-  const instructionText =
+  const instText =
     window.cpuElements.IMINSTRUCTIONTEXT.getElementsByTagName("div")[2];
 
   // Initialization style
-  applyElementProperties([rect], properties.disabledShapeView);
-  applyCSSProperties(
-    [text, addressText, instructionText],
-    properties.disabledText
+  applyProps(
+    [rect],
+    "disabledShapeView",
+    [text, addressText, instText],
+    "disabledText"
   );
 
   // Text: Address
@@ -182,54 +154,44 @@ export function IM(window, document, element) {
       showTooltip(e, `<b>Current address:</b><div>${instParsed.inst}</div>`);
     }
   });
-  addressText.addEventListener("mouseover", () => {
-    const state = window.cpuElements.state.IM;
-    if (state.enabled) {
-      applyElementProperties([rect], properties.selectedShapeView);
-      applyCSSProperties([text, addressText], properties.selectedText);
-    }
-  });
-  addressText.addEventListener("mouseout", () => {
-    const state = window.cpuElements.state.IM;
-    if (state.enabled) {
-      applyCSSProperties([addressText], properties.enabledText);
-      hideTooltip();
-    }
-  });
+  addressText.addEventListener(
+    "mouseover",
+    onEvt(
+      "IM",
+      [rect],
+      "selectedShapeView",
+      [text, addressText],
+      "selectedText"
+    )
+  );
+  addressText.addEventListener(
+    "mouseout",
+    onEvtText("IM", [addressText], "enabledText")
+  );
   // Text: instruction
-  instructionText.addEventListener("mouseover", () => {
-    const state = window.cpuElements.state.IM;
-    if (state.enabled) {
-      applyElementProperties([rect], properties.selectedShapeView);
-      applyCSSProperties([text, instructionText], properties.selectedText);
-    }
-  });
-  instructionText.addEventListener("mouseout", () => {
-    const state = window.cpuElements.state.IM;
-    if (state.enabled) {
-      applyCSSProperties([instructionText], properties.enabledText);
-    }
-  });
+  instText.addEventListener(
+    "mouseover",
+    onEvt("IM", [rect], "selectedShapeView", [text, instText], "selectedText")
+  );
+  instText.addEventListener(
+    "mouseout",
+    onEvtText("IM", [instText], "enabledText")
+  );
   // Main component
-  element.addEventListener("mouseover", () => {
-    const state = window.cpuElements.state.IM;
-    if (state.enabled) {
-      applyElementProperties([rect], properties.selectedShapeView);
-      applyCSSProperties([text], properties.selectedText);
-    }
-  });
-  element.addEventListener("mouseout", () => {
-    const state = window.cpuElements.state.IM;
-    if (state.enabled) {
-      applyElementProperties([rect], properties.enabledShapeView);
-      applyCSSProperties([text], properties.enabledText);
-    }
-  });
+  element.addEventListener(
+    "mouseover",
+    onEvt("IM", [rect], "selectedShapeView", [text], "selectedText")
+  );
+  element.addEventListener(
+    "mouseout",
+    onEvt("IM", [rect], "enabledShapeView", [text], "enabledText")
+  );
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    applyElementProperties([rect], properties.enabledShapeView);
-    applyCSSProperties(
-      [text, addressText, instructionText],
-      properties.enabledText
+    applyProps(
+      [rect],
+      "enabledShapeView",
+      [text, addressText, instText],
+      "enabledText"
     );
     // IM is enabled on all instructions
     window.cpuElements.state.IM.enabled = true;
@@ -244,27 +206,20 @@ export function CU(window, document, element) {
   const text = element.getElementsByTagName("div")[2];
 
   // Initialization style
-  applyElementProperties([rect, arrow], properties.disabledShapeView);
-  applyCSSProperties([text], properties.disabledText);
+  applyProps([rect, arrow], "disabledShapeView", [text], "disabledText");
 
   // Register listeners
-  element.addEventListener("mouseover", () => {
-    const state = window.cpuElements.state.IM;
-    if (state.enabled) {
-      applyElementProperties([rect, arrow], properties.selectedShapeView);
-      applyCSSProperties([text], properties.selectedText);
-    }
-  });
-  element.addEventListener("mouseout", () => {
-    const state = window.cpuElements.state.IM;
-    if (state.enabled) {
-      applyElementProperties([rect, arrow], properties.enabledShapeView);
-      applyCSSProperties([text], properties.enabledText);
-    }
-  });
+  element.addEventListener(
+    "mouseover",
+    onEvt("IM", [rect, arrow], "selectedShapeView", [text], "selectedText")
+  );
+
+  element.addEventListener(
+    "mouseout",
+    onEvt("IM", [rect, arrow], "enabledShapeView", [text], "enabledText")
+  );
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    applyElementProperties([rect, arrow], properties.enabledShapeView);
-    applyCSSProperties([text], properties.enabledText);
+    applyProps([rect, arrow], "enabledShapeView", [text], "enabledText");
     // CU is enabled on all instructions
     window.cpuElements.state.CU.enabled = true;
     console.log("[CU] new instruction: ", " enabling.");
@@ -288,157 +243,91 @@ export function RU(window, document, element) {
   const rd2Text =
     window.cpuElements.RUTEXTOUTRD2.getElementsByTagName("div")[2];
 
+  let onEvtSelectedInc = function (inc) {
+    return onEvt(
+      "RU",
+      [rect, clk],
+      "selectedShapeView",
+      [text].concat(inc),
+      "selectedText"
+    );
+  };
   // Initialization style
-  applyElementProperties([rect, clk], properties.disabledShapeView);
-  applyCSSProperties(
+  applyProps(
+    [rect, clk],
+    "disabledShapeView",
     [text, rs1Text, rs2Text, rdText, datawrText, ruwrText, rd1Text, rd2Text],
-    properties.disabledText
+    "disabledText"
   );
   // Register listeners
   // RS1Text
-  rs1Text.addEventListener("mouseover", () => {
-    const state = window.cpuElements.state.RU;
-    if (state.enabled) {
-      applyElementProperties([rect, clk], properties.selectedShapeView);
-      applyCSSProperties([text, rs1Text], properties.selectedText);
-    }
-  });
-  rs1Text.addEventListener("mouseout", () => {
-    const state = window.cpuElements.state.RU;
-    if (state.enabled) {
-      applyCSSProperties([rs1Text], properties.enabledText);
-    }
-  });
+  rs1Text.addEventListener("mouseover", onEvtSelectedInc([rs1Text]));
+  rs1Text.addEventListener(
+    "mouseout",
+    onEvtText("RU", [rs1Text], "enabledText")
+  );
   // RS2Text
-  rs2Text.addEventListener("mouseover", () => {
-    const state = window.cpuElements.state.RU;
-    if (state.enabled) {
-      applyElementProperties([rect, clk], properties.selectedShapeView);
-      applyCSSProperties([text, rs2Text], properties.selectedText);
-    }
-  });
-  rs2Text.addEventListener("mouseout", () => {
-    const state = window.cpuElements.state.RU;
-    if (state.enabled) {
-      applyCSSProperties([rs2Text], properties.enabledText);
-    }
-  });
+  rs2Text.addEventListener("mouseover", onEvtSelectedInc([rs2Text]));
+  rs2Text.addEventListener(
+    "mouseout",
+    onEvtText("RU", [rs2Text], "enabledText")
+  );
   // RDText
-  rdText.addEventListener("mouseover", () => {
-    const state = window.cpuElements.state.RU;
-    if (state.enabled) {
-      applyElementProperties([rect, clk], properties.selectedShapeView);
-      applyCSSProperties([text, rdText], properties.selectedText);
-    }
-  });
-  rdText.addEventListener("mouseout", () => {
-    const state = window.cpuElements.state.RU;
-    if (state.enabled) {
-      applyCSSProperties([rdText], properties.enabledText);
-    }
-  });
+  rdText.addEventListener("mouseover", onEvtSelectedInc([rdText]));
+  rdText.addEventListener("mouseout", onEvtText("RU", [rdText], "enabledText"));
   // DataWr Text
-  datawrText.addEventListener("mouseover", () => {
-    const state = window.cpuElements.state.RU;
-    if (state.enabled) {
-      applyElementProperties([rect, clk], properties.selectedShapeView);
-      applyCSSProperties([text, datawrText], properties.selectedText);
-    }
-  });
-  datawrText.addEventListener("mouseout", () => {
-    const state = window.cpuElements.state.RU;
-    if (state.enabled) {
-      applyCSSProperties([datawrText], properties.enabledText);
-    }
-  });
+  datawrText.addEventListener("mouseover", onEvtSelectedInc([datawrText]));
+  datawrText.addEventListener(
+    "mouseout",
+    onEvtText("RU", [datawrText], "enabledText")
+  );
   // RUWR Text
-  ruwrText.addEventListener("mouseover", () => {
-    const state = window.cpuElements.state.RU;
-    if (state.enabled) {
-      applyElementProperties([rect, clk], properties.selectedShapeView);
-      applyCSSProperties([text, ruwrText], properties.selectedText);
-    }
-  });
-  ruwrText.addEventListener("mouseout", () => {
-    const state = window.cpuElements.state.RU;
-    if (state.enabled) {
-      applyCSSProperties([ruwrText], properties.enabledText);
-    }
-  });
+  ruwrText.addEventListener("mouseover", onEvtSelectedInc([ruwrText]));
+  ruwrText.addEventListener(
+    "mouseout",
+    onEvtText("RU", [ruwrText], "enabledText")
+  );
   // R1 Data Text
-  rd1Text.addEventListener("mouseover", () => {
-    const state = window.cpuElements.state.RU;
-    if (state.enabled) {
-      applyElementProperties([rect, clk], properties.selectedShapeView);
-      applyCSSProperties([text, rd1Text], properties.selectedText);
-    }
-  });
-  rd1Text.addEventListener("mouseout", () => {
-    const state = window.cpuElements.state.RU;
-    if (state.enabled) {
-      applyCSSProperties([rd1Text], properties.enabledText);
-    }
-  });
+  rd1Text.addEventListener("mouseover", onEvtSelectedInc([rd1Text]));
+  rd1Text.addEventListener(
+    "mouseout",
+    onEvtText("RU", [rd1Text], "enabledText")
+  );
   // R2 Data Text
-  rd2Text.addEventListener("mouseover", () => {
-    const state = window.cpuElements.state.RU;
-    if (state.enabled) {
-      applyElementProperties([rect, clk], properties.selectedShapeView);
-      applyCSSProperties([text, rd2Text], properties.selectedText);
-    }
-  });
-  rd2Text.addEventListener("mouseout", () => {
-    const state = window.cpuElements.state.RU;
-    if (state.enabled) {
-      applyCSSProperties([rd2Text], properties.enabledText);
-    }
-  });
-  // Main component
-  element.addEventListener("mouseover", () => {
-    const state = window.cpuElements.state.IM;
-    if (state.enabled) {
-      applyElementProperties([rect, clk], properties.selectedShapeView);
-      applyCSSProperties(
-        [
-          text,
-          rs1Text,
-          rs2Text,
-          rdText,
-          datawrText,
-          ruwrText,
-          rd1Text,
-          rd2Text,
-        ],
-        properties.selectedText
-      );
-    }
-  });
-  element.addEventListener("mouseout", () => {
-    const state = window.cpuElements.state.IM;
-    if (state.enabled) {
-      applyElementProperties([rect, clk], properties.enabledShapeView);
-      applyCSSProperties(
-        [
-          text,
-          rs1Text,
-          rs2Text,
-          rdText,
-          datawrText,
-          ruwrText,
-          rd1Text,
-          rd2Text,
-        ],
-        properties.enabledText
-      );
-    }
-  });
+  rd2Text.addEventListener("mouseover", onEvtSelectedInc([rd2Text]));
+  rd2Text.addEventListener(
+    "mouseout",
+    onEvtText("RU", [rd2Text], "enabledText")
+  );
 
+  // Main component
+  element.addEventListener(
+    "mouseover",
+    onEvt(
+      "RU",
+      [rect, clk],
+      "selectedShapeView",
+      [text, rs1Text, rs2Text, rdText, datawrText, ruwrText, rd1Text, rd2Text],
+      "selectedText"
+    )
+  );
+  element.addEventListener(
+    "mouseout",
+    onEvt(
+      "RU",
+      [rect, clk],
+      "enabledShapeView",
+      [text, rs1Text, rs2Text, rdText, datawrText, ruwrText, rd1Text, rd2Text],
+      "enabledText"
+    )
+  );
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // Registers unit available for all instructions
-    applyElementProperties([rect, clk], properties.enabledShapeView);
-    applyCSSProperties(
+    applyProps(
+      [rect, clk],
+      "enabledShapeView",
       [text, rs1Text, rs2Text, rdText, datawrText, ruwrText, rd1Text, rd2Text],
-      properties.enabledText
+      "enabledText"
     );
     window.cpuElements.state.RU.enabled = true;
     console.log("[RU] new instruction: ", " enabling.");
@@ -449,47 +338,26 @@ export function IMM(window, document, element) {
   // Reference the UI elements
   const rect = element.getElementsByTagName("rect")[0];
   const text = element.getElementsByTagName("div")[2];
-  const viewState = (state) => {
-    switch (state) {
-      case "disabled":
-        applyElementProperties([rect], properties.disabledShapeView);
-        applyCSSProperties([text], properties.disabledText);
-        break;
-      case "enabled":
-        applyElementProperties([rect], properties.enabledShapeView);
-        applyCSSProperties([text], properties.enabledText);
-        break;
-      case "selected":
-        applyElementProperties([rect], properties.selectedShapeView);
-        applyCSSProperties([text], properties.selectedText);
-        break;
-    }
-  };
   // Initialization style
-  viewState("disabled");
+  applyProps([rect], "disabledShapeView", [text], "disabledText");
   // Register listeners
-  element.addEventListener("mouseover", () => {
-    const state = window.cpuElements.state.IMM;
-    if (state.enabled) {
-      viewState("selected");
-    }
-  });
-  element.addEventListener("mouseout", () => {
-    const state = window.cpuElements.state.IMM;
-    if (state.enabled) {
-      viewState("enabled");
-    }
-  });
-
+  element.addEventListener(
+    "mouseover",
+    onEvt("IMM", [rect], "selectedShapeView", [text], "selectedText")
+  );
+  element.addEventListener(
+    "mouseout",
+    onEvt("IMM", [rect], "enabledShapeView", [text], "enabledText")
+  );
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // Immediate unit available for all but R instructions
     const parseResult = window.cpuData.parseResult;
     if (parseResult.type.toUpperCase() !== "R") {
-      viewState("enabled");
+      applyProps([rect], "enabledShapeView", [text], "enabledText");
       window.cpuElements.state.IMM.enabled = true;
       console.log("[IMM] new instruction: ", " enabling.");
     } else {
-      viewState("disabled");
+      applyProps([rect], "disabledShapeView", [text], "disabledText");
     }
   });
 }
@@ -508,15 +376,18 @@ export function ALUA(window, document, element) {
     return inst === "R" || inst === "I" || inst === "S";
   };
   // Initialization style
-  applyElementProperties([rect, path1, path0], properties.disabledShapeView);
-  applyCSSProperties([text, text0, text1], properties.disabledText);
+  applyProps(
+    [rect, path1, path0],
+    "disabledShapeView",
+    [text, text0, text1],
+    "disabledText"
+  );
   // Main component
   element.addEventListener("mouseover", () => {
     const state = window.cpuElements.state.ALUA;
     if (state.enabled) {
+      applyProps([rect], "selectedShapeView", [text], "selectedText");
       const instType = window.cpuData.parseResult.type.toUpperCase();
-      applyElementProperties([rect], properties.selectedShapeView);
-      applyCSSProperties([text], properties.selectedText);
       if (path0Visible(instType)) {
         applyElementProperties([path0], properties.selectedShapeView);
         applyElementProperties([path1], properties.hiddenShapeView);
@@ -530,8 +401,7 @@ export function ALUA(window, document, element) {
     const state = window.cpuElements.state.ALUA;
     if (state.enabled) {
       const instType = window.cpuData.parseResult.type.toUpperCase();
-      applyElementProperties([rect], properties.enabledShapeView);
-      applyCSSProperties([text], properties.enabledText);
+      applyProps([rect], "enabledShapeView", [text], "enabledText");
       if (path0Visible(instType)) {
         applyElementProperties([path0], properties.enabledShapeView);
         applyElementProperties([path1], properties.hiddenShapeView);
@@ -546,8 +416,7 @@ export function ALUA(window, document, element) {
     const instType = window.cpuData.parseResult.type.toUpperCase();
     window.cpuElements.state.ALUA.enabled = instType !== "U";
     if (window.cpuElements.state.ALUA.enabled) {
-      applyElementProperties([rect], properties.enabledShapeView);
-      applyCSSProperties([text], properties.enabledText);
+      applyProps([rect], "enabledShapeView", [text], "enabledText");
       if (path0Visible(instType)) {
         applyElementProperties([path0], properties.enabledShapeView);
         applyElementProperties([path1], properties.hiddenShapeView);
@@ -555,6 +424,13 @@ export function ALUA(window, document, element) {
         applyElementProperties([path1], properties.enabledShapeView);
         applyElementProperties([path0], properties.hiddenShapeView);
       }
+    } else {
+      applyProps(
+        [rect, path1, path0],
+        "disabledShapeView",
+        [text, text0, text1],
+        "disabledText"
+      );
     }
     console.log("[ALUA] new instruction: ", path0Visible(instType));
   });
@@ -574,15 +450,18 @@ export function ALUB(window, document, element) {
     return inst === "R" || inst === "B" || inst === "J";
   };
   // Initialization style
-  applyElementProperties([rect, path1, path0], properties.disabledShapeView);
-  applyCSSProperties([text, text0, text1], properties.disabledText);
+  applyProps(
+    [rect, path1, path0],
+    "disabledShapeView",
+    [text, text0, text1],
+    "disabledText"
+  );
   // Main component
   element.addEventListener("mouseover", () => {
     const state = window.cpuElements.state.ALUB;
     if (state.enabled) {
       const instType = window.cpuData.parseResult.type.toUpperCase();
-      applyElementProperties([rect], properties.selectedShapeView);
-      applyCSSProperties([text], properties.selectedText);
+      applyProps([rect], "selectedShapeView", [text], "selectedText");
       if (path0Visible(instType)) {
         applyElementProperties([path0], properties.selectedShapeView);
         applyElementProperties([path1], properties.hiddenShapeView);
@@ -596,8 +475,7 @@ export function ALUB(window, document, element) {
     const state = window.cpuElements.state.ALUA;
     if (state.enabled) {
       const instType = window.cpuData.parseResult.type.toUpperCase();
-      applyElementProperties([rect], properties.enabledShapeView);
-      applyCSSProperties([text], properties.enabledText);
+      applyProps([rect], "enabledShapeView", [text], "enabledText");
       if (path0Visible(instType)) {
         applyElementProperties([path0], properties.enabledShapeView);
         applyElementProperties([path1], properties.hiddenShapeView);
@@ -612,8 +490,7 @@ export function ALUB(window, document, element) {
     // Always enabled for all instructions
     window.cpuElements.state.ALUB.enabled = true;
     const instType = window.cpuData.parseResult.type.toUpperCase();
-    applyElementProperties([rect], properties.enabledShapeView);
-    applyCSSProperties([text], properties.enabledText);
+    applyProps([rect], "enabledShapeView", [text], "enabledText");
     if (path0Visible(instType)) {
       applyElementProperties([path0], properties.enabledShapeView);
       applyElementProperties([path1], properties.hiddenShapeView);
@@ -634,86 +511,60 @@ export function ALU(window, document, element) {
   const textRes = window.cpuElements.ALUTEXTRES.getElementsByTagName("div")[2];
 
   // Initialization style
-  applyElementProperties([rect], properties.disabledShapeView);
-  applyCSSProperties([text, textA, textB, textRes], properties.disabledText);
+  applyProps(
+    [rect],
+    "disabledShapeView",
+    [text, textA, textB, textRes],
+    "disabledText"
+  );
 
   // Text: A
-  textA.addEventListener("mouseover", () => {
-    const state = window.cpuElements.state.ALU;
-    if (state.enabled) {
-      applyElementProperties([rect], properties.selectedShapeView);
-      applyCSSProperties([textA, text], properties.selectedText);
-    }
-  });
-  textA.addEventListener("mouseout", () => {
-    const state = window.cpuElements.state.ALU;
-    if (state.enabled) {
-      applyCSSProperties([textA], properties.enabledText);
-    }
-  });
+  textA.addEventListener(
+    "mouseover",
+    onEvt("ALU", [rect], "selectedShapeView", [textA, text], "selectedText")
+  );
+  textA.addEventListener("mouseout", onEvtText("ALU", [textA], "enabledText"));
   // Text: B
-  textB.addEventListener("mouseover", () => {
-    const state = window.cpuElements.state.ALU;
-    if (state.enabled) {
-      applyElementProperties([rect], properties.selectedShapeView);
-      applyCSSProperties([textB, text], properties.selectedText);
-    }
-  });
-  textB.addEventListener("mouseout", () => {
-    const state = window.cpuElements.state.ALU;
-    if (state.enabled) {
-      applyCSSProperties([textB], properties.enabledText);
-    }
-  });
+  textB.addEventListener(
+    "mouseover",
+    onEvt("ALU", [rect], "selectedShapeView", [textB, text], "selectedText")
+  );
+  textB.addEventListener("mouseout", onEvtText("ALU", [textB], "enabledText"));
   // Text: ALURes
-  textRes.addEventListener("mouseover", () => {
-    const state = window.cpuElements.state.ALU;
-    if (state.enabled) {
-      applyElementProperties([rect], properties.selectedShapeView);
-      applyCSSProperties([textRes, text], properties.selectedText);
-    }
-  });
-  textRes.addEventListener("mouseout", () => {
-    const state = window.cpuElements.state.ALU;
-    if (state.enabled) {
-      applyCSSProperties([textRes], properties.enabledText);
-    }
-  });
+  textRes.addEventListener(
+    "mouseover",
+    onEvt("ALU", [rect], "selectedShapeView", [textRes, text], "selectedText")
+  );
+  textRes.addEventListener(
+    "mouseout",
+    onEvtText("ALU", [textRes], "enabledText")
+  );
   // Main component
-  element.addEventListener("mouseover", () => {
-    const state = window.cpuElements.state.ALU;
-    if (state.enabled) {
-      applyElementProperties([rect], properties.selectedShapeView);
-      applyCSSProperties([text], properties.selectedText);
-    }
-  });
-  element.addEventListener("mouseout", () => {
-    const state = window.cpuElements.state.ALU;
-    if (state.enabled) {
-      applyElementProperties([rect], properties.enabledShapeView);
-      applyCSSProperties([text], properties.enabledText);
-    }
-  });
-  // Text: ALU
-  text.addEventListener("mouseover", () => {
-    const state = window.cpuElements.state.ALU;
-    if (state.enabled) {
-      applyElementProperties([rect], properties.selectedShapeView);
-      applyCSSProperties([text], properties.selectedText);
-    }
-  });
-  text.addEventListener("mouseout", () => {
-    const state = window.cpuElements.state.ALU;
-    if (state.enabled) {
-      applyCSSProperties([text], properties.enabledText);
-    }
-  });
+  element.addEventListener(
+    "mouseover",
+    onEvt(
+      "ALU",
+      [rect],
+      "selectedShapeView",
+      [textA, textB, textRes, text],
+      "selectedText"
+    )
+  );
+  element.addEventListener(
+    "mouseout",
+    onEvt(
+      "ALU",
+      [rect],
+      "enabledShapeView",
+      [textA, textB, textRes, text],
+      "enabledText"
+    )
+  );
 
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // !TODO: Enabled for all components?
     window.cpuElements.state.ALU.enabled = true;
-    applyElementProperties([rect], properties.enabledShapeView);
-    applyCSSProperties([text], properties.enabledText);
+    applyProps([rect], "enabledShapeView", [text], "enabledText");
     // IM is enabled on all instructions
     console.log("[IM] new instruction: ", " enabling.");
   });
@@ -723,42 +574,23 @@ export function BU(window, document, element) {
   // Reference the UI elements
   const rect = element.getElementsByTagName("rect")[0];
   const text = element.getElementsByTagName("div")[2];
-  const viewState = (state) => {
-    switch (state) {
-      case "disabled":
-        applyElementProperties([rect], properties.disabledShapeView);
-        applyCSSProperties([text], properties.disabledText);
-        break;
-      case "enabled":
-        applyElementProperties([rect], properties.enabledShapeView);
-        applyCSSProperties([text], properties.enabledText);
-        break;
-      case "selected":
-        applyElementProperties([rect], properties.selectedShapeView);
-        applyCSSProperties([text], properties.selectedText);
-        break;
-    }
-  };
+
   // Initialization style
-  viewState("disabled");
+  applyProps([rect], "disabledShapeView", [text], "disabledText");
   // Register listeners
-  element.addEventListener("mouseover", () => {
-    const state = window.cpuElements.state.BU;
-    if (state.enabled) {
-      viewState("selected");
-    }
-  });
-  element.addEventListener("mouseout", () => {
-    const state = window.cpuElements.state.BU;
-    if (state.enabled) {
-      viewState("enabled");
-    }
-  });
+  element.addEventListener(
+    "mouseover",
+    onEvt("BU", [rect], "selectedShapeView", [text], "selectedText")
+  );
+  element.addEventListener(
+    "mouseout",
+    onEvt("BU", [rect], "enabledShapeView", [text], "enabledText")
+  );
 
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // Branch unit is always enabled as it controls NextPCSrc. When in a branch
     // instruction its inputs coming from the registers will be enabled.
-    viewState("enabled");
+    applyProps([rect], "enabledShapeView", [text], "enabledText");
     window.cpuElements.state.BU.enabled = true;
     console.log("[BU] new instruction: ", " enabling.");
   });
@@ -777,76 +609,63 @@ export function DM(window, document, element) {
   const dataRdText =
     window.cpuElements.DMTEXTDATARD.getElementsByTagName("div")[2];
 
+  let onEvtSelectedInc = function (inc) {
+    return onEvt(
+      "DM",
+      [rect, clk],
+      "selectedShapeView",
+      [text].concat(inc),
+      "selectedText"
+    );
+  };
+
   // Initialization style
-  applyElementProperties([rect, clk], properties.disabledShapeView);
-  applyCSSProperties(
+  applyProps(
+    [rect, clk],
+    "disabledShapeView",
     [text, addressText, datawrText, dataRdText],
-    properties.disabledText
+    "disabledText"
   );
   // Register listeners
   // Address text
-  addressText.addEventListener("mouseover", () => {
-    const state = window.cpuElements.state.DM;
-    if (state.enabled) {
-      applyElementProperties([rect, clk], properties.selectedShapeView);
-      applyCSSProperties([text, addressText], properties.selectedText);
-    }
-  });
-  addressText.addEventListener("mouseout", () => {
-    const state = window.cpuElements.state.DM;
-    if (state.enabled) {
-      applyCSSProperties([addressText], properties.enabledText);
-    }
-  });
+  addressText.addEventListener("mouseover", onEvtSelectedInc([addressText]));
+  addressText.addEventListener(
+    "mouseout",
+    onEvtText("DM", [addressText], "enabledText")
+  );
   // DataWr text
-  datawrText.addEventListener("mouseover", () => {
-    const state = window.cpuElements.state.DM;
-    if (state.enabled) {
-      applyElementProperties([rect, clk], properties.selectedShapeView);
-      applyCSSProperties([text, datawrText], properties.selectedText);
-    }
-  });
-  datawrText.addEventListener("mouseout", () => {
-    const state = window.cpuElements.state.DM;
-    if (state.enabled) {
-      applyCSSProperties([datawrText], properties.enabledText);
-    }
-  });
+  datawrText.addEventListener(
+    "mouseover",
+    datawrText.addEventListener("mouseover", onEvtSelectedInc([datawrText]))
+  );
+  datawrText.addEventListener(
+    "mouseout",
+    onEvtText("DM", [datawrText], "enabledText")
+  );
   // DataRd text
-  dataRdText.addEventListener("mouseover", () => {
-    const state = window.cpuElements.state.DM;
-    if (state.enabled) {
-      applyElementProperties([rect, clk], properties.selectedShapeView);
-      applyCSSProperties([text, dataRdText], properties.selectedText);
-    }
-  });
-  dataRdText.addEventListener("mouseout", () => {
-    const state = window.cpuElements.state.DM;
-    if (state.enabled) {
-      applyCSSProperties([dataRdText], properties.enabledText);
-    }
-  });
+  dataRdText.addEventListener(
+    "mouseover",
+    dataRdText.addEventListener("mouseover", onEvtSelectedInc([dataRdText]))
+  );
+  dataRdText.addEventListener(
+    "mouseout",
+    onEvtText("DM", [dataRdText], "enabledText")
+  );
   // Main component
-  element.addEventListener("mouseover", () => {
-    const state = window.cpuElements.state.DM;
-    if (state.enabled) {
-      applyElementProperties([rect, clk], properties.selectedShapeView);
-      applyCSSProperties(
-        [text, datawrText, addressText, dataRdText],
-        properties.selectedText
-      );
-    }
-  });
-  element.addEventListener("mouseout", () => {
-    const state = window.cpuElements.state.DM;
-    if (state.enabled) {
-      applyElementProperties([rect, clk], properties.enabledShapeView);
-      applyCSSProperties(
-        [text, datawrText, addressText, dataRdText],
-        properties.enabledText
-      );
-    }
-  });
+  element.addEventListener(
+    "mouseover",
+    onEvtSelectedInc([datawrText, addressText, dataRdText])
+  );
+  element.addEventListener(
+    "mouseout",
+    onEvt(
+      "DM",
+      [rect, clk],
+      "enabledShapeView",
+      [text, datawrText, addressText, dataRdText],
+      "enabledText"
+    )
+  );
 
   window.cpuData.buttonExecute.addEventListener("click", () => {
     const parseResult = window.cpuData.parseResult;
@@ -854,10 +673,18 @@ export function DM(window, document, element) {
     if (instType === "S" || parseResult.opcode === "0000011") {
       // Data memory only available for S and load instructions
       window.cpuElements.state.DM.enabled = true;
-      applyElementProperties([rect, clk], properties.enabledShapeView);
-      applyCSSProperties(
+      applyProps(
+        [rect, clk],
+        "enabledShapeView",
         [text, datawrText, addressText, dataRdText],
-        properties.enabledText
+        "enabledText"
+      );
+    } else {
+      applyProps(
+        [rect, clk],
+        "disabledShapeView",
+        [text, addressText, datawrText, dataRdText],
+        "disabledText"
       );
     }
     console.log("[DM] new instruction: ", " enabling.");
@@ -878,8 +705,12 @@ export function BUMUX(window, document, element) {
     return inst === "J" || inst === "B" || opcode === "1100111";
   };
   // Initialization style
-  applyElementProperties([rect, path1, path0], properties.disabledShapeView);
-  applyCSSProperties([text, text0, text1], properties.disabledText);
+  applyProps(
+    [rect, path1, path0],
+    "disabledShapeView",
+    [text, text0, text1],
+    "disabledText"
+  );
   // Main component
   element.addEventListener("mouseover", () => {
     const state = window.cpuElements.state.BUMUX;
@@ -887,8 +718,7 @@ export function BUMUX(window, document, element) {
       const instType = window.cpuData.parseResult.type.toUpperCase();
       const instOC = window.cpuData.parseResult.opcode;
 
-      applyElementProperties([rect], properties.selectedShapeView);
-      applyCSSProperties([text], properties.selectedText);
+      applyProps([rect], "selectedShapeView", [text], "selectedText");
       if (path1Visible(instType, instOC)) {
         applyElementProperties([path1], properties.selectedShapeView);
         applyElementProperties([path0], properties.hiddenShapeView);
@@ -903,8 +733,7 @@ export function BUMUX(window, document, element) {
     if (state.enabled) {
       const instType = window.cpuData.parseResult.type.toUpperCase();
       const instOC = window.cpuData.parseResult.opcode;
-      applyElementProperties([rect], properties.enabledShapeView);
-      applyCSSProperties([text], properties.enabledText);
+      applyProps([rect], "enabledShapeView", [text], "enabledText");
       if (path1Visible(instType, instOC)) {
         applyElementProperties([path1], properties.enabledShapeView);
         applyElementProperties([path0], properties.hiddenShapeView);
@@ -920,8 +749,7 @@ export function BUMUX(window, document, element) {
     const instType = window.cpuData.parseResult.type.toUpperCase();
     const instOC = window.cpuData.parseResult.opcode;
     if (window.cpuElements.state.BUMUX.enabled) {
-      applyElementProperties([rect], properties.enabledShapeView);
-      applyCSSProperties([text], properties.enabledText);
+      applyProps([rect], "enabledShapeView", [text], "enabledText");
       if (path1Visible(instType, instOC)) {
         applyElementProperties([path1], properties.enabledShapeView);
         applyElementProperties([path0], properties.hiddenShapeView);
@@ -959,31 +787,33 @@ export function WBMUX(window, document, element) {
     return inst == "J" || opcode === "1100111";
   };
   // Initialization style
-  applyElementProperties(
+  applyProps(
     [rect, path00, path01, path10],
-    properties.disabledShapeView
+    "disabledShapeView",
+    [text, text00, text01, text10],
+    "disabledText"
   );
-  applyCSSProperties([text, text00, text01, text10], properties.disabledText);
   // Main component
   element.addEventListener("mouseover", () => {
     const state = window.cpuElements.state.WBMUX;
     if (state.enabled) {
       const instType = window.cpuData.parseResult.type.toUpperCase();
       const instOC = window.cpuData.parseResult.opcode;
-      applyElementProperties([rect], properties.selectedShapeView);
-      applyCSSProperties([text], properties.selectedText);
+      applyProps(
+        [rect],
+        "selectedShapeView",
+        [text, text00, text10, text01],
+        "selectedText"
+      );
       if (path00Visible(instType, instOC)) {
-        applyElementProperties([path00], properties.selectedShapeView);
-        applyElementProperties([path01], properties.hiddenShapeView);
-        applyElementProperties([path10], properties.hiddenShapeView);
+        applyProps([path00], "selectedShapeView", [], "");
+        applyProps([path01, path10], "hiddenShapeView", [], "");
       } else if (path01Visible(instType, instOC)) {
-        applyElementProperties([path01], properties.selectedShapeView);
-        applyElementProperties([path00], properties.hiddenShapeView);
-        applyElementProperties([path10], properties.hiddenShapeView);
+        applyProps([path01], "selectedShapeView", [], "");
+        applyProps([path00, path10], "hiddenShapeView", [], "");
       } else if (path10Visible(instType, instOC)) {
-        applyElementProperties([path10], properties.selectedShapeView);
-        applyElementProperties([path01], properties.hiddenShapeView);
-        applyElementProperties([path00], properties.hiddenShapeView);
+        applyProps([path10], "selectedShapeView", [], "");
+        applyProps([path01, path00], "hiddenShapeView", [], "");
       }
     }
   });
@@ -992,20 +822,21 @@ export function WBMUX(window, document, element) {
     if (state.enabled) {
       const instType = window.cpuData.parseResult.type.toUpperCase();
       const instOC = window.cpuData.parseResult.opcode;
-      applyElementProperties([rect], properties.enabledShapeView);
-      applyCSSProperties([text], properties.enabledText);
+      applyProps(
+        [rect],
+        "enabledShapeView",
+        [text, text00, text10, text01],
+        "enabledText"
+      );
       if (path00Visible(instType, instOC)) {
-        applyElementProperties([path00], properties.enabledShapeView);
-        applyElementProperties([path01], properties.hiddenShapeView);
-        applyElementProperties([path10], properties.hiddenShapeView);
+        applyProps([path00], "enabledShapeView", [], "");
+        applyProps([path01, path10], "hiddenShapeView", [], "");
       } else if (path01Visible(instType, instOC)) {
-        applyElementProperties([path01], properties.enabledShapeView);
-        applyElementProperties([path00], properties.hiddenShapeView);
-        applyElementProperties([path10], properties.hiddenShapeView);
+        applyProps([path01], "enabledShapeView", [], "");
+        applyProps([path00, path10], "hiddenShapeView", [], "");
       } else if (path10Visible(instType, instOC)) {
-        applyElementProperties([path10], properties.enabledShapeView);
-        applyElementProperties([path01], properties.hiddenShapeView);
-        applyElementProperties([path00], properties.hiddenShapeView);
+        applyProps([path10], "enabledShapeView", [], "");
+        applyProps([path01, path00], "hiddenShapeView", [], "");
       }
     }
   });
@@ -1017,22 +848,30 @@ export function WBMUX(window, document, element) {
     if (window.cpuElements.state.WBMUX.enabled) {
       const instType = window.cpuData.parseResult.type.toUpperCase();
       const instOC = window.cpuData.parseResult.opcode;
-      applyElementProperties([rect], properties.enabledShapeView);
-      applyCSSProperties([text], properties.enabledText);
+      applyProps(
+        [rect],
+        "enabledShapeView",
+        [text, text00, text10, text01],
+        "enabledText"
+      );
       if (path00Visible(instType, instOC)) {
-        applyElementProperties([path00], properties.enabledShapeView);
-        applyElementProperties([path01], properties.hiddenShapeView);
-        applyElementProperties([path10], properties.hiddenShapeView);
+        applyProps([path00], "enabledShapeView", [], "");
+        applyProps([path01, path10], "hiddenShapeView", [], "");
       } else if (path01Visible(instType, instOC)) {
         applyElementProperties([path01], properties.enabledShapeView);
-        applyElementProperties([path00], properties.hiddenShapeView);
-        applyElementProperties([path10], properties.hiddenShapeView);
+        applyProps([path00, path10], "hiddenShapeView", [], "");
       } else if (path10Visible(instType, instOC)) {
         applyElementProperties([path10], properties.enabledShapeView);
-        applyElementProperties([path01], properties.hiddenShapeView);
-        applyElementProperties([path00], properties.hiddenShapeView);
+        applyProps([path01, path00], "hiddenShapeView", [], "");
       }
       //   console.log("[BUMUX] new instruction: ", path1Visible(instType, instOC));
+    } else {
+      applyProps(
+        [rect, path00, path01, path10],
+        "disabledShapeView",
+        [text, text00, text01, text10],
+        "disabledText"
+      );
     }
   });
 }
