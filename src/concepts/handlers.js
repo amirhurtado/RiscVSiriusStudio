@@ -34,6 +34,10 @@ function applyProps(compL, compProp, textL, textProp) {
   applyElementProperties(compL, properties[compProp]);
   applyCSSProperties(textL, properties[textProp]);
 }
+function applyPthProps(pth, pthProp, arr, arrProp) {
+  applyProps(pth, pthProp, [], "");
+  applyProps(arr, arrProp, [], "");
+}
 
 function evt(name, compL, compProp, textL, textProp, e) {
   const state = window.cpuElements.state[name];
@@ -41,8 +45,22 @@ function evt(name, compL, compProp, textL, textProp, e) {
     applyProps(compL, compProp, textL, textProp);
   }
 }
+function pathEvt(name, pth, pthProp, arr, arrProp, text, textProp, e) {
+  const state = window.cpuElements.state[name];
+  if (state["enabled"]) {
+    applyPthProps(pth, pthProp, arr, arrProp, text, textProp);
+  }
+}
 
+function textEvt(name, text, textProp, e) {
+  const state = window.cpuElements.state[name];
+  if (state["enabled"]) {
+    applyCSSProperties([text], properties[textProp]);
+  }
+}
 let onEvt = _.curry(evt);
+let onPthEvt = _.curry(pathEvt);
+let onTxtEvt = _.curry(textEvt);
 
 function onEvtText(name, textL, textProp) {
   return onEvt(name, [], "", textL, textProp);
@@ -877,49 +895,90 @@ export function WBMUX(window, document, element) {
 }
 
 // !PATHS
+
+function setPathState(cable, state) {
+  let pathStyle = "disabledPathView";
+  let arrowStyle = "disabledArrowView";
+  switch (state) {
+    case "disabled":
+      pathStyle = "disabledPathView";
+      arrowStyle = "disabledArrowView";
+      break;
+    case "enabled":
+      pathStyle = "enabledPathView";
+      arrowStyle = "enabledArrowView";
+      break;
+    case "selected":
+      pathStyle = "selectedPathView";
+      arrowStyle = "selectedArrowView";
+
+    default:
+      console.error("Unknown path style", state);
+  }
+  applyPthProps([cable[0]], pathStyle, [cable[1]], arrowStyle, null, []);
+}
+
+function selectEvents(name, element, cable, on, off) {
+  element.addEventListener(
+    "mouseover",
+    onPthEvt(
+      name,
+      [cable[0]],
+      on + "PathView",
+      [cable[1]],
+      on + "ArrowView",
+      null,
+      ""
+    )
+  );
+  element.addEventListener(
+    "mouseout",
+    onPthEvt(
+      name,
+      [cable[0]],
+      off + "PathView",
+      [cable[1]],
+      off + "ArrowView",
+      null,
+      ""
+    )
+  );
+}
+
+function setTextState(text, state) {
+  let textStyle = "disabledText";
+  switch (state) {
+    case "disabled":
+      textStyle = "disabledText";
+      break;
+    case "enabled":
+      textStyle = "enabledText";
+      break;
+    case "selected":
+      textStyle = "selectedText";
+    default:
+      console.error("Unknown text style", state);
+  }
+
+  applyProps([], "", [text], textStyle);
+}
+
+function textEvents(name, text, on, off) {
+  console.log("Text events for ", name);
+  text.addEventListener("mouseover", onTxtEvt(name, text, on + "Text"));
+  text.addEventListener("mouseout", onTxtEvt(name, text, off + "Text"));
+}
 export function CLKPC(window, document, element) {
   // Reference the UI elements
   const cable = element.getElementsByTagName("path");
-  const path = cable[0];
-  const arrow = cable[1];
-
-  const viewState = (state) => {
-    switch (state) {
-      case "disabled":
-        applyElementProperties([path], properties.disabledPathView);
-        applyElementProperties([arrow], properties.disabledArrowView);
-        break;
-      case "enabled":
-        applyElementProperties([path], properties.enabledPathView);
-        applyElementProperties([arrow], properties.enabledArrowView);
-        break;
-      case "selected":
-        applyElementProperties([path], properties.selectedPathView);
-        applyElementProperties([arrow], properties.selectedArrowView);
-        break;
-    }
-  };
-
   // Set initialization style
-  viewState("disabled");
+  setPathState(cable, "disabled");
   // Add event listeners
-  element.addEventListener("mouseover", (e) => {
-    const state = window.cpuElements.state.CLKPC;
-    if (state.enabled) {
-      viewState("selected");
-    }
-  });
-  element.addEventListener("mouseout", (e) => {
-    const state = window.cpuElements.state.CLKPC;
-    if (state.enabled) {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
-    }
-  });
+  selectEvents("CLKPC", element, cable, "selected", "enabled");
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // CLKPC enabled on all instructions
-    viewState("enabled");
     window.cpuElements.state.CLKPC.enabled = true;
+    setPathState(cable, "enabled");
     console.log("[-CLKPC] new instruction: ", " enabling.");
   });
 }
@@ -927,31 +986,13 @@ export function CLKPC(window, document, element) {
 export function CLKRU(window, document, element) {
   // Reference the UI elements
   const cable = element.getElementsByTagName("path");
-  const path = cable[0];
-  const arrow = cable[1];
-
   // Set initialization style
-  applyElementProperties([path], properties.disabledPathView);
-  applyElementProperties([arrow], properties.disabledArrowView);
+  setPathState(cable, "disabled");
   // Add event listeners
-  element.addEventListener("mouseover", (e) => {
-    const state = window.cpuElements.state.CLKRU;
-    if (state.enabled) {
-      applyElementProperties([path], properties.selectedPathView);
-      applyElementProperties([arrow], properties.selectedArrowView);
-    }
-  });
-  element.addEventListener("mouseout", (e) => {
-    const state = window.cpuElements.state.CLKRU;
-    if (state.enabled) {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
-    }
-  });
+  selectEvents("CLKRU", element, cable, "selected", "enabled");
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // CLKRU enabled on all instructions
-    applyElementProperties([path], properties.enabledPathView);
-    applyElementProperties([arrow], properties.enabledArrowView);
+    setPathState(cable, "enabled");
     window.cpuElements.state.CLKRU.enabled = true;
     console.log("[-CLKPC] new instruction: ", " enabling.");
   });
@@ -960,31 +1001,13 @@ export function CLKRU(window, document, element) {
 export function CLKDM(window, document, element) {
   // Reference the UI elements
   const cable = element.getElementsByTagName("path");
-  const path = cable[0];
-  const arrow = cable[1];
-
   // Set initialization style
-  applyElementProperties([path], properties.disabledPathView);
-  applyElementProperties([arrow], properties.disabledArrowView);
+  setPathState(cable, "disabled");
   // Add event listeners
-  element.addEventListener("mouseover", (e) => {
-    const state = window.cpuElements.state.CLKDM;
-    if (state.enabled) {
-      applyElementProperties([path], properties.selectedPathView);
-      applyElementProperties([arrow], properties.selectedArrowView);
-    }
-  });
-  element.addEventListener("mouseout", (e) => {
-    const state = window.cpuElements.state.CLKDM;
-    if (state.enabled) {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
-    }
-  });
+  selectEvents("CLKDM", element, cable, "selected", "enabled");
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // CLKDM enabled on all instructions
-    applyElementProperties([path], properties.enabledPathView);
-    applyElementProperties([arrow], properties.enabledArrowView);
+    setPathState(cable, "enabled");
     window.cpuElements.state.CLKDM.enabled = true;
     console.log("[-CLKDM] new instruction: ", " enabling.");
   });
@@ -993,13 +1016,10 @@ export function CLKDM(window, document, element) {
 export function PCIM(window, document, element) {
   // Reference the UI elements
   const cable = element.getElementsByTagName("path");
-  const path = cable[0];
-  const arrow = cable[1];
-
   // Set initialization style
-  applyElementProperties([path], properties.disabledPathView);
-  applyElementProperties([arrow], properties.disabledArrowView);
+  setPathState(cable, "disabled");
   // Add event listeners
+  selectEvents("PCIM", element, cable, "selected", "enabled");
   element.addEventListener("mousemove", (e) => {
     const state = window.cpuElements.state.PCIM;
     const instParsed = window.cpuData.parseResult;
@@ -1007,25 +1027,9 @@ export function PCIM(window, document, element) {
       showTooltip(e, `<b>Current address:</b><div>${instParsed.inst}</div>`);
     }
   });
-  element.addEventListener("mouseover", (e) => {
-    const state = window.cpuElements.state.PCIM;
-    if (state.enabled) {
-      applyElementProperties([path], properties.selectedPathView);
-      applyElementProperties([arrow], properties.selectedArrowView);
-    }
-  });
-  element.addEventListener("mouseout", (e) => {
-    const state = window.cpuElements.state.PCIM;
-    if (state.enabled) {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
-      hideTooltip();
-    }
-  });
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // PCIM enabled on all instructions
-    applyElementProperties([path], properties.enabledPathView);
-    applyElementProperties([arrow], properties.enabledArrowView);
+    setPathState(cable, "enabled");
     window.cpuElements.state.PCIM.enabled = true;
     console.log("[-PCIM] new instruction: ", " enabling.");
   });
@@ -1034,13 +1038,10 @@ export function PCIM(window, document, element) {
 export function PCADD4(window, document, element) {
   // Reference the UI elements
   const cable = element.getElementsByTagName("path");
-  const path = cable[0];
-  const arrow = cable[1];
-
   // Set initialization style
-  applyElementProperties([path], properties.disabledPathView);
-  applyElementProperties([arrow], properties.disabledArrowView);
+  setPathState(cable, "disabled");
   // Add event listeners
+  selectEvents("PCIM", element, cable, "selected", "enabled");
   element.addEventListener("mousemove", (e) => {
     const state = window.cpuElements.state.PCADD4;
     const instParsed = window.cpuData.parseResult;
@@ -1048,25 +1049,9 @@ export function PCADD4(window, document, element) {
       showTooltip(e, `<b>Current address:</b><div>${instParsed.inst}</div>`);
     }
   });
-  element.addEventListener("mouseover", (e) => {
-    const state = window.cpuElements.state.PCADD4;
-    if (state.enabled) {
-      applyElementProperties([path], properties.selectedPathView);
-      applyElementProperties([arrow], properties.selectedArrowView);
-    }
-  });
-  element.addEventListener("mouseout", (e) => {
-    const state = window.cpuElements.state.PCADD4;
-    if (state.enabled) {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
-      hideTooltip();
-    }
-  });
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // PCADD4 enabled on all instructions
-    applyElementProperties([path], properties.enabledPathView);
-    applyElementProperties([arrow], properties.enabledArrowView);
+    setPathState(cable, "enabled");
     window.cpuElements.state.PCADD4.enabled = true;
     console.log("[-PCADD4] new instruction: ", " enabling.");
   });
@@ -1075,35 +1060,19 @@ export function PCADD4(window, document, element) {
 export function PCALUA(window, document, element) {
   // Reference the UI elements
   const cable = element.getElementsByTagName("path");
-  const path = cable[0];
-  const arrow = cable[1];
-
   // Set initialization style
-  applyElementProperties([path], properties.disabledPathView);
-  applyElementProperties([arrow], properties.disabledArrowView);
+  setPathState(cable, "disabled");
   // Add event listeners
-  element.addEventListener("mouseover", (e) => {
-    const state = window.cpuElements.state.PCALUA;
-    if (state.enabled) {
-      applyElementProperties([path], properties.selectedPathView);
-      applyElementProperties([arrow], properties.selectedArrowView);
-    }
-  });
-  element.addEventListener("mouseout", (e) => {
-    const state = window.cpuElements.state.PCALUA;
-    if (state.enabled) {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
-    }
-  });
+  selectEvents("PCALUA", element, cable, "selected", "enabled");
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // PCALUA only enabled for J and B type instructions
     const instType = window.cpuData.parseResult.type.toUpperCase();
     if (instType === "J" || instType === "B") {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
+      setPathState(cable, "enabled");
       window.cpuElements.state.PCALUA.enabled = true;
       console.log("[-PCALUA] new instruction: ", " enabling.");
+    } else {
+      setPathState(cable, "disabled");
     }
   });
 }
@@ -1111,50 +1080,23 @@ export function PCALUA(window, document, element) {
 export function IMCUOPCODE(window, document, element) {
   // Reference the UI elements
   const cable = element.getElementsByTagName("path");
-  const path = cable[0];
-  const arrow = cable[1];
   const text = window.cpuElements.opcodeLabel.getElementsByTagName("div")[2];
   const text2 = window.cpuElements.imInstruction.getElementsByTagName("div")[2];
-
-  const viewState = (state) => {
-    switch (state) {
-      case "disabled":
-        applyElementProperties([path], properties.disabledPathView);
-        applyElementProperties([arrow], properties.disabledArrowView);
-        applyCSSProperties([text, text2], disabledLabelProperties);
-        break;
-      case "enabled":
-        applyElementProperties([path], properties.enabledPathView);
-        applyElementProperties([arrow], properties.enabledArrowView);
-        applyCSSProperties([text, text2], enabledLabelProperties);
-        break;
-      case "selected":
-        applyElementProperties([path], properties.selectedPathView);
-        applyElementProperties([arrow], properties.selectedArrowView);
-        applyCSSProperties([text, text2], selectedLabelProperties);
-        break;
-    }
-  };
-
   // Set initialization style
-  viewState("disabled");
-  // Add event listeners
-  element.addEventListener("mouseover", (e) => {
-    const state = window.cpuElements.state.IMCUOPCODE;
-    if (state.enabled) {
-      viewState("selected");
-    }
-  });
-  element.addEventListener("mouseout", (e) => {
-    const state = window.cpuElements.state.IMCUOPCODE;
-    if (state.enabled) {
-      viewState("enabled");
-    }
-  });
+  setPathState(cable, "disabled");
+  setTextState(text, "disabled");
+  setTextState(text2, "disabled");
+  // Add event listeners The two events are separated this is why the cable is
+  // not selected when the text is.
+  selectEvents("IMCUOPCODE", element, cable, "selected", "enabled");
+  textEvents("IMCUOPCODE", text, "selected", "enabled");
+  textEvents("IMCUOPCODE", text2, "selected", "enabled");
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // IMCUOPCODE enabled for all instructions
     const instType = window.cpuData.parseResult.type.toUpperCase();
-    viewState("enabled");
+    setPathState(cable, "enabled");
+    setTextState(text, "enabled");
+    setTextState(text2, "enabled");
     window.cpuElements.state.IMCUOPCODE.enabled = true;
     console.log("[-IMCUOPCODE] new instruction: ", " enabling.");
   });
@@ -1163,37 +1105,19 @@ export function IMCUOPCODE(window, document, element) {
 export function IMCUFUNCT3(window, document, element) {
   // Reference the UI elements
   const cable = element.getElementsByTagName("path");
-  const path = cable[0];
-  const arrow = cable[1];
   const text = window.cpuElements.funct3Label.getElementsByTagName("div")[2];
 
   // Set initialization style
-  applyElementProperties([path], properties.disabledPathView);
-  applyElementProperties([arrow], properties.disabledArrowView);
-  applyCSSProperties([text], disabledLabelProperties);
+  setPathState(cable, "disabled");
+  setTextState(text, "disabled");
   // Add event listeners
-  element.addEventListener("mouseover", (e) => {
-    const state = window.cpuElements.state.IMCUFUNCT3;
-    if (state.enabled) {
-      applyElementProperties([path], properties.selectedPathView);
-      applyElementProperties([arrow], properties.selectedArrowView);
-      applyCSSProperties([text], selectedLabelProperties);
-    }
-  });
-  element.addEventListener("mouseout", (e) => {
-    const state = window.cpuElements.state.IMCUFUNCT3;
-    if (state.enabled) {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
-      applyCSSProperties([text], enabledLabelProperties);
-    }
-  });
+  selectEvents("IMCUFUNCT3", element, cable, "selected", "enabled");
+  textEvents("IMCUOPCODE", text, "selected", "enabled");
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // IMCUFUNCT3 enabled for all instructions
     const instType = window.cpuData.parseResult.type.toUpperCase();
-    applyElementProperties([path], properties.enabledPathView);
-    applyElementProperties([arrow], properties.enabledArrowView);
-    applyCSSProperties([text], enabledLabelProperties);
+    setPathState(cable, "enabled");
+    setTextState(text, "enabled");
     window.cpuElements.state.IMCUFUNCT3.enabled = true;
     console.log("[-IMCUFUNCT3] new instruction: ", " enabling.");
   });
@@ -1202,37 +1126,18 @@ export function IMCUFUNCT3(window, document, element) {
 export function IMCUFUNCT7(window, document, element) {
   // Reference the UI elements
   const cable = element.getElementsByTagName("path");
-  const path = cable[0];
-  const arrow = cable[1];
   const text = window.cpuElements.funct7Label.getElementsByTagName("div")[2];
-
   // Set initialization style
-  applyElementProperties([path], properties.disabledPathView);
-  applyElementProperties([arrow], properties.disabledArrowView);
-  applyCSSProperties([text], disabledLabelProperties);
+  setPathState(cable, "disabled");
+  setTextState(text, "disabled");
   // Add event listeners
-  element.addEventListener("mouseover", (e) => {
-    const state = window.cpuElements.state.IMCUFUNCT7;
-    if (state.enabled) {
-      applyElementProperties([path], properties.selectedPathView);
-      applyElementProperties([arrow], properties.selectedArrowView);
-      applyCSSProperties([text], selectedLabelProperties);
-    }
-  });
-  element.addEventListener("mouseout", (e) => {
-    const state = window.cpuElements.state.IMCUFUNCT7;
-    if (state.enabled) {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
-      applyCSSProperties([text], enabledLabelProperties);
-    }
-  });
+  selectEvents("IMCUFUNCT7", element, cable, "selected", "enabled");
+  textEvents("IMCUFUNCT7", text, "selected", "enabled");
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // IMCUFUNCT7 enabled for all instructions
     const instType = window.cpuData.parseResult.type.toUpperCase();
-    applyElementProperties([path], properties.enabledPathView);
-    applyElementProperties([arrow], properties.enabledArrowView);
-    applyCSSProperties([text], enabledLabelProperties);
+    setPathState(cable, "enabled");
+    setTextState(text, "enabled");
     window.cpuElements.state.IMCUFUNCT7.enabled = true;
     console.log("[-IMCUFUNCT7] new instruction: ", " enabling.");
   });
@@ -1241,37 +1146,19 @@ export function IMCUFUNCT7(window, document, element) {
 export function IMRURS1(window, document, element) {
   // Reference the UI elements
   const cable = element.getElementsByTagName("path");
-  const path = cable[0];
-  const arrow = cable[1];
   const text = window.cpuElements.rs1Label.getElementsByTagName("div")[2];
 
   // Set initialization style
-  applyElementProperties([path], properties.disabledPathView);
-  applyElementProperties([arrow], properties.disabledArrowView);
-  applyCSSProperties([text], disabledLabelProperties);
+  setPathState(cable, "disabled");
+  setTextState(text, "disabled");
   // Add event listeners
-  element.addEventListener("mouseover", (e) => {
-    const state = window.cpuElements.state.IMRURS1;
-    if (state.enabled) {
-      applyElementProperties([path], properties.selectedPathView);
-      applyElementProperties([arrow], properties.selectedArrowView);
-      applyCSSProperties([text], selectedLabelProperties);
-    }
-  });
-  element.addEventListener("mouseout", (e) => {
-    const state = window.cpuElements.state.IMRURS1;
-    if (state.enabled) {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
-      applyCSSProperties([text], enabledLabelProperties);
-    }
-  });
+  selectEvents("IMRURS1", element, cable, "selected", "enabled");
+  textEvents("IMRURS1", text, "selected", "enabled");
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // IMRURS1 enabled for all instructions
     const instType = window.cpuData.parseResult.type.toUpperCase();
-    applyElementProperties([path], properties.enabledPathView);
-    applyElementProperties([arrow], properties.enabledArrowView);
-    applyCSSProperties([text], enabledLabelProperties);
+    setPathState(cable, "enabled");
+    setTextState(text, "enabled");
     window.cpuElements.state.IMRURS1.enabled = true;
     console.log("[-IMRURS1] new instruction: ", " enabling.");
   });
@@ -1280,37 +1167,19 @@ export function IMRURS1(window, document, element) {
 export function IMRURS2(window, document, element) {
   // Reference the UI elements
   const cable = element.getElementsByTagName("path");
-  const path = cable[0];
-  const arrow = cable[1];
   const text = window.cpuElements.rs2Label.getElementsByTagName("div")[2];
 
   // Set initialization style
-  applyElementProperties([path], properties.disabledPathView);
-  applyElementProperties([arrow], properties.disabledArrowView);
-  applyCSSProperties([text], disabledLabelProperties);
+  setPathState(cable, "disabled");
+  setTextState(text, "disabled");
   // Add event listeners
-  element.addEventListener("mouseover", (e) => {
-    const state = window.cpuElements.state.IMRURS2;
-    if (state.enabled) {
-      applyElementProperties([path], properties.selectedPathView);
-      applyElementProperties([arrow], properties.selectedArrowView);
-      applyCSSProperties([text], selectedLabelProperties);
-    }
-  });
-  element.addEventListener("mouseout", (e) => {
-    const state = window.cpuElements.state.IMRURS2;
-    if (state.enabled) {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
-      applyCSSProperties([text], enabledLabelProperties);
-    }
-  });
+  selectEvents("IMRURS2", element, cable, "selected", "enabled");
+  textEvents("IMRURS2", text, "selected", "enabled");
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // IMRURS2 enabled for all instructions
     const instType = window.cpuData.parseResult.type.toUpperCase();
-    applyElementProperties([path], properties.enabledPathView);
-    applyElementProperties([arrow], properties.enabledArrowView);
-    applyCSSProperties([text], enabledLabelProperties);
+    setPathState(cable, "enabled");
+    setTextState(text, "enabled");
     window.cpuElements.state.IMRURS2.enabled = true;
     console.log("[-IMRURS2] new instruction: ", " enabling.");
   });
@@ -1319,37 +1188,20 @@ export function IMRURS2(window, document, element) {
 export function IMRURDEST(window, document, element) {
   // Reference the UI elements
   const cable = element.getElementsByTagName("path");
-  const path = cable[0];
-  const arrow = cable[1];
   const text = window.cpuElements.rdLabel.getElementsByTagName("div")[2];
 
   // Set initialization style
-  applyElementProperties([path], properties.disabledPathView);
-  applyElementProperties([arrow], properties.disabledArrowView);
-  applyCSSProperties([text], disabledLabelProperties);
+  setPathState(cable, "disabled");
+  setTextState(text, "disabled");
   // Add event listeners
-  element.addEventListener("mouseover", (e) => {
-    const state = window.cpuElements.state.IMRURDEST;
-    if (state.enabled) {
-      applyElementProperties([path], properties.selectedPathView);
-      applyElementProperties([arrow], properties.selectedArrowView);
-      applyCSSProperties([text], selectedLabelProperties);
-    }
-  });
-  element.addEventListener("mouseout", (e) => {
-    const state = window.cpuElements.state.IMRURDEST;
-    if (state.enabled) {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
-      applyCSSProperties([text], enabledLabelProperties);
-    }
-  });
+  selectEvents("IMRURDEST", element, cable, "selected", "enabled");
+  textEvents("IMRURDEST", text, "selected", "enabled");
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // IMRURDEST enabled for all instructions
     const instType = window.cpuData.parseResult.type.toUpperCase();
-    applyElementProperties([path], properties.enabledPathView);
-    applyElementProperties([arrow], properties.enabledArrowView);
-    applyCSSProperties([text], enabledLabelProperties);
+    setPathState(cable, "enabled");
+    setTextState(text, "enabled");
+
     window.cpuElements.state.IMRURDEST.enabled = true;
     console.log("[-IMRURDEST] new instruction: ", " enabling.");
   });
@@ -1361,37 +1213,23 @@ export function IMIMM(window, document, element) {
   const path = cable[0];
   const arrow = cable[1];
   const text = window.cpuElements.immLabel.getElementsByTagName("div")[2];
-
   // Set initialization style
-  applyElementProperties([path], properties.disabledPathView);
-  applyElementProperties([arrow], properties.disabledArrowView);
-  applyCSSProperties([text], disabledLabelProperties);
+  setPathState(cable, "disabled");
+  setTextState(text, "disabled");
   // Add event listeners
-  element.addEventListener("mouseover", (e) => {
-    const state = window.cpuElements.state.IMIMM;
-    if (state.enabled) {
-      applyElementProperties([path], properties.selectedPathView);
-      applyElementProperties([arrow], properties.selectedArrowView);
-      applyCSSProperties([text], selectedLabelProperties);
-    }
-  });
-  element.addEventListener("mouseout", (e) => {
-    const state = window.cpuElements.state.IMIMM;
-    if (state.enabled) {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
-      applyCSSProperties([text], enabledLabelProperties);
-    }
-  });
+  selectEvents("IMIMM", element, cable, "selected", "enabled");
+  textEvents("IMIMM", text, "selected", "enabled");
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // IMIMM enabled for all but R instructions
     const instType = window.cpuData.parseResult.type.toUpperCase();
     if (instType !== "R") {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
-      applyCSSProperties([text], enabledLabelProperties);
+      setPathState(cable, "enabled");
+      setTextState(text, "enabled");
       window.cpuElements.state.IMIMM.enabled = true;
       console.log("[-IMIMM] new instruction: ", " enabling.");
+    } else {
+      setPathState(cable, "disabled");
+      setTextState(text, "disabled");
     }
   });
 }
@@ -1399,35 +1237,19 @@ export function IMIMM(window, document, element) {
 export function WBMUXRU(window, document, element) {
   // Reference the UI elements
   const cable = element.getElementsByTagName("path");
-  const path = cable[0];
-  const arrow = cable[1];
-
   // Set initialization style
-  applyElementProperties([path], properties.disabledPathView);
-  applyElementProperties([arrow], properties.disabledArrowView);
+  setPathState(cable, "disabled");
   // Add event listeners
-  element.addEventListener("mouseover", (e) => {
-    const state = window.cpuElements.state.WBMUXRU;
-    if (state.enabled) {
-      applyElementProperties([path], properties.selectedPathView);
-      applyElementProperties([arrow], properties.selectedArrowView);
-    }
-  });
-  element.addEventListener("mouseout", (e) => {
-    const state = window.cpuElements.state.WBMUXRU;
-    if (state.enabled) {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
-    }
-  });
+  selectEvents("WBMUXRU", element, cable, "selected", "enabled");
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // WBMUXRU enabled for J I R instructions
     const instType = window.cpuData.parseResult.type.toUpperCase();
     if (instType === "J" || instType === "I" || instType === "R") {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
+      setPathState(cable, "enabled");
       window.cpuElements.state.WBMUXRU.enabled = true;
       console.log("[-WBMUXRU] new instruction: ", " enabling.");
+    } else {
+      setPathState(cable, "disabled");
     }
   });
 }
@@ -1435,35 +1257,19 @@ export function WBMUXRU(window, document, element) {
 export function IMMALUB(window, document, element) {
   // Reference the UI elements
   const cable = element.getElementsByTagName("path");
-  const path = cable[0];
-  const arrow = cable[1];
-
   // Set initialization style
-  applyElementProperties([path], properties.disabledPathView);
-  applyElementProperties([arrow], properties.disabledArrowView);
+  setPathState(cable, "disabled");
   // Add event listeners
-  element.addEventListener("mouseover", (e) => {
-    const state = window.cpuElements.state.IMMALUB;
-    if (state.enabled) {
-      applyElementProperties([path], properties.selectedPathView);
-      applyElementProperties([arrow], properties.selectedArrowView);
-    }
-  });
-  element.addEventListener("mouseout", (e) => {
-    const state = window.cpuElements.state.IMMALUB;
-    if (state.enabled) {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
-    }
-  });
+  selectEvents("IMMALUB", element, cable, "selected", "enabled");
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // IMMALUB enabled for J I R instructions
     const instType = window.cpuData.parseResult.type.toUpperCase();
     if (instType !== "R" && instType !== "U") {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
+      setPathState(cable, "enabled");
       window.cpuElements.state.IMMALUB.enabled = true;
       console.log("[-IMMALUB] new instruction: ", " enabling.");
+    } else {
+      setPathState(cable, "disabled");
     }
   });
 }
@@ -1471,35 +1277,20 @@ export function IMMALUB(window, document, element) {
 export function RUALUA(window, document, element) {
   // Reference the UI elements
   const cable = element.getElementsByTagName("path");
-  const path = cable[0];
-  const arrow = cable[1];
-
   // Set initialization style
-  applyElementProperties([path], properties.disabledPathView);
-  applyElementProperties([arrow], properties.disabledArrowView);
+  setPathState(cable, "disabled");
   // Add event listeners
-  element.addEventListener("mouseover", (e) => {
-    const state = window.cpuElements.state.RUALUA;
-    if (state.enabled) {
-      applyElementProperties([path], properties.selectedPathView);
-      applyElementProperties([arrow], properties.selectedArrowView);
-    }
-  });
-  element.addEventListener("mouseout", (e) => {
-    const state = window.cpuElements.state.RUALUA;
-    if (state.enabled) {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
-    }
-  });
+  selectEvents("RUALUA", element, cable, "selected", "enabled");
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // RUALUA enabled for R instructions
     const instType = window.cpuData.parseResult.type.toUpperCase();
     if (instType !== "J" && instType !== "B") {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
+      setPathState(cable, "enabled");
+
       window.cpuElements.state.RUALUA.enabled = true;
       console.log("[-RUALUA] new instruction: ", " enabling.");
+    } else {
+      setPathState(cable, "disabled");
     }
   });
 }
@@ -1507,35 +1298,21 @@ export function RUALUA(window, document, element) {
 export function RUALUB(window, document, element) {
   // Reference the UI elements
   const cable = element.getElementsByTagName("path");
-  const path = cable[0];
-  const arrow = cable[1];
 
   // Set initialization style
-  applyElementProperties([path], properties.disabledPathView);
-  applyElementProperties([arrow], properties.disabledArrowView);
+  setPathState(cable, "disabled");
   // Add event listeners
-  element.addEventListener("mouseover", (e) => {
-    const state = window.cpuElements.state.RUALUB;
-    if (state.enabled) {
-      applyElementProperties([path], properties.selectedPathView);
-      applyElementProperties([arrow], properties.selectedArrowView);
-    }
-  });
-  element.addEventListener("mouseout", (e) => {
-    const state = window.cpuElements.state.RUALUB;
-    if (state.enabled) {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
-    }
-  });
+  selectEvents("RUALUB", element, cable, "selected", "enabled");
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // RUALUB enabled for R instructions
     const instType = window.cpuData.parseResult.type.toUpperCase();
     if (instType === "R") {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
+      setPathState(cable, "enabled");
+
       window.cpuElements.state.RUALUB.enabled = true;
       console.log("[-RUALUB] new instruction: ", " enabling.");
+    } else {
+      setPathState(cable, "disabled");
     }
   });
 }
@@ -1543,35 +1320,20 @@ export function RUALUB(window, document, element) {
 export function RUDM(window, document, element) {
   // Reference the UI elements
   const cable = element.getElementsByTagName("path");
-  const path = cable[0];
-  const arrow = cable[1];
-
   // Set initialization style
-  applyElementProperties([path], properties.disabledPathView);
-  applyElementProperties([arrow], properties.disabledArrowView);
+  setPathState(cable, "disabled");
   // Add event listeners
-  element.addEventListener("mouseover", (e) => {
-    const state = window.cpuElements.state.RUDM;
-    if (state.enabled) {
-      applyElementProperties([path], properties.selectedPathView);
-      applyElementProperties([arrow], properties.selectedArrowView);
-    }
-  });
-  element.addEventListener("mouseout", (e) => {
-    const state = window.cpuElements.state.RUDM;
-    if (state.enabled) {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
-    }
-  });
+  selectEvents("RUDM", element, cable, "selected", "enabled");
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // RUDM enabled for S instructions
     const instType = window.cpuData.parseResult.type.toUpperCase();
     if (instType === "S") {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
+      setPathState(cable, "enabled");
+
       window.cpuElements.state.RUDM.enabled = true;
       console.log("[-RUDM] new instruction: ", " enabling.");
+    } else {
+      setPathState(cable, "disabled");
     }
   });
 }
@@ -1579,35 +1341,19 @@ export function RUDM(window, document, element) {
 export function RURS1BU(window, document, element) {
   // Reference the UI elements
   const cable = element.getElementsByTagName("path");
-  const path = cable[0];
-  const arrow = cable[1];
-
   // Set initialization style
-  applyElementProperties([path], properties.disabledPathView);
-  applyElementProperties([arrow], properties.disabledArrowView);
+  setPathState(cable, "disabled");
   // Add event listeners
-  element.addEventListener("mouseover", (e) => {
-    const state = window.cpuElements.state.RURS1BU;
-    if (state.enabled) {
-      applyElementProperties([path], properties.selectedPathView);
-      applyElementProperties([arrow], properties.selectedArrowView);
-    }
-  });
-  element.addEventListener("mouseout", (e) => {
-    const state = window.cpuElements.state.RURS1BU;
-    if (state.enabled) {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
-    }
-  });
+  selectEvents("RURS1BU", element, cable, "selected", "enabled");
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // RURS1BU enabled for S instructions
     const instType = window.cpuData.parseResult.type.toUpperCase();
     if (instType === "B") {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
+      setPathState(cable, "enabled");
       window.cpuElements.state.RURS1BU.enabled = true;
       console.log("[-RURS1BU] new instruction: ", " enabling.");
+    } else {
+      setPathState(cable, "disabled");
     }
   });
 }
@@ -1615,35 +1361,19 @@ export function RURS1BU(window, document, element) {
 export function RURS2BU(window, document, element) {
   // Reference the UI elements
   const cable = element.getElementsByTagName("path");
-  const path = cable[0];
-  const arrow = cable[1];
-
   // Set initialization style
-  applyElementProperties([path], properties.disabledPathView);
-  applyElementProperties([arrow], properties.disabledArrowView);
+  setPathState(cable, "disabled");
   // Add event listeners
-  element.addEventListener("mouseover", (e) => {
-    const state = window.cpuElements.state.RURS2BU;
-    if (state.enabled) {
-      applyElementProperties([path], properties.selectedPathView);
-      applyElementProperties([arrow], properties.selectedArrowView);
-    }
-  });
-  element.addEventListener("mouseout", (e) => {
-    const state = window.cpuElements.state.RURS2BU;
-    if (state.enabled) {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
-    }
-  });
+  selectEvents("RURS2BU", element, cable, "selected", "enabled");
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // RURS2BU enabled for S instructions
     const instType = window.cpuData.parseResult.type.toUpperCase();
     if (instType === "B") {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
+      setPathState(cable, "enabled");
       window.cpuElements.state.RURS2BU.enabled = true;
       console.log("[-RURS2BU] new instruction: ", " enabling.");
+    } else {
+      setPathState(cable, "disabled");
     }
   });
 }
@@ -1651,32 +1381,15 @@ export function RURS2BU(window, document, element) {
 export function ALUAALU(window, document, element) {
   // Reference the UI elements
   const cable = element.getElementsByTagName("path");
-  const path = cable[0];
-  const arrow = cable[1];
 
   // Set initialization style
-  applyElementProperties([path], properties.disabledPathView);
-  applyElementProperties([arrow], properties.disabledArrowView);
+  setPathState(cable, "disabled");
   // Add event listeners
-  element.addEventListener("mouseover", (e) => {
-    const state = window.cpuElements.state.ALUAALU;
-    if (state.enabled) {
-      applyElementProperties([path], properties.selectedPathView);
-      applyElementProperties([arrow], properties.selectedArrowView);
-    }
-  });
-  element.addEventListener("mouseout", (e) => {
-    const state = window.cpuElements.state.ALUAALU;
-    if (state.enabled) {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
-    }
-  });
+  selectEvents("ALUAALU", element, cable, "selected", "enabled");
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // ALUAALU always enabled
     const instType = window.cpuData.parseResult.type.toUpperCase();
-    applyElementProperties([path], properties.enabledPathView);
-    applyElementProperties([arrow], properties.enabledArrowView);
+    setPathState(cable, "disabled");
     window.cpuElements.state.ALUAALU.enabled = true;
     console.log("[-ALUAALU] new instruction: ", " enabling.");
   });
@@ -1685,32 +1398,14 @@ export function ALUAALU(window, document, element) {
 export function ALUBALU(window, document, element) {
   // Reference the UI elements
   const cable = element.getElementsByTagName("path");
-  const path = cable[0];
-  const arrow = cable[1];
-
   // Set initialization style
-  applyElementProperties([path], properties.disabledPathView);
-  applyElementProperties([arrow], properties.disabledArrowView);
+  setPathState(cable, "disabled");
   // Add event listeners
-  element.addEventListener("mouseover", (e) => {
-    const state = window.cpuElements.state.ALUBALU;
-    if (state.enabled) {
-      applyElementProperties([path], properties.selectedPathView);
-      applyElementProperties([arrow], properties.selectedArrowView);
-    }
-  });
-  element.addEventListener("mouseout", (e) => {
-    const state = window.cpuElements.state.ALUBALU;
-    if (state.enabled) {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
-    }
-  });
+  selectEvents("ALUBALU", element, cable, "selected", "enabled");
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // ALUBALU always enabled
     const instType = window.cpuData.parseResult.type.toUpperCase();
-    applyElementProperties([path], properties.enabledPathView);
-    applyElementProperties([arrow], properties.enabledArrowView);
+    setPathState(cable, "enabled");
     window.cpuElements.state.ALUBALU.enabled = true;
     console.log("[-ALUBALU] new instruction: ", " enabling.");
   });
@@ -1719,32 +1414,14 @@ export function ALUBALU(window, document, element) {
 export function ALUDM(window, document, element) {
   // Reference the UI elements
   const cable = element.getElementsByTagName("path");
-  const path = cable[0];
-  const arrow = cable[1];
-
   // Set initialization style
-  applyElementProperties([path], properties.disabledPathView);
-  applyElementProperties([arrow], properties.disabledArrowView);
+  setPathState(cable, "disabled");
   // Add event listeners
-  element.addEventListener("mouseover", (e) => {
-    const state = window.cpuElements.state.ALUDM;
-    if (state.enabled) {
-      applyElementProperties([path], properties.selectedPathView);
-      applyElementProperties([arrow], properties.selectedArrowView);
-    }
-  });
-  element.addEventListener("mouseout", (e) => {
-    const state = window.cpuElements.state.ALUDM;
-    if (state.enabled) {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
-    }
-  });
+  selectEvents("ALUDM", element, cable, "selected", "enabled");
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // ALUDM always enabled
     const instType = window.cpuData.parseResult.type.toUpperCase();
-    applyElementProperties([path], properties.enabledPathView);
-    applyElementProperties([arrow], properties.enabledArrowView);
+    setPathState(cable, "enabled");
     window.cpuElements.state.ALUDM.enabled = true;
     console.log("[-ALUDM] new instruction: ", " enabling.");
   });
@@ -1753,32 +1430,14 @@ export function ALUDM(window, document, element) {
 export function ALUWBMUX(window, document, element) {
   // Reference the UI elements
   const cable = element.getElementsByTagName("path");
-  const path = cable[0];
-  const arrow = cable[1];
-
   // Set initialization style
-  applyElementProperties([path], properties.disabledPathView);
-  applyElementProperties([arrow], properties.disabledArrowView);
+  setPathState(cable, "disabled");
   // Add event listeners
-  element.addEventListener("mouseover", (e) => {
-    const state = window.cpuElements.state.ALUWBMUX;
-    if (state.enabled) {
-      applyElementProperties([path], properties.selectedPathView);
-      applyElementProperties([arrow], properties.selectedArrowView);
-    }
-  });
-  element.addEventListener("mouseout", (e) => {
-    const state = window.cpuElements.state.ALUWBMUX;
-    if (state.enabled) {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
-    }
-  });
+  selectEvents("ALUWBMUX", element, cable, "selected", "enabled");
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // ALUWBMUX always enabled
     const instType = window.cpuData.parseResult.type.toUpperCase();
-    applyElementProperties([path], properties.enabledPathView);
-    applyElementProperties([arrow], properties.enabledArrowView);
+    setPathState(cable, "enabled");
     window.cpuElements.state.ALUWBMUX.enabled = true;
     console.log("[-ALUWBMUX] new instruction: ", " enabling.");
   });
@@ -1787,32 +1446,14 @@ export function ALUWBMUX(window, document, element) {
 export function DMWBMUX(window, document, element) {
   // Reference the UI elements
   const cable = element.getElementsByTagName("path");
-  const path = cable[0];
-  const arrow = cable[1];
-
   // Set initialization style
-  applyElementProperties([path], properties.disabledPathView);
-  applyElementProperties([arrow], properties.disabledArrowView);
+  setPathState(cable, "disabled");
   // Add event listeners
-  element.addEventListener("mouseover", (e) => {
-    const state = window.cpuElements.state.DMWBMUX;
-    if (state.enabled) {
-      applyElementProperties([path], properties.selectedPathView);
-      applyElementProperties([arrow], properties.selectedArrowView);
-    }
-  });
-  element.addEventListener("mouseout", (e) => {
-    const state = window.cpuElements.state.DMWBMUX;
-    if (state.enabled) {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
-    }
-  });
+  selectEvents("DMWBMUX", element, cable, "selected", "enabled");
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // DMWBMUX always enabled
     const instType = window.cpuData.parseResult.type.toUpperCase();
-    applyElementProperties([path], properties.enabledPathView);
-    applyElementProperties([arrow], properties.enabledArrowView);
+    setPathState(cable, "enabled");
     window.cpuElements.state.DMWBMUX.enabled = true;
     console.log("[-DMWBMUX] new instruction: ", " enabling.");
   });
@@ -1821,32 +1462,14 @@ export function DMWBMUX(window, document, element) {
 export function ADD4WBMUX(window, document, element) {
   // Reference the UI elements
   const cable = element.getElementsByTagName("path");
-  const path = cable[0];
-  const arrow = cable[1];
-
   // Set initialization style
-  applyElementProperties([path], properties.disabledPathView);
-  applyElementProperties([arrow], properties.disabledArrowView);
+  setPathState(cable, "disabled");
   // Add event listeners
-  element.addEventListener("mouseover", (e) => {
-    const state = window.cpuElements.state.ADD4WBMUX;
-    if (state.enabled) {
-      applyElementProperties([path], properties.selectedPathView);
-      applyElementProperties([arrow], properties.selectedArrowView);
-    }
-  });
-  element.addEventListener("mouseout", (e) => {
-    const state = window.cpuElements.state.ADD4WBMUX;
-    if (state.enabled) {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
-    }
-  });
+  selectEvents("ADD4WBMUX", element, cable, "selected", "enabled");
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // ADD4WBMUX always enabled
     const instType = window.cpuData.parseResult.type.toUpperCase();
-    applyElementProperties([path], properties.enabledPathView);
-    applyElementProperties([arrow], properties.enabledArrowView);
+    setPathState(cable, "enabled");
     window.cpuElements.state.ADD4WBMUX.enabled = true;
     console.log("[-ADD4WBMUX] new instruction: ", " enabling.");
   });
@@ -1855,32 +1478,14 @@ export function ADD4WBMUX(window, document, element) {
 export function BUBUMUX(window, document, element) {
   // Reference the UI elements
   const cable = element.getElementsByTagName("path");
-  const path = cable[0];
-  const arrow = cable[1];
-
   // Set initialization style
-  applyElementProperties([path], properties.disabledPathView);
-  applyElementProperties([arrow], properties.disabledArrowView);
+  setPathState(cable, "disabled");
   // Add event listeners
-  element.addEventListener("mouseover", (e) => {
-    const state = window.cpuElements.state.BUBUMUX;
-    if (state.enabled) {
-      applyElementProperties([path], properties.selectedPathView);
-      applyElementProperties([arrow], properties.selectedArrowView);
-    }
-  });
-  element.addEventListener("mouseout", (e) => {
-    const state = window.cpuElements.state.BUBUMUX;
-    if (state.enabled) {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
-    }
-  });
+  selectEvents("ADD4WBMUX", element, cable, "selected", "enabled");
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // BUBUMUX always enabled
     const instType = window.cpuData.parseResult.type.toUpperCase();
-    applyElementProperties([path], properties.enabledPathView);
-    applyElementProperties([arrow], properties.enabledArrowView);
+    setPathState(cable, "enabled");
     window.cpuElements.state.BUBUMUX.enabled = true;
     console.log("[-BUBUMUX] new instruction: ", " enabling.");
   });
@@ -1889,36 +1494,20 @@ export function BUBUMUX(window, document, element) {
 export function ALUBUMUX(window, document, element) {
   // Reference the UI elements
   const cable = element.getElementsByTagName("path");
-  const path = cable[0];
-  const arrow = cable[1];
-
   // Set initialization style
-  applyElementProperties([path], properties.disabledPathView);
-  applyElementProperties([arrow], properties.disabledArrowView);
+  setPathState(cable, "disabled");
   // Add event listeners
-  element.addEventListener("mouseover", (e) => {
-    const state = window.cpuElements.state.ALUBUMUX;
-    if (state.enabled) {
-      applyElementProperties([path], properties.selectedPathView);
-      applyElementProperties([arrow], properties.selectedArrowView);
-    }
-  });
-  element.addEventListener("mouseout", (e) => {
-    const state = window.cpuElements.state.ALUBUMUX;
-    if (state.enabled) {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
-    }
-  });
+  selectEvents("ALUBUMUX", element, cable, "selected", "enabled");
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // ALUBUMUX enabled on S and ILoad instructions
     const instType = window.cpuData.parseResult.type.toUpperCase();
     const instOC = window.cpuData.parseResult.opcode;
     if (instType === "S" || instOC === "0000011") {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
+      setPathState(cable, "enabled");
       window.cpuElements.state.ALUBUMUX.enabled = true;
       console.log("[-ALUBUMUX] new instruction: ", " enabling.");
+    } else {
+      setPathState(cable, "disabled");
     }
   });
 }
@@ -1926,32 +1515,14 @@ export function ALUBUMUX(window, document, element) {
 export function ADD4BUMUX(window, document, element) {
   // Reference the UI elements
   const cable = element.getElementsByTagName("path");
-  const path = cable[0];
-  const arrow = cable[1];
-
   // Set initialization style
-  applyElementProperties([path], properties.disabledPathView);
-  applyElementProperties([arrow], properties.disabledArrowView);
+  setPathState(cable, "disabled");
   // Add event listeners
-  element.addEventListener("mouseover", (e) => {
-    const state = window.cpuElements.state.ADD4BUMUX;
-    if (state.enabled) {
-      applyElementProperties([path], properties.selectedPathView);
-      applyElementProperties([arrow], properties.selectedArrowView);
-    }
-  });
-  element.addEventListener("mouseout", (e) => {
-    const state = window.cpuElements.state.ADD4BUMUX;
-    if (state.enabled) {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
-    }
-  });
+  selectEvents("ADD4BUMUX", element, cable, "selected", "enabled");
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // ADD4BUMUX always enabled
     const instType = window.cpuData.parseResult.type.toUpperCase();
-    applyElementProperties([path], properties.enabledPathView);
-    applyElementProperties([arrow], properties.enabledArrowView);
+    setPathState(cable, "enabled");
     window.cpuElements.state.ADD4BUMUX.enabled = true;
     console.log("[-ADD4BUMUX] new instruction: ", " enabling.");
   });
@@ -1960,32 +1531,14 @@ export function ADD4BUMUX(window, document, element) {
 export function BUMUXPC(window, document, element) {
   // Reference the UI elements
   const cable = element.getElementsByTagName("path");
-  const path = cable[0];
-  const arrow = cable[1];
-
   // Set initialization style
-  applyElementProperties([path], properties.disabledPathView);
-  applyElementProperties([arrow], properties.disabledArrowView);
+  setPathState(cable, "disabled");
   // Add event listeners
-  element.addEventListener("mouseover", (e) => {
-    const state = window.cpuElements.state.BUMUXPC;
-    if (state.enabled) {
-      applyElementProperties([path], properties.selectedPathView);
-      applyElementProperties([arrow], properties.selectedArrowView);
-    }
-  });
-  element.addEventListener("mouseout", (e) => {
-    const state = window.cpuElements.state.BUMUXPC;
-    if (state.enabled) {
-      applyElementProperties([path], properties.enabledPathView);
-      applyElementProperties([arrow], properties.enabledArrowView);
-    }
-  });
+  selectEvents("BUMUXPC", element, cable, "selected", "enabled");
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // BUMUXPC always enabled
     const instType = window.cpuData.parseResult.type.toUpperCase();
-    applyElementProperties([path], properties.enabledPathView);
-    applyElementProperties([arrow], properties.enabledArrowView);
+    setPathState(cable, "enabled");
     window.cpuElements.state.BUMUXPC.enabled = true;
     console.log("[-BUMUXPC] new instruction: ", " enabling.");
   });
