@@ -15,10 +15,12 @@
   <label> or select an example:</label>
   <select id="dropInstruction">
     <option value="add x2, a0, sp">(R) add x2, a0, sp</option>
+    <option value="sub x2, a0, sp">(R) sub x2, a0, sp</option>
     <option value="xori x2, a0, 100">(I-arith) xori x2, a0, 100</option>
     <option value="sltiu x2, a5, 100">(I-arith) sltiu x2, a5, 100</option>
     <option value="lw x2, 16(a5)">(I-load) lw x2,16(a5)</option>
     <option value="beq x2, x3, -2048">(B) beq x2, x3, -2048</option>
+  
   </select>
   <button class="executeInstruction" type="button" >Execute</button>
   </div>

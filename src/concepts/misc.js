@@ -11,17 +11,20 @@ export function getDrawComponent(document, attribute, value) {
  *
  * TODO: Test whether the property is supported by the element.
  */
-export function applyElementProperties(element, properties) {
-  for (var key in properties) {
-    setAttribute(element, key, properties[key]);
-  }
+export function applyElementProperties(elements, properties) {
+  elements.forEach((element) => {
+    for (var key in properties) {
+      setAttribute(element, key, properties[key]);
+    }
+  });
 }
 
-export function applyCSSProperties(element, properties) {
-  for (var key in properties) {
-    //console.log("Applying CSS property ", key);
-    element.style[key] = properties[key];
-  }
+export function applyCSSProperties(elements, properties) {
+  elements.forEach((element) => {
+    for (var key in properties) {
+      element.style[key] = properties[key];
+    }
+  });
 }
 
 export function setAttribute(component, attribute, value) {

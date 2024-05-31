@@ -2,21 +2,6 @@ import { applyElementProperties, applyCSSProperties } from "./misc.js";
 import { defaultComponentProperties as properties } from "./styles.js";
 import _ from "../../node_modules/lodash-es/lodash.js";
 
-const disabledLabelProperties = _.assign(
-  properties.disabledText,
-  properties.labels
-);
-
-const enabledLabelProperties = _.assign(
-  properties.enabledText,
-  properties.labels
-);
-
-const selectedLabelProperties = _.assign(
-  properties.selectedText,
-  properties.labels
-);
-
 const showTooltip = (evt, text) => {
   let tooltip = document.getElementById("tooltip");
   tooltip.innerHTML = text;
@@ -31,11 +16,6 @@ const hideTooltip = () => {
 };
 
 function applyProps(compL, compProp, textL, textProp) {
-  applyElementProperties(compL, properties[compProp]);
-  applyCSSProperties(textL, properties[textProp]);
-}
-
-function ShtapplyProps(compL, compProp, textL, textProp) {
   applyElementProperties(compL, properties[compProp]);
   applyCSSProperties(textL, properties[textProp]);
 }
