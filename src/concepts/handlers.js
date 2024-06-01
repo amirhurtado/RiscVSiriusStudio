@@ -1458,64 +1458,64 @@ export function LOGTEXTBIN(window, document, element) {
   });
 }
 
-// function instructionType(rect, expected, actual) {
-//   if (expected === actual) {
-//     applyElementProperties(rect, defaultProperties.selectedView);
-//   } else {
-//     applyElementProperties(rect, defaultProperties.disabledView);
-//   }
-// }
+function instructionType(rect, expected, actual) {
+  if (expected === actual) {
+    applyProps([rect], "selectedShapeView", [], "");
+  } else {
+    applyProps([rect], "disabledShapeView", [], "");
+  }
+}
 
-// export function LOGTYPER(window, document, element) {
-//   const rect = element.getElementsByTagName("rect")[0];
-//   const newInstruction = () => {
-//     const actual = window.cpuData.parseResult.type.toUpperCase();
-//     instructionType(rect, "R", actual);
-//   };
-//   window.cpuData.buttonExecute.addEventListener("click", newInstruction);
-// }
+export function LOGTYPER(window, document, element) {
+  const rect = element.getElementsByTagName("rect")[0];
+  const newInstruction = () => {
+    const actual = window.cpuData.parseResult.type.toUpperCase();
+    instructionType(rect, "R", actual);
+  };
+  window.cpuData.buttonExecute.addEventListener("click", newInstruction);
+}
 
-// export function LOGTYPEI(window, document, element) {
-//   const rect = element.getElementsByTagName("rect")[0];
-//   const newInstruction = () => {
-//     const actual = window.cpuData.parseResult.type.toUpperCase();
-//     instructionType(rect, "I", actual);
-//   };
-//   window.cpuData.buttonExecute.addEventListener("click", newInstruction);
-// }
+export function LOGTYPEI(window, document, element) {
+  const rect = element.getElementsByTagName("rect")[0];
+  const newInstruction = () => {
+    const actual = window.cpuData.parseResult.type.toUpperCase();
+    instructionType(rect, "I", actual);
+  };
+  window.cpuData.buttonExecute.addEventListener("click", newInstruction);
+}
 
-// export function LOGTYPES(window, document, element) {
-//   const rect = element.getElementsByTagName("rect")[0];
-//   const newInstruction = () => {
-//     const actual = window.cpuData.parseResult.type.toUpperCase();
-//     instructionType(rect, "S", actual);
-//   };
-//   window.cpuData.buttonExecute.addEventListener("click", newInstruction);
-// }
+export function LOGTYPES(window, document, element) {
+  const rect = element.getElementsByTagName("rect")[0];
+  const newInstruction = () => {
+    const actual = window.cpuData.parseResult.type.toUpperCase();
+    instructionType(rect, "S", actual);
+  };
+  window.cpuData.buttonExecute.addEventListener("click", newInstruction);
+}
 
-// export function LOGTYPEB(window, document, element) {
-//   const rect = element.getElementsByTagName("rect")[0];
-//   const newInstruction = () => {
-//     const actual = window.cpuData.parseResult.type.toUpperCase();
-//     instructionType(rect, "B", actual);
-//   };
-//   window.cpuData.buttonExecute.addEventListener("click", newInstruction);
-// }
+export function LOGTYPEB(window, document, element) {
+  const rect = element.getElementsByTagName("rect")[0];
+  const newInstruction = () => {
+    const actual = window.cpuData.parseResult.type.toUpperCase();
+    instructionType(rect, "B", actual);
+  };
+  window.cpuData.buttonExecute.addEventListener("click", newInstruction);
+}
 
-// export function LOGTYPEU(window, document, element) {
-//   const rect = element.getElementsByTagName("rect")[0];
-//   const newInstruction = () => {
-//     const actual = window.cpuData.parseResult.type.toUpperCase();
-//     instructionType(rect, "U", actual);
-//   };
-//   window.cpuData.buttonExecute.addEventListener("click", newInstruction);
-// }
+export function LOGTYPEU(window, document, element) {
+  const rect = element.getElementsByTagName("rect")[0];
+  const newInstruction = () => {
+    const actual = window.cpuData.parseResult.type.toUpperCase();
+    instructionType(rect, "U", actual);
+  };
+  window.cpuData.buttonExecute.addEventListener("click", newInstruction);
+}
 
-// export function LOGTYPEJ(window, document, element) {
-//   const rect = element.getElementsByTagName("rect")[0];
-//   const newInstruction = () => {
-//     const actual = window.cpuData.parseResult.type.toUpperCase();
-//     instructionType(rect, "J", actual);
-//   };
-//   window.cpuData.buttonExecute.addEventListener("click", newInstruction);
-// }
+export function LOGTYPEJ(window, document, element) {
+  const rect = element.getElementsByTagName("rect")[0];
+  const newInstruction = () => {
+    const actual = window.cpuData.parseResult.type.toUpperCase();
+    instructionType(rect, "J", actual);
+  };
+  window.cpuData.buttonExecute.addEventListener("click", newInstruction);
+}
