@@ -1,11 +1,14 @@
-import { applyElementProperties, applyCSSProperties } from "./misc.js";
-import { defaultComponentProperties as properties } from "./styles.js";
 import _ from "../../node_modules/lodash-es/lodash.js";
 
-const showTooltip = (evt, text) => {
+function undefinedFunc0() {}
+
+const showTooltip = (evt, text, etext) => {
+  if (evt.altKey) {
+    return;
+  }
   let tooltip = document.getElementById("tooltip");
-  tooltip.innerHTML = text;
-  tooltip.style.display = "block";
+  tooltip.innerHTML = evt.shiftKey && etext ? etext : text;
+  tooltip.style.display = "inline-block";
   tooltip.style.left = evt.pageX + 10 + "px";
   tooltip.style.top = evt.pageY + 10 + "px";
 };
@@ -15,47 +18,11 @@ const hideTooltip = () => {
   tooltip.style.display = "none";
 };
 
-function applyProps(compL, compProp, textL, textProp) {
-  applyElementProperties(compL, properties[compProp]);
-  applyCSSProperties(textL, properties[textProp]);
-}
-
-function applyPthProps(pth, pthProp, arr, arrProp) {
-  applyProps(pth, pthProp, [], "");
-  applyProps(arr, arrProp, [], "");
-}
-
-function evt(name, compL, compProp, textL, textProp, e) {
-  const state = window.cpuElements.state[name];
-  if (state["enabled"]) {
-    applyProps(compL, compProp, textL, textProp);
-  }
-}
-
-function pathEvt(name, pth, pthProp, arr, arrProp, text, textProp, e) {
-  const state = window.cpuElements.state[name];
-  if (state["enabled"]) {
-    applyPthProps(pth, pthProp, arr, arrProp, text, textProp);
-  }
-}
-
-function textEvt(name, text, textProp, e) {
-  const state = window.cpuElements.state[name];
-  if (state["enabled"]) {
-    applyCSSProperties([text], properties[textProp]);
-  }
-}
-
-let onEvt = _.curry(evt);
-let onPthEvt = _.curry(pathEvt);
-let onTxtEvt = _.curry(textEvt);
-
-function onEvtText(name, textL, textProp) {
-  return onEvt(name, [], "", textL, textProp);
+function applyClass(comp, cls) {
+  comp.setAttributeNS(null, "class", cls);
 }
 
 function binFormattedDisplay(window, selection) {
-  const selected = 7;
   const formatLists = { R: [1, 1, 5, 5, 5, 3, 5, 7] };
   const selectors = {
     opcode: [7],
@@ -64,7 +31,6 @@ function binFormattedDisplay(window, selection) {
     rs1: [4],
     rs2: [3],
   };
-  const component = window.cpuElements.LOGTEXTBIN;
   const parsed = window.cpuData.parseResult;
   const type = parsed.type.toUpperCase();
   let s = [];
@@ -73,18 +39,7 @@ function binFormattedDisplay(window, selection) {
   } else {
     s = selectors[selection];
   }
-  // console.log("Selection ", s, selection, type);
-  const html = formatInstruction(parsed, formatLists[type], s);
-  const label = component.getElementsByTagName("div")[2];
-  label.innerHTML = html;
-}
-function binPlainDisplay(window) {
-  const component = window.cpuElements.LOGTEXTBIN;
-  const label = component.getElementsByTagName("div")[2];
-  const txt = window.cpuData.parseResult.encoding.binEncoding;
-  const stag = `<span style="color:${properties.enabledText.color}">`;
-  const etag = "</span>";
-  label.innerHTML = `${stag}${txt}${etag}`;
+  return formatInstruction(parsed, formatLists[type], s);
 }
 
 function splitInstruction(binInst, specL) {
@@ -100,9 +55,9 @@ function splitInstruction(binInst, specL) {
 function formatInstruction(parsed, type, selected) {
   const pieces = splitInstruction(parsed.encoding.binEncoding, type);
   // console.log("pieces ", pieces);
-  const selectedStag = `-<span style="color:${properties.selectedText.color}"><b>`;
-  const selectedEetag = "</b></span>-";
-  const disabledStag = `<span style="color:${properties.disabledText.color}">`;
+  const selectedStag = `<span class="instHigh">`;
+  const selectedEetag = "</span>";
+  const disabledStag = `<span class="instDis">`;
   const disabledEetag = "</span>";
   let html = "";
   // const selected = 7;
@@ -115,549 +70,513 @@ function formatInstruction(parsed, type, selected) {
   }
   return html;
 }
-// Components functions
-function tooltipEvt(name, window, element, htmlGen) {
+
+function currentInst(window) {
+  return window.cpuData.parseResult;
+}
+
+function currentBinInst(window) {
+  return currentInst(window).encoding.binEncoding;
+}
+
+function isEnabled(name) {
+  return window.cpuElements.state[name].enabled;
+}
+
+function tooltipEvt(name, window, element, htmlGen, htmlDet) {
   element.addEventListener("mousemove", (e) => {
     const state = window.cpuElements.state[name];
-    const instParsed = window.cpuData.parseResult;
     if (state.enabled) {
-      showTooltip(e, htmlGen());
+      showTooltip(e, htmlGen(), htmlDet !== undefinedFunc0 ? htmlDet() : null);
     }
   });
-  element.addEventListener("mouseout", (e) => {
+  element.addEventListener("mouseout", () => {
     const state = window.cpuElements.state[name];
     if (state.enabled) {
       hideTooltip();
     }
   });
 }
-function genCompEvt(element, name, compElems, textElems) {
-  element.addEventListener(
-    "mouseover",
-    onEvt(name, compElems, "selectedShapeView", textElems, "selectedText")
-  );
-  element.addEventListener(
-    "mouseout",
-    onEvt(name, compElems, "enabledShapeView", textElems, "enabledText")
-  );
+
+function focus(element) {
+  element.addEventListener("mousemove", () => {
+    element.parentNode.append(element);
+  });
 }
 
-// Initialize components
-export function CLK(window, document, element) {
-  const rect = element.getElementsByTagName("rect")[0];
-  const clk = window.cpuElements.CLKCLK.getElementsByTagName("path")[0];
-  const text = element.getElementsByTagName("div")[2];
+function mouseHover(element, mmove, mout) {
+  element.addEventListener("mousemove", mmove);
+  element.addEventListener("mouseout", mout);
+}
 
-  // Set initialization style
-  applyProps([rect, clk], "disabledShapeView", [text], "disabledText");
-  // Add event listeners
-  genCompEvt(element, "CLK", [rect, clk], [text]);
+/**
+ *
+ * There is a function per every component in the CPU diagram.
+ *
+ * Every exported function will be executed automatically. It is the
+ * responsibility of the function to install all the listeners of the object and
+ * to add a listener on window.cpuData.buttonExecute when clicked. That way the
+ * listener will be called every time a new instruction is executed. It is also
+ * up to the installed listener to decide if the component is enabled or
+ * disabled during the execution of that instruction.
+ *
+ */
+export function CLK(window, element) {
+  applyClass(element, "component");
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    // PC is enabled on all instructions
-    applyProps([rect, clk], "enabledShapeView", [text], "enabledText");
+    applyClass(element, "component");
     window.cpuElements.state.CLK.enabled = true;
     console.log("[CLK] new instruction: ", " enabling.");
   });
 }
 
-export function PC(window, document, element) {
-  // Reference the UI elements
-  const rect = element.getElementsByTagName("rect")[0];
-  const text = element.getElementsByTagName("div")[2];
-  const clk = window.cpuElements.PCCLOCK.getElementsByTagName("path")[0];
-
-  // Set initialization style
-  applyProps([rect, clk], "disabledShapeView", [text], "disabledText");
-  // Add event listeners
-  tooltipEvt("PC", window, element, () => {
-    const inst = window.cpuData.parseResult.inst;
-    return `Current address: <b>${inst}</b>`;
+export function PC(window, element) {
+  [element, window.cpuElements.PCCLOCK].forEach((e) => {
+    applyClass(e, "componentDisabled");
   });
-  genCompEvt(element, "PC", [rect, clk], [text]);
-  // Every new instruction the following function is executed.
-  window.cpuData.buttonExecute.addEventListener("click", () => {
-    applyProps([rect, clk], "enabledShapeView", [text], "enabledText");
-    // PC is enabled on all instructions
-    window.cpuElements.state.PC.enabled = true;
-    console.log("[PC] new instruction: ", " enabling.");
-  });
-}
-
-export function ADD4(window, document, element) {
-  // Reference the UI elements
-  const rect = element.getElementsByTagName("rect")[0];
-  const text = element.getElementsByTagName("div")[2];
-
-  // Set initialization style
-  applyProps([rect], "disabledShapeView", [text], "disabledText");
-  // Add event listeners
-  genCompEvt(element, "ADD4", [rect], [text]);
-  window.cpuData.buttonExecute.addEventListener("click", () => {
-    applyProps([rect], "enabledShapeView", [text], "enabledText");
-    // ADD4 is enabled on all instructions
-    window.cpuElements.state.ADD4.enabled = true;
-    console.log("[ADD4] new instruction: ", " enabling.");
-  });
-}
-
-export function IM(window, document, element) {
-  // Reference the UI elements
-  const rect = element.getElementsByTagName("rect")[0];
-  const text = element.getElementsByTagName("div")[2];
-  const addressText =
-    window.cpuElements.IMADDRESSTEXT.getElementsByTagName("div")[2];
-  const instText =
-    window.cpuElements.IMINSTRUCTIONTEXT.getElementsByTagName("div")[2];
-
-  // Initialization style
-  applyProps(
-    [rect],
-    "disabledShapeView",
-    [text, addressText, instText],
-    "disabledText"
-  );
-
-  // Text: Address
-  tooltipEvt("IM", window, addressText, () => {
-    const instParsed = window.cpuData.parseResult;
-    return `<b>Current address:</b><div>${instParsed.inst}</div>`;
-  });
-  genCompEvt(addressText, "IM", [rect], [text, addressText]);
-  genCompEvt(instText, "IM", [rect], [text, instText]);
-  genCompEvt(element, "IM", [rect], [text]);
-  window.cpuData.buttonExecute.addEventListener("click", () => {
-    applyProps(
-      [rect],
-      "enabledShapeView",
-      [text, addressText, instText],
-      "enabledText"
-    );
-    // IM is enabled on all instructions
-    window.cpuElements.state.IM.enabled = true;
-    console.log("[IM] new instruction: ", " enabling.");
-  });
-}
-
-export function CU(window, document, element) {
-  // Reference the UI elements
-  const rect = element.getElementsByTagName("rect")[0];
-  const arrow = window.cpuElements.CUArrow.getElementsByTagName("path")[0];
-  const text = element.getElementsByTagName("div")[2];
-
-  // Initialization style
-  applyProps([rect, arrow], "disabledShapeView", [text], "disabledText");
-
-  // Register listeners
-  genCompEvt(element, "CU", [rect, arrow], [text]);
-  genCompEvt(arrow, "CU", [rect, arrow], [text]);
-  window.cpuData.buttonExecute.addEventListener("click", () => {
-    applyProps([rect, arrow], "enabledShapeView", [text], "enabledText");
-    // CU is enabled on all instructions
-    window.cpuElements.state.CU.enabled = true;
-    console.log("[CU] new instruction: ", " enabling.");
-  });
-}
-
-export function RU(window, document, element) {
-  // Reference the UI elements
-  const rect = element.getElementsByTagName("rect")[0];
-  const clk = window.cpuElements.RUCLOCK.getElementsByTagName("path")[0];
-
-  const text = element.getElementsByTagName("div")[2];
-  const rs1Text = window.cpuElements.RUTEXTINRS1.getElementsByTagName("div")[2];
-  const rs2Text = window.cpuElements.RUTEXTINRS2.getElementsByTagName("div")[2];
-  const rdText = window.cpuElements.RUTEXTINRD.getElementsByTagName("div")[2];
-  const datawrText =
-    window.cpuElements.RUTEXTINDATAWR.getElementsByTagName("div")[2];
-  const ruwrText = window.cpuElements.RUTEXTINWE.getElementsByTagName("div")[2];
-  const rd1Text =
-    window.cpuElements.RUTEXTOUTRD1.getElementsByTagName("div")[2];
-  const rd2Text =
-    window.cpuElements.RUTEXTOUTRD2.getElementsByTagName("div")[2];
-
-  // Initialization style
-  applyProps(
-    [rect, clk],
-    "disabledShapeView",
-    [text, rs1Text, rs2Text, rdText, datawrText, ruwrText, rd1Text, rd2Text],
-    "disabledText"
-  );
-  // Register listeners
-  genCompEvt(rs1Text, "RU", [rect, clk], [text, rs1Text]);
-  genCompEvt(rs2Text, "RU", [rect, clk], [text, rs2Text]);
-  genCompEvt(rdText, "RU", [rect, clk], [text, rdText]);
-  genCompEvt(datawrText, "RU", [rect, clk], [text, datawrText]);
-  genCompEvt(ruwrText, "RU", [rect, clk], [text, ruwrText]);
-  genCompEvt(rd1Text, "RU", [rect, clk], [text, rd1Text]);
-  genCompEvt(rd2Text, "RU", [rect, clk], [text, rd2Text]);
-  genCompEvt(
+  tooltipEvt(
+    "PC",
+    window,
     element,
-    "RU",
-    [rect, clk],
-    [text, rs1Text, rs2Text, rdText, datawrText, ruwrText, rd1Text, rd2Text]
+    () => {
+      const inst = window.cpuData.parseResult.inst;
+      return `<span class="tooltipinfo">
+            <h1>Current address</h1>
+            <p>${inst}</p>
+            </span>`;
+    },
+    undefinedFunc0
   );
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    // Registers unit available for all instructions
-    applyProps(
-      [rect, clk],
-      "enabledShapeView",
-      [text, rs1Text, rs2Text, rdText, datawrText, ruwrText, rd1Text, rd2Text],
-      "enabledText"
-    );
-    window.cpuElements.state.RU.enabled = true;
-    console.log("[RU] new instruction: ", " enabling.");
+    window.cpuElements.state.PC.enabled = true;
+    [element, window.cpuElements.PCCLOCK].forEach((e) => {
+      applyClass(e, "component");
+    });
   });
 }
 
-export function IMM(window, document, element) {
-  // Reference the UI elements
-  const rect = element.getElementsByTagName("rect")[0];
-  const text = element.getElementsByTagName("div")[2];
-  // Initialization style
-  applyProps([rect], "disabledShapeView", [text], "disabledText");
-  // Register listeners
-  genCompEvt(element, "IMM", [rect], [text]);
+export function ADD4(window, element) {
+  applyClass(element, "componentDisabled");
+  window.cpuData.buttonExecute.addEventListener("click", () => {
+    applyClass(element, "component");
+    window.cpuElements.state.ADD4.enabled = true;
+  });
+}
+
+export function IM(window, element) {
+  const { IMADDRESSTEXT: addressText, IMINSTRUCTIONTEXT: instText } =
+    window.cpuElements;
+  "div"[2];
+  applyClass(element, "componentDisabled");
+  [addressText, instText].forEach((e) => {
+    applyClass(e, "inputTextDisabled");
+  });
+  tooltipEvt(
+    "IM",
+    window,
+    addressText,
+    () => {
+      const instParsed = window.cpuData.parseResult;
+      return `<span class="tooltipinfo">
+            <h1>Current address</h1>
+            <p>${instParsed.inst}</p>
+            </span>`;
+    },
+    () => {
+      return "TODO: probably show next instruction or the contents of the memory";
+    }
+  );
+  tooltipEvt(
+    "IM",
+    window,
+    instText,
+    () => {
+      const text = window.cpuData.instruction;
+      return `<span class="tooltipinfo">
+            <h1>Current instruction</h1>
+            <p>${text}</p>`;
+    },
+    () => {
+      const text = window.cpuData.instruction;
+      const instParsed = window.cpuData.parseResult;
+      return `<span class="tooltipinfo">
+            <h1>Current instruction</h1>
+            <ul>
+              <li>Assembler: <b>${text}</b></li>
+              <li>Type: ${instParsed.type}</li>
+              <li>Pseudo: ${instParsed.pseudo}</li>
+            </ul>`;
+    }
+  );
+  window.cpuData.buttonExecute.addEventListener("click", () => {
+    applyClass(element, "component");
+    [addressText, instText].forEach((e) => {
+      applyClass(e, "inputText");
+    });
+    window.cpuElements.state.IM.enabled = true;
+  });
+}
+
+export function CU(window, element) {
+  const arrow = window.cpuElements.CUArrow;
+  [element, arrow].forEach((e) => {
+    applyClass(e, "componentDisabled");
+  });
+  tooltipEvt(
+    "CU",
+    window,
+    arrow,
+    () => {
+      const { parseResult: instParsed, instruction: text } = window.cpuData;
+      return `<span class="tooltipinfo">
+            <h1>Flags for instruction</h1>
+            <p>${text}${instParsed.inst}</p>`;
+    },
+    undefinedFunc0
+  );
+  window.cpuData.buttonExecute.addEventListener("click", () => {
+    [element, arrow].forEach((e) => {
+      applyClass(e, "component");
+    });
+    window.cpuElements.state.CU.enabled = true;
+  });
+}
+
+export function RU(window, element) {
+  [element, window.cpuElements.RUCLOCK].forEach((e) => {
+    applyClass(e, "componentDisabled");
+  });
+  const {
+    RUTEXTINRS1: rs1Text,
+    RUTEXTINRS2: rs2Text,
+    RUTEXTINRD: rdText,
+    RUTEXTINDATAWR: datawrText,
+    RUTEXTINWE: ruwrText,
+  } = window.cpuElements;
+
+  [rs1Text, rs2Text, rdText, datawrText, ruwrText].forEach((e) => {
+    applyClass(e, "inputTextDisabled");
+  });
+  // !TODO: It would be nice to compute if the register has sense in the current
+  // instruction and show something accordingly in the tooltip text.
+  tooltipEvt(
+    "RU",
+    window,
+    rs1Text,
+    () => {
+      const regname = window.cpuData.parseResult.rs1.regname;
+      return `<span class="tooltipinfo">
+            <h1>Register</h1>
+            <p>ABI: ${regname}</p>`;
+    },
+    () => {
+      const { regeq, regname, regenc } = window.cpuData.parseResult.rs1;
+      const binEncoding = window.cpuData.parseResult.encoding.rs1;
+      return `<span class="tooltipinfo">
+            <ul>
+              <li>Register: ${regeq}</li>
+              <li>ABI: ${regname}</li>
+              <li>Encoding: ${regenc}</li>
+              <li>Encoding(2): ${binEncoding}</li>
+            </ul>`;
+    }
+  );
+  tooltipEvt(
+    "RU",
+    window,
+    rs2Text,
+    () => {
+      const regname = window.cpuData.parseResult.rs2.regname;
+      return `<span class="tooltipinfo">
+            <h1>Register</h1>
+            <p>ABI: ${regname}</p>`;
+    },
+    () => {
+      const { regeq, regname, regenc } = window.cpuData.parseResult.rs2;
+      const binEncoding = window.cpuData.parseResult.encoding.rs2;
+      return `<span class="tooltipinfo">
+            <ul>
+              <li>Register: ${regeq}</li>
+              <li>ABI: ${regname}</li>
+              <li>Encoding: ${regenc}</li>
+              <li>Encoding(2): ${binEncoding}</li>
+            </ul>`;
+    }
+  );
+  tooltipEvt(
+    "RU",
+    window,
+    rdText,
+    () => {
+      const regname = window.cpuData.parseResult.rd.regname;
+      return `<span class="tooltipinfo">
+            <h1>Register</h1>
+            <p>ABI: ${regname}</p>`;
+    },
+    () => {
+      const { regeq, regname, regenc } = window.cpuData.parseResult.rd;
+      const binEncoding = window.cpuData.parseResult.encoding.rd;
+      return `<span class="tooltipinfo">
+            <ul>
+              <li>Register: ${regeq}</li>
+              <li>ABI: ${regname}</li>
+              <li>Encoding: ${regenc}</li>
+              <li>Encoding(2): ${binEncoding}</li>
+            </ul>`;
+    }
+  );
+  window.cpuData.buttonExecute.addEventListener("click", () => {
+    [element, window.cpuElements.RUCLOCK].forEach((e) => {
+      applyClass(e, "component");
+    });
+    [rs1Text, rs2Text, rdText, datawrText, ruwrText].forEach((e) => {
+      applyClass(e, "inputText");
+    });
+    window.cpuElements.state.RU.enabled = true;
+  });
+}
+
+export function IMM(window, element) {
+  applyClass(element, "componentDisabled");
+  tooltipEvt(
+    "IMM",
+    window,
+    element,
+    () => {
+      //const inst = window.cpuData.parseResult.inst;
+      return `<span class="tooltipinfo">
+            <ul>
+            <li>Value: TODO!</li>
+            <li>Bit length: TODO!</li>
+            </ul>
+            </span>`;
+    },
+    () => {
+      //const inst = window.cpuData.parseResult.inst;
+      return `<span class="tooltipinfo">
+            <ul>
+            <li>Value: TODO!</li>
+            <li>Value(2): TODO!</li>
+            <li>Value(8): TODO!</li>
+            </ul>
+            </span>`;
+    }
+  );
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // Immediate unit available for all but R instructions
+    console.log("[IMM] new instruction: ");
     const parseResult = window.cpuData.parseResult;
     if (parseResult.type.toUpperCase() !== "R") {
-      applyProps([rect], "enabledShapeView", [text], "enabledText");
+      applyClass(element, "component");
       window.cpuElements.state.IMM.enabled = true;
-      console.log("[IMM] new instruction: ", " enabling.");
     } else {
-      applyProps([rect], "disabledShapeView", [text], "disabledText");
+      applyClass(element, "componentDisabled");
+      window.cpuElements.state.IMM.enabled = false;
     }
   });
 }
 
-export function ALUA(window, document, element) {
-  // Reference the UI elements
-  const rect = element.getElementsByTagName("rect")[0];
-  const text = element.getElementsByTagName("div")[2];
-  const path1 = window.cpuElements.ALUAMUXIC1.getElementsByTagName("path")[0];
-  const path0 = window.cpuElements.ALUAMUXIC0.getElementsByTagName("path")[0];
-  const text0 = window.cpuElements.ALUATEXTIN0.getElementsByTagName("div")[2];
-  const text1 = window.cpuElements.ALUATEXTIN1.getElementsByTagName("div")[2];
-
-  // Support function that returns when the path0 should be visible
+export function ALUA(window, element) {
+  applyClass(element, "componentDisabled");
+  const { ALUAMUXIC1: path1, ALUAMUXIC0: path0 } = window.cpuElements;
+  [path1, path0].forEach((x) => {
+    applyClass(x, "connectionDisabled muxPathDisabled");
+  });
   const path0Visible = (inst) => {
     return inst === "R" || inst === "I" || inst === "S";
   };
-  // Initialization style
-  applyProps(
-    [rect, path1, path0],
-    "disabledShapeView",
-    [text, text0, text1],
-    "disabledText"
-  );
-  // Main component
-  element.addEventListener("mouseover", () => {
-    const state = window.cpuElements.state.ALUA;
-    if (state.enabled) {
-      applyProps([rect], "selectedShapeView", [text], "selectedText");
-      const instType = window.cpuData.parseResult.type.toUpperCase();
-      if (path0Visible(instType)) {
-        applyElementProperties([path0], properties.selectedShapeView);
-        applyElementProperties([path1], properties.hiddenShapeView);
-      } else {
-        applyElementProperties([path1], properties.selectedShapeView);
-        applyElementProperties([path0], properties.hiddenShapeView);
-      }
-    }
-  });
-  element.addEventListener("mouseout", () => {
-    const state = window.cpuElements.state.ALUA;
-    if (state.enabled) {
-      const instType = window.cpuData.parseResult.type.toUpperCase();
-      applyProps([rect], "enabledShapeView", [text], "enabledText");
-      if (path0Visible(instType)) {
-        applyElementProperties([path0], properties.enabledShapeView);
-        applyElementProperties([path1], properties.hiddenShapeView);
-      } else {
-        applyElementProperties([path1], properties.enabledShapeView);
-        applyElementProperties([path0], properties.hiddenShapeView);
-      }
-    }
-  });
-
   window.cpuData.buttonExecute.addEventListener("click", () => {
     const instType = window.cpuData.parseResult.type.toUpperCase();
     window.cpuElements.state.ALUA.enabled = instType !== "U";
     if (window.cpuElements.state.ALUA.enabled) {
-      applyProps([rect], "enabledShapeView", [text], "enabledText");
+      applyClass(element, "component");
       if (path0Visible(instType)) {
-        applyElementProperties([path0], properties.enabledShapeView);
-        applyElementProperties([path1], properties.hiddenShapeView);
+        applyClass(path0, "connection muxPath");
+        applyClass(path1, "connectionDisabled muxPathDisabled");
       } else {
-        applyElementProperties([path1], properties.enabledShapeView);
-        applyElementProperties([path0], properties.hiddenShapeView);
+        applyClass(path1, "connection muxPath");
+        applyClass(path0, "connectionDisabled muxPathDisabled");
       }
     } else {
-      applyProps(
-        [rect, path1, path0],
-        "disabledShapeView",
-        [text, text0, text1],
-        "disabledText"
-      );
+      applyClass(element, "componentDisabled");
+      [path1, path0].forEach((x) => {
+        applyClass(x, "connectionDisabled muxPathDisabled");
+      });
     }
-    console.log("[ALUA] new instruction: ", path0Visible(instType));
   });
 }
 
-export function ALUB(window, document, element) {
-  // Reference the UI elements
-  const rect = element.getElementsByTagName("rect")[0];
-  const text = element.getElementsByTagName("div")[2];
-  const path1 = window.cpuElements.ALUBMUXIC1.getElementsByTagName("path")[0];
-  const path0 = window.cpuElements.ALUBMUXIC0.getElementsByTagName("path")[0];
-  const text0 = window.cpuElements.ALUBTEXTIN0.getElementsByTagName("div")[2];
-  const text1 = window.cpuElements.ALUBTEXTIN1.getElementsByTagName("div")[2];
-
-  // Support function that returns when the path0 should be visible
+export function ALUB(window, element) {
+  applyClass(element, "componentDisabled");
+  const { ALUBMUXIC1: path1, ALUBMUXIC0: path0 } = window.cpuElements;
+  [path1, path0].forEach((x) => {
+    applyClass(x, "connectionDisabled muxPathDisabled");
+  });
   const path0Visible = (inst) => {
     return inst === "R" || inst === "B" || inst === "J";
   };
-  // Initialization style
-  applyProps(
-    [rect, path1, path0],
-    "disabledShapeView",
-    [text, text0, text1],
-    "disabledText"
-  );
-  // Main component
-  element.addEventListener("mouseover", () => {
-    const state = window.cpuElements.state.ALUB;
-    if (state.enabled) {
-      const instType = window.cpuData.parseResult.type.toUpperCase();
-      applyProps([rect], "selectedShapeView", [text], "selectedText");
-      if (path0Visible(instType)) {
-        applyElementProperties([path0], properties.selectedShapeView);
-        applyElementProperties([path1], properties.hiddenShapeView);
-      } else {
-        applyElementProperties([path1], properties.selectedShapeView);
-        applyElementProperties([path0], properties.hiddenShapeView);
-      }
-    }
-  });
-  element.addEventListener("mouseout", () => {
-    const state = window.cpuElements.state.ALUA;
-    if (state.enabled) {
-      const instType = window.cpuData.parseResult.type.toUpperCase();
-      applyProps([rect], "enabledShapeView", [text], "enabledText");
-      if (path0Visible(instType)) {
-        applyElementProperties([path0], properties.enabledShapeView);
-        applyElementProperties([path1], properties.hiddenShapeView);
-      } else {
-        applyElementProperties([path1], properties.enabledShapeView);
-        applyElementProperties([path0], properties.hiddenShapeView);
-      }
-    }
-  });
-
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // Always enabled for all instructions
     window.cpuElements.state.ALUB.enabled = true;
+    applyClass(element, "component");
     const instType = window.cpuData.parseResult.type.toUpperCase();
-    applyProps([rect], "enabledShapeView", [text], "enabledText");
     if (path0Visible(instType)) {
-      applyElementProperties([path0], properties.enabledShapeView);
-      applyElementProperties([path1], properties.hiddenShapeView);
+      applyClass(path0, "connection muxPath");
+      applyClass(path1, "connectionDisabled muxPathDisabled");
     } else {
-      applyElementProperties([path1], properties.enabledShapeView);
-      applyElementProperties([path0], properties.hiddenShapeView);
+      applyClass(path1, "connection muxPath");
+      applyClass(path0, "connectionDisabled muxPathDisabled");
     }
-    console.log("[ALUB] new instruction: ", path0Visible(instType));
   });
 }
 
-export function ALU(window, document, element) {
-  // Reference the UI elements
-  const rect = element.getElementsByTagName("path")[0];
-  const text = window.cpuElements.ALUTEXT.getElementsByTagName("div")[2];
-  const textA = window.cpuElements.ALUTEXTINA.getElementsByTagName("div")[2];
-  const textB = window.cpuElements.ALUTEXTINB.getElementsByTagName("div")[2];
-  const textRes = window.cpuElements.ALUTEXTRES.getElementsByTagName("div")[2];
+export function ALU(window, element) {
+  const { ALUTEXTINA: textA, ALUTEXTINB: textB } = window.cpuElements;
 
-  // Initialization style
-  applyProps(
-    [rect],
-    "disabledShapeView",
-    [text, textA, textB, textRes],
-    "disabledText"
+  applyClass(element, "componentDisabled");
+  [textA, textB].forEach((e) => {
+    applyClass(e, "inputTextDisabled");
+  });
+  tooltipEvt(
+    "ALU",
+    window,
+    textA,
+    () => {
+      const alua = 123456;
+      return `<span class="tooltipinfo">
+            <h1>Input A</h1>
+            <p>Value: ${alua}</p>`;
+    },
+    () => {
+      const alua = 123456;
+      return `<span class="tooltipinfo">
+            <ul>
+              <li>Value(10): ${alua}</li>
+              <li>Value(2): ${alua}</li>
+              <li>Encoding(2): ${alua}</li>
+            </ul>`;
+    }
   );
-
-  genCompEvt(textA, "ALU", [rect], [text, textA]);
-  genCompEvt(textB, "ALU", [rect], [text, textB]);
-  genCompEvt(textRes, "ALU", [rect], [text, textRes]);
-  genCompEvt(element, "ALU", [rect], [text, textA, textB, textRes]);
-  // !TODO: When mouse  is over the text is not highlighting the other components
-  // of the ALU
+  tooltipEvt(
+    "ALU",
+    window,
+    textB,
+    () => {
+      const alub = 123456;
+      return `<span class="tooltipinfo">
+            <h1>Input B</h1>
+            <p>Value: ${alub}</p>`;
+    },
+    () => {
+      const alub = 123456;
+      return `<span class="tooltipinfo">
+            <ul>
+              <li>Value(10): ${alub}</li>
+              <li>Value(2): ${alub}</li>
+              <li>Encoding(2): ${alub}</li>
+            </ul>`;
+    }
+  );
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // !TODO: Enabled for all components?
     window.cpuElements.state.ALU.enabled = true;
-    applyProps([rect], "enabledShapeView", [text], "enabledText");
-    // IM is enabled on all instructions
-    console.log("[IM] new instruction: ", " enabling.");
+    applyClass(element, "component");
+    [textA, textB].forEach((e) => {
+      applyClass(e, "inputTextDisabled");
+    });
   });
 }
 
-export function BU(window, document, element) {
-  // Reference the UI elements
-  const rect = element.getElementsByTagName("rect")[0];
-  const text = element.getElementsByTagName("div")[2];
-  // Initialization style
-  applyProps([rect], "disabledShapeView", [text], "disabledText");
-  // Register listeners
-  genCompEvt(element, "BU", [rect], [text]);
+export function BU(window, element) {
+  applyClass(element, "componentDisabled");
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // Branch unit is always enabled as it controls NextPCSrc. When in a branch
     // instruction its inputs coming from the registers will be enabled.
-    applyProps([rect], "enabledShapeView", [text], "enabledText");
+    applyClass(element, "component");
     window.cpuElements.state.BU.enabled = true;
-    console.log("[BU] new instruction: ", " enabling.");
   });
 }
 
-export function DM(window, document, element) {
-  // Reference the UI elements
-  const rect = element.getElementsByTagName("rect")[0];
-  const clk = window.cpuElements.MEMCLOCK.getElementsByTagName("path")[0];
-  const text = element.getElementsByTagName("div")[2];
-
-  const addressText =
-    window.cpuElements.DMTEXTINADDRESS.getElementsByTagName("div")[2];
-  const datawrText =
-    window.cpuElements.DMTEXTINDATAWR.getElementsByTagName("div")[2];
-  const dataRdText =
-    window.cpuElements.DMTEXTDATARD.getElementsByTagName("div")[2];
-  // Initialization style
-  applyProps(
-    [rect, clk],
-    "disabledShapeView",
-    [text, addressText, datawrText, dataRdText],
-    "disabledText"
-  );
-  // Register listeners
-  // Address text
-  genCompEvt(addressText, "DM", [rect, clk], [text, addressText]);
-  genCompEvt(datawrText, "DM", [rect, clk], [text, datawrText]);
-  genCompEvt(dataRdText, "DM", [rect, clk], [text, dataRdText]);
-  genCompEvt(
-    element,
-    "DM",
-    [rect, clk],
-    [text, dataRdText, datawrText, addressText]
-  );
+export function DM(window, element) {
+  const {
+    DMTEXTINADDRESS: addressText,
+    DMTEXTINDATAWR: datawrText,
+    // DMTEXTDATARD: dataRdText,
+    SgnDMCTRLPTH: ctrlSignal,
+    SgnDMWRPTH: wrSignal,
+  } = window.cpuElements;
+  [ctrlSignal, wrSignal].forEach((e) => {
+    applyClass(e, "signalDisabled");
+  });
+  [element, window.cpuElements.MEMCLOCK].forEach((e) => {
+    applyClass(e, "componentDisabled");
+  });
+  [addressText, datawrText].forEach((e) => {
+    applyClass(e, "inputTextDisabled");
+  });
   window.cpuData.buttonExecute.addEventListener("click", () => {
     const parseResult = window.cpuData.parseResult;
     const instType = parseResult.type.toUpperCase();
     if (instType === "S" || parseResult.opcode === "0000011") {
       // Data memory only available for S and load instructions
       window.cpuElements.state.DM.enabled = true;
-      applyProps(
-        [rect, clk],
-        "enabledShapeView",
-        [text, datawrText, addressText, dataRdText],
-        "enabledText"
-      );
+      [ctrlSignal, wrSignal].forEach((e) => {
+        applyClass(e, "signal");
+      });
+      [element, window.cpuElements.MEMCLOCK].forEach((e) => {
+        applyClass(e, "component");
+      });
+      [addressText, datawrText].forEach((e) => {
+        applyClass(e, "inputText");
+      });
     } else {
-      applyProps(
-        [rect, clk],
-        "disabledShapeView",
-        [text, addressText, datawrText, dataRdText],
-        "disabledText"
-      );
+      [ctrlSignal, wrSignal].forEach((e) => {
+        applyClass(e, "signalDisabled");
+      });
+      [element, window.cpuElements.MEMCLOCK].forEach((e) => {
+        applyClass(e, "componentDisabled");
+      });
+      [addressText, datawrText].forEach((e) => {
+        applyClass(e, "inputTextDisabled");
+      });
     }
-    console.log("[DM] new instruction: ", " enabling.");
   });
 }
 
-export function BUMUX(window, document, element) {
-  // Reference the UI elements
-  const rect = element.getElementsByTagName("rect")[0];
-  const text = element.getElementsByTagName("div")[2];
-  const path0 = window.cpuElements.BUMUXIC0.getElementsByTagName("path")[0];
-  const path1 = window.cpuElements.BUMUXIC1.getElementsByTagName("path")[0];
-  const text0 = window.cpuElements.BUMUXTEXTIN0.getElementsByTagName("div")[2];
-  const text1 = window.cpuElements.BUMUXTEXTIN1.getElementsByTagName("div")[2];
-
-  // Support function that returns when the path0 should be visible
+export function BUMUX(window, element) {
+  applyClass(element, "componentDisabled");
+  const { BUMUXIC1: path1, BUMUXIC0: path0 } = window.cpuElements;
+  [path1, path0].forEach((x) => {
+    applyClass(x, "connectionDisabled muxPathDisabled");
+  });
   const path1Visible = (inst, opcode) => {
     return inst === "J" || inst === "B" || opcode === "1100111";
   };
-  // Initialization style
-  applyProps(
-    [rect, path1, path0],
-    "disabledShapeView",
-    [text, text0, text1],
-    "disabledText"
-  );
-  // Main component
-  element.addEventListener("mouseover", () => {
-    const state = window.cpuElements.state.BUMUX;
-    if (state.enabled) {
-      const instType = window.cpuData.parseResult.type.toUpperCase();
-      const instOC = window.cpuData.parseResult.opcode;
-
-      applyProps([rect], "selectedShapeView", [text], "selectedText");
-      if (path1Visible(instType, instOC)) {
-        applyElementProperties([path1], properties.selectedShapeView);
-        applyElementProperties([path0], properties.hiddenShapeView);
-      } else {
-        applyElementProperties([path0], properties.selectedShapeView);
-        applyElementProperties([path1], properties.hiddenShapeView);
-      }
-    }
-  });
-  element.addEventListener("mouseout", () => {
-    const state = window.cpuElements.state.BUMUX;
-    if (state.enabled) {
-      const instType = window.cpuData.parseResult.type.toUpperCase();
-      const instOC = window.cpuData.parseResult.opcode;
-      applyProps([rect], "enabledShapeView", [text], "enabledText");
-      if (path1Visible(instType, instOC)) {
-        applyElementProperties([path1], properties.enabledShapeView);
-        applyElementProperties([path0], properties.hiddenShapeView);
-      } else {
-        applyElementProperties([path0], properties.enabledShapeView);
-        applyElementProperties([path1], properties.hiddenShapeView);
-      }
-    }
-  });
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    // Always enabled
     window.cpuElements.state.BUMUX.enabled = true;
+    applyClass(element, "component");
     const instType = window.cpuData.parseResult.type.toUpperCase();
     const instOC = window.cpuData.parseResult.opcode;
-    if (window.cpuElements.state.BUMUX.enabled) {
-      applyProps([rect], "enabledShapeView", [text], "enabledText");
-      if (path1Visible(instType, instOC)) {
-        applyElementProperties([path1], properties.enabledShapeView);
-        applyElementProperties([path0], properties.hiddenShapeView);
-      } else {
-        applyElementProperties([path0], properties.enabledShapeView);
-        applyElementProperties([path1], properties.hiddenShapeView);
-      }
+    if (path1Visible(instType, instOC)) {
+      applyClass(path1, "connection muxPath");
+      applyClass(path0, "connectionDisabled muxPathDisabled");
+    } else {
+      applyClass(path0, "connection muxPath");
+      applyClass(path1, "connectionDisabled muxPathDisabled");
     }
-    console.log("[BUMUX] new instruction: ", path1Visible(instType, instOC));
   });
 }
 
-export function WBMUX(window, document, element) {
-  // Reference the UI elements
-  const rect = element.getElementsByTagName("rect")[0];
-  const text = element.getElementsByTagName("div")[2];
-  const path00 = window.cpuElements.WBMUXIC00.getElementsByTagName("path")[0];
-  const path01 = window.cpuElements.WBMUXIC01.getElementsByTagName("path")[0];
-  const path10 = window.cpuElements.WBMUXIC10.getElementsByTagName("path")[0];
-  const text00 =
-    window.cpuElements.WBMUXTEXTIN00.getElementsByTagName("div")[2];
-  const text01 =
-    window.cpuElements.WBMUXTEXTIN01.getElementsByTagName("div")[2];
-  const text10 =
-    window.cpuElements.WBMUXTEXTIN10.getElementsByTagName("div")[2];
-
-  // Support function that returns when the path00 should be visible
+export function WBMUX(window, element) {
+  const {
+    WBMUXIC00: path00,
+    WBMUXIC01: path01,
+    WBMUXIC10: path10,
+  } = window.cpuElements;
+  applyClass(element, "componentDisabled");
+  [path00, path01, path10].forEach((x) => {
+    applyClass(x, "connectionDisabled muxPathDisabled");
+  });
   const path00Visible = (inst, opcode) => {
     return inst === "R" || opcode === "0010011";
   };
@@ -665,62 +584,8 @@ export function WBMUX(window, document, element) {
     return opcode === "0000011";
   };
   const path10Visible = (inst, opcode) => {
-    return inst == "J" || opcode === "1100111";
+    return inst === "J" || opcode === "1100111";
   };
-  // Initialization style
-  applyProps(
-    [rect, path00, path01, path10],
-    "disabledShapeView",
-    [text, text00, text01, text10],
-    "disabledText"
-  );
-  // Main component
-  element.addEventListener("mouseover", () => {
-    const state = window.cpuElements.state.WBMUX;
-    if (state.enabled) {
-      const instType = window.cpuData.parseResult.type.toUpperCase();
-      const instOC = window.cpuData.parseResult.opcode;
-      applyProps(
-        [rect],
-        "selectedShapeView",
-        [text, text00, text10, text01],
-        "selectedText"
-      );
-      if (path00Visible(instType, instOC)) {
-        applyProps([path00], "selectedShapeView", [], "");
-        applyProps([path01, path10], "hiddenShapeView", [], "");
-      } else if (path01Visible(instType, instOC)) {
-        applyProps([path01], "selectedShapeView", [], "");
-        applyProps([path00, path10], "hiddenShapeView", [], "");
-      } else if (path10Visible(instType, instOC)) {
-        applyProps([path10], "selectedShapeView", [], "");
-        applyProps([path01, path00], "hiddenShapeView", [], "");
-      }
-    }
-  });
-  element.addEventListener("mouseout", () => {
-    const state = window.cpuElements.state.WBMUX;
-    if (state.enabled) {
-      const instType = window.cpuData.parseResult.type.toUpperCase();
-      const instOC = window.cpuData.parseResult.opcode;
-      applyProps(
-        [rect],
-        "enabledShapeView",
-        [text, text00, text10, text01],
-        "enabledText"
-      );
-      if (path00Visible(instType, instOC)) {
-        applyProps([path00], "enabledShapeView", [], "");
-        applyProps([path01, path10], "hiddenShapeView", [], "");
-      } else if (path01Visible(instType, instOC)) {
-        applyProps([path01], "enabledShapeView", [], "");
-        applyProps([path00, path10], "hiddenShapeView", [], "");
-      } else if (path10Visible(instType, instOC)) {
-        applyProps([path10], "enabledShapeView", [], "");
-        applyProps([path01, path00], "hiddenShapeView", [], "");
-      }
-    }
-  });
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // Disabled for B and S
     const instType = window.cpuData.parseResult.type.toUpperCase();
@@ -729,793 +594,571 @@ export function WBMUX(window, document, element) {
     if (window.cpuElements.state.WBMUX.enabled) {
       const instType = window.cpuData.parseResult.type.toUpperCase();
       const instOC = window.cpuData.parseResult.opcode;
-      applyProps(
-        [rect],
-        "enabledShapeView",
-        [text, text00, text10, text01],
-        "enabledText"
-      );
+      applyClass(element, "component");
       if (path00Visible(instType, instOC)) {
-        applyProps([path00], "enabledShapeView", [], "");
-        applyProps([path01, path10], "hiddenShapeView", [], "");
+        [path00].forEach((x) => {
+          applyClass(x, "connection muxPath");
+        });
+        [path01, path10].forEach((x) => {
+          applyClass(x, "connectionDisabled muxPathDisabled");
+        });
       } else if (path01Visible(instType, instOC)) {
-        applyElementProperties([path01], properties.enabledShapeView);
-        applyProps([path00, path10], "hiddenShapeView", [], "");
+        [path01].forEach((x) => {
+          applyClass(x, "connection muxPath");
+        });
+        [path00, path10].forEach((x) => {
+          applyClass(x, "connectionDisabled muxPathDisabled");
+        });
       } else if (path10Visible(instType, instOC)) {
-        applyElementProperties([path10], properties.enabledShapeView);
-        applyProps([path01, path00], "hiddenShapeView", [], "");
+        [path10].forEach((x) => {
+          applyClass(x, "connection muxPath");
+        });
+        [path00, path01].forEach((x) => {
+          applyClass(x, "connectionDisabled muxPathDisabled");
+        });
       }
-      //   console.log("[BUMUX] new instruction: ", path1Visible(instType, instOC));
     } else {
-      applyProps(
-        [rect, path00, path01, path10],
-        "disabledShapeView",
-        [text, text00, text01, text10],
-        "disabledText"
-      );
+      applyClass(element, "componentDisabled");
     }
   });
 }
 
 // !PATHS
 
-function setPathState(cable, state) {
-  let pathStyle = "disabledPathView";
-  let arrowStyle = "disabledArrowView";
-  switch (state) {
-    case "disabled":
-      pathStyle = "disabledPathView";
-      arrowStyle = "disabledArrowView";
-      break;
-    case "enabled":
-      pathStyle = "enabledPathView";
-      arrowStyle = "enabledArrowView";
-      break;
-    case "selected":
-      pathStyle = "selectedPathView";
-      arrowStyle = "selectedArrowView";
-
-    default:
-      console.error("Unknown path style", state);
-  }
-  applyPthProps([cable[0]], pathStyle, [cable[1]], arrowStyle, null, []);
-}
-
-function selectEvents(name, element, cable, on, off) {
-  element.addEventListener(
-    "mouseover",
-    onPthEvt(
-      name,
-      [cable[0]],
-      on + "PathView",
-      [cable[1]],
-      on + "ArrowView",
-      null,
-      ""
-    )
-  );
-  element.addEventListener(
-    "mouseout",
-    onPthEvt(
-      name,
-      [cable[0]],
-      off + "PathView",
-      [cable[1]],
-      off + "ArrowView",
-      null,
-      ""
-    )
-  );
-}
-
-function setTextState(text, state) {
-  let textStyle = "disabledText";
-  switch (state) {
-    case "disabled":
-      textStyle = "disabledText";
-      break;
-    case "enabled":
-      textStyle = "enabledText";
-      break;
-    case "selected":
-      textStyle = "selectedText";
-    default:
-      console.error("Unknown text style", state);
-  }
-
-  applyProps([], "", [text], textStyle);
-}
-
-function textEvents(name, text, on, off) {
-  console.log("Text events for ", name);
-  text.addEventListener("mouseover", onTxtEvt(name, text, on + "Text"));
-  text.addEventListener("mouseout", onTxtEvt(name, text, off + "Text"));
-}
-export function CLKPC(window, document, element) {
-  // Reference the UI elements
-  const cable = element.getElementsByTagName("path");
-  // Set initialization style
-  setPathState(cable, "disabled");
-  // Add event listeners
-  selectEvents("CLKPC", element, cable, "selected", "enabled");
+export function CLKPC(window, element) {
+  applyClass(element, "connectionDisabled");
+  focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    // CLKPC enabled on all instructions
     window.cpuElements.state.CLKPC.enabled = true;
-    setPathState(cable, "enabled");
-    console.log("[-CLKPC] new instruction: ", " enabling.");
+    applyClass(element, "connection");
   });
 }
 
-export function CLKRU(window, document, element) {
-  // Reference the UI elements
-  const cable = element.getElementsByTagName("path");
-  // Set initialization style
-  setPathState(cable, "disabled");
-  // Add event listeners
-  selectEvents("CLKRU", element, cable, "selected", "enabled");
+export function CLKRU(window, element) {
+  applyClass(element, "connectionDisabled");
+  focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    // CLKRU enabled on all instructions
-    setPathState(cable, "enabled");
     window.cpuElements.state.CLKRU.enabled = true;
-    console.log("[-CLKPC] new instruction: ", " enabling.");
+    applyClass(element, "connection");
   });
 }
 
-export function CLKDM(window, document, element) {
-  // Reference the UI elements
-  const cable = element.getElementsByTagName("path");
-  // Set initialization style
-  setPathState(cable, "disabled");
-  // Add event listeners
-  selectEvents("CLKDM", element, cable, "selected", "enabled");
+export function CLKDM(window, element) {
+  applyClass(element, "connectionDisabled");
+  focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    // CLKDM enabled on all instructions
-    setPathState(cable, "enabled");
     window.cpuElements.state.CLKDM.enabled = true;
-    console.log("[-CLKDM] new instruction: ", " enabling.");
+    applyClass(element, "connection");
   });
 }
 
-export function PCIM(window, document, element) {
-  // Reference the UI elements
-  const cable = element.getElementsByTagName("path");
-  // Set initialization style
-  setPathState(cable, "disabled");
-  // Add event listeners
-  selectEvents("PCIM", element, cable, "selected", "enabled");
-  element.addEventListener("mousemove", (e) => {
-    const state = window.cpuElements.state.PCIM;
-    const instParsed = window.cpuData.parseResult;
-    if (state.enabled) {
-      showTooltip(e, `<b>Current address:</b><div>${instParsed.inst}</div>`);
-    }
-  });
+export function PCIM(window, element) {
+  applyClass(element, "connectionDisabled");
+  focus(element);
+  tooltipEvt(
+    "PCIM",
+    window,
+    element,
+    () => {
+      const inst = window.cpuData.parseResult.inst;
+      return `<span class="tooltipinfo">
+            <h1>PC <-> IM</h1>
+            <p>Instruction: ${inst}</p>`;
+    },
+    undefinedFunc0
+  );
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    // PCIM enabled on all instructions
-    setPathState(cable, "enabled");
     window.cpuElements.state.PCIM.enabled = true;
-    console.log("[-PCIM] new instruction: ", " enabling.");
+    applyClass(element, "connection");
   });
 }
 
-export function PCADD4(window, document, element) {
-  // Reference the UI elements
-  const cable = element.getElementsByTagName("path");
-  // Set initialization style
-  setPathState(cable, "disabled");
-  // Add event listeners
-  selectEvents("PCIM", element, cable, "selected", "enabled");
-  element.addEventListener("mousemove", (e) => {
-    const state = window.cpuElements.state.PCADD4;
-    const instParsed = window.cpuData.parseResult;
-    if (state.enabled) {
-      showTooltip(e, `<b>Current address:</b><div>${instParsed.inst}</div>`);
-    }
-  });
+export function PCADD4(window, element) {
+  applyClass(element, "connectionDisabled");
+  // focus(element);
+  tooltipEvt(
+    "PCIM",
+    window,
+    element,
+    () => {
+      const inst = window.cpuData.parseResult.inst;
+      return `<span class="tooltipinfo">
+          <h1>PC <-> ADD4</h1>
+          <p>Instruction: ${inst}</p>`;
+    },
+    undefinedFunc0
+  );
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    // PCADD4 enabled on all instructions
-    setPathState(cable, "enabled");
+    applyClass(element, "connection");
     window.cpuElements.state.PCADD4.enabled = true;
-    console.log("[-PCADD4] new instruction: ", " enabling.");
   });
 }
 
-export function PCALUA(window, document, element) {
-  // Reference the UI elements
-  const cable = element.getElementsByTagName("path");
-  // Set initialization style
-  setPathState(cable, "disabled");
-  // Add event listeners
-  selectEvents("PCALUA", element, cable, "selected", "enabled");
+export function PCALUA(window, element) {
+  applyClass(element, "connectionDisabled");
+  focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    // PCALUA only enabled for J and B type instructions
     const instType = window.cpuData.parseResult.type.toUpperCase();
     if (instType === "J" || instType === "B") {
-      setPathState(cable, "enabled");
+      applyClass(element, "connection");
       window.cpuElements.state.PCALUA.enabled = true;
-      console.log("[-PCALUA] new instruction: ", " enabling.");
     } else {
-      setPathState(cable, "disabled");
+      applyClass(element, "connectionDisabled");
     }
   });
 }
 
-export function IMCUOPCODE(window, document, element) {
-  // Reference the UI elements
-  const cable = element.getElementsByTagName("path");
-  const text = window.cpuElements.opcodeLabel.getElementsByTagName("div")[2];
-  const text2 = window.cpuElements.imInstruction.getElementsByTagName("div")[2];
-  // Set initialization style
-  setPathState(cable, "disabled");
-  setTextState(text, "disabled");
-  setTextState(text2, "disabled");
-  // Add event listeners The two events are separated this is why the cable is
-  // not selected when the text is.
-  selectEvents("IMCUOPCODE", element, cable, "selected", "enabled");
-  textEvents("IMCUOPCODE", text, "selected", "enabled");
-  textEvents("IMCUOPCODE", text2, "selected", "enabled");
-  text.addEventListener("mouseover", () => {
-    binFormattedDisplay(window, "opcode");
-  });
-  text.addEventListener("mouseout", () => {
-    binPlainDisplay(window);
-  });
+export function IMCUOPCODE(window, element) {
+  applyClass(element, "connectionDisabled");
+  element.parentNode.appendChild(element);
+  focus(element);
+  mouseHover(
+    element,
+    () => {
+      if (isEnabled("IMCUOPCODE")) {
+        const html = binFormattedDisplay(window, "opcode");
+        setBinInstruction(window, html);
+      }
+    },
+    () => {
+      if (isEnabled("IMCUOPCODE")) {
+        setBinInstruction(window, currentBinInst(window));
+      }
+    }
+  );
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    // IMCUOPCODE enabled for all instructions
-    const instType = window.cpuData.parseResult.type.toUpperCase();
-    setPathState(cable, "enabled");
-    setTextState(text, "enabled");
-    setTextState(text2, "enabled");
     window.cpuElements.state.IMCUOPCODE.enabled = true;
-    console.log("[-IMCUOPCODE] new instruction: ", " enabling.");
+    applyClass(element, "connection");
   });
 }
 
-export function IMCUFUNCT3(window, document, element) {
-  // Reference the UI elements
-  const cable = element.getElementsByTagName("path");
-  const text = window.cpuElements.funct3Label.getElementsByTagName("div")[2];
-
-  // Set initialization style
-  setPathState(cable, "disabled");
-  setTextState(text, "disabled");
-  // Add event listeners
-  selectEvents("IMCUFUNCT3", element, cable, "selected", "enabled");
-  textEvents("IMCUOPCODE", text, "selected", "enabled");
-  text.addEventListener("mouseover", () => {
-    binFormattedDisplay(window, "funct3");
-  });
-  text.addEventListener("mouseout", () => {
-    binPlainDisplay(window);
-  });
+export function IMCUFUNCT3(window, element) {
+  applyClass(element, "connectionDisabled");
+  focus(element);
+  mouseHover(
+    element,
+    () => {
+      if (isEnabled("IMCUFUNCT3")) {
+        const html = binFormattedDisplay(window, "funct3");
+        setBinInstruction(window, html);
+      }
+    },
+    () => {
+      if (isEnabled("IMCUFUNCT3")) {
+        setBinInstruction(window, currentBinInst(window));
+      }
+    }
+  );
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    // IMCUFUNCT3 enabled for all instructions
-    const instType = window.cpuData.parseResult.type.toUpperCase();
-    setPathState(cable, "enabled");
-    setTextState(text, "enabled");
+    applyClass(element, "connection");
     window.cpuElements.state.IMCUFUNCT3.enabled = true;
-    console.log("[-IMCUFUNCT3] new instruction: ", " enabling.");
   });
 }
 
-export function IMCUFUNCT7(window, document, element) {
-  // Reference the UI elements
-  const cable = element.getElementsByTagName("path");
-  const text = window.cpuElements.funct7Label.getElementsByTagName("div")[2];
-  // Set initialization style
-  setPathState(cable, "disabled");
-  setTextState(text, "disabled");
-  // Add event listeners
-  selectEvents("IMCUFUNCT7", element, cable, "selected", "enabled");
-  textEvents("IMCUFUNCT7", text, "selected", "enabled");
-  text.addEventListener("mouseover", () => {
-    binFormattedDisplay(window, "funct7");
-  });
-  text.addEventListener("mouseout", () => {
-    binPlainDisplay(window);
-  });
+export function IMCUFUNCT7(window, element) {
+  applyClass(element, "connectionDisabled");
+  focus(element);
+  mouseHover(
+    element,
+    () => {
+      if (isEnabled("IMCUFUNCT7")) {
+        const html = binFormattedDisplay(window, "funct7");
+        setBinInstruction(window, html);
+      }
+    },
+    () => {
+      if (isEnabled("IMCUFUNCT7")) {
+        setBinInstruction(window, currentBinInst(window));
+      }
+    }
+  );
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    // IMCUFUNCT7 enabled for all instructions
-    const instType = window.cpuData.parseResult.type.toUpperCase();
-    setPathState(cable, "enabled");
-    setTextState(text, "enabled");
+    applyClass(element, "connection");
     window.cpuElements.state.IMCUFUNCT7.enabled = true;
-    console.log("[-IMCUFUNCT7] new instruction: ", " enabling.");
   });
 }
 
-export function IMRURS1(window, document, element) {
-  // Reference the UI elements
-  const cable = element.getElementsByTagName("path");
-  const text = window.cpuElements.rs1Label.getElementsByTagName("div")[2];
-
-  // Set initialization style
-  setPathState(cable, "disabled");
-  setTextState(text, "disabled");
-  // Add event listeners
-  selectEvents("IMRURS1", element, cable, "selected", "enabled");
-  textEvents("IMRURS1", text, "selected", "enabled");
-  text.addEventListener("mouseover", () => {
-    binFormattedDisplay(window, "rs1");
-  });
-  text.addEventListener("mouseout", () => {
-    binPlainDisplay(window);
-  });
+export function IMRURS1(window, element) {
+  applyClass(element, "connectionDisabled");
+  focus(element);
+  mouseHover(
+    element,
+    () => {
+      if (isEnabled("IMRURS1")) {
+        const html = binFormattedDisplay(window, "rs1");
+        setBinInstruction(window, html);
+      }
+    },
+    () => {
+      if (isEnabled("IMRURS1")) {
+        setBinInstruction(window, currentBinInst(window));
+      }
+    }
+  );
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    // IMRURS1 enabled for all instructions
-    const instType = window.cpuData.parseResult.type.toUpperCase();
-    setPathState(cable, "enabled");
-    setTextState(text, "enabled");
+    applyClass(element, "connection");
     window.cpuElements.state.IMRURS1.enabled = true;
-    console.log("[-IMRURS1] new instruction: ", " enabling.");
   });
 }
 
-export function IMRURS2(window, document, element) {
-  // Reference the UI elements
-  const cable = element.getElementsByTagName("path");
-  const text = window.cpuElements.rs2Label.getElementsByTagName("div")[2];
-
-  // Set initialization style
-  setPathState(cable, "disabled");
-  setTextState(text, "disabled");
-  // Add event listeners
-  selectEvents("IMRURS2", element, cable, "selected", "enabled");
-  textEvents("IMRURS2", text, "selected", "enabled");
-  text.addEventListener("mouseover", () => {
-    binFormattedDisplay(window, "rs2");
-  });
-  text.addEventListener("mouseout", () => {
-    binPlainDisplay(window);
-  });
+export function IMRURS2(window, element) {
+  applyClass(element, "connectionDisabled");
+  focus(element);
+  mouseHover(
+    element,
+    () => {
+      if (isEnabled("IMRURS2")) {
+        const html = binFormattedDisplay(window, "rs2");
+        setBinInstruction(window, html);
+      }
+    },
+    () => {
+      if (isEnabled("IMRURS2")) {
+        setBinInstruction(window, currentBinInst(window));
+      }
+    }
+  );
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    // IMRURS2 enabled for all instructions
-    const instType = window.cpuData.parseResult.type.toUpperCase();
-    setPathState(cable, "enabled");
-    setTextState(text, "enabled");
+    applyClass(element, "connection");
     window.cpuElements.state.IMRURS2.enabled = true;
-    console.log("[-IMRURS2] new instruction: ", " enabling.");
   });
 }
 
-export function IMRURDEST(window, document, element) {
-  // Reference the UI elements
-  const cable = element.getElementsByTagName("path");
-  const text = window.cpuElements.rdLabel.getElementsByTagName("div")[2];
-  // Set initialization style
-  setPathState(cable, "disabled");
-  setTextState(text, "disabled");
-  // Add event listeners
-  selectEvents("IMRURDEST", element, cable, "selected", "enabled");
-  textEvents("IMRURDEST", text, "selected", "enabled");
-  text.addEventListener("mouseover", () => {
-    binFormattedDisplay(window, "rd");
-  });
-  text.addEventListener("mouseout", () => {
-    binPlainDisplay(window);
-  });
+export function IMRURDEST(window, element) {
+  applyClass(element, "connectionDisabled");
+  focus(element);
+  mouseHover(
+    element,
+    () => {
+      if (isEnabled("IMRURDEST")) {
+        const html = binFormattedDisplay(window, "rd");
+        setBinInstruction(window, html);
+      }
+    },
+    () => {
+      if (isEnabled("IMRURDEST")) {
+        setBinInstruction(window, currentBinInst(window));
+      }
+    }
+  );
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    // IMRURDEST enabled for all instructions
-    const instType = window.cpuData.parseResult.type.toUpperCase();
-    setPathState(cable, "enabled");
-    setTextState(text, "enabled");
-
+    applyClass(element, "connection");
     window.cpuElements.state.IMRURDEST.enabled = true;
-    console.log("[-IMRURDEST] new instruction: ", " enabling.");
   });
 }
 
-export function IMIMM(window, document, element) {
-  // Reference the UI elements
-  const cable = element.getElementsByTagName("path");
-  const path = cable[0];
-  const arrow = cable[1];
-  const text = window.cpuElements.immLabel.getElementsByTagName("div")[2];
-  // Set initialization style
-  setPathState(cable, "disabled");
-  setTextState(text, "disabled");
-  // Add event listeners
-  selectEvents("IMIMM", element, cable, "selected", "enabled");
-  textEvents("IMIMM", text, "selected", "enabled");
+export function IMIMM(window, element) {
+  applyClass(element, "connectionDisabled");
+  focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    // IMIMM enabled for all but R instructions
     const instType = window.cpuData.parseResult.type.toUpperCase();
     if (instType !== "R") {
-      setPathState(cable, "enabled");
-      setTextState(text, "enabled");
+      applyClass(element, "connection");
       window.cpuElements.state.IMIMM.enabled = true;
-      console.log("[-IMIMM] new instruction: ", " enabling.");
     } else {
-      setPathState(cable, "disabled");
-      setTextState(text, "disabled");
+      applyClass(element, "connectionDisabled");
     }
   });
 }
 
-export function WBMUXRU(window, document, element) {
-  // Reference the UI elements
-  const cable = element.getElementsByTagName("path");
-  // Set initialization style
-  setPathState(cable, "disabled");
-  // Add event listeners
-  selectEvents("WBMUXRU", element, cable, "selected", "enabled");
+export function WBMUXRU(window, element) {
+  applyClass(element, "connectionDisabled");
+  focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    // WBMUXRU enabled for J I R instructions
     const instType = window.cpuData.parseResult.type.toUpperCase();
     if (instType === "J" || instType === "I" || instType === "R") {
-      setPathState(cable, "enabled");
+      applyClass(element, "connection");
       window.cpuElements.state.WBMUXRU.enabled = true;
-      console.log("[-WBMUXRU] new instruction: ", " enabling.");
     } else {
-      setPathState(cable, "disabled");
+      applyClass(element, "connectionDisabled");
     }
   });
 }
 
-export function IMMALUB(window, document, element) {
-  // Reference the UI elements
-  const cable = element.getElementsByTagName("path");
-  // Set initialization style
-  setPathState(cable, "disabled");
-  // Add event listeners
-  selectEvents("IMMALUB", element, cable, "selected", "enabled");
+export function IMMALUB(window, element) {
+  applyClass(element, "connectionDisabled");
+  focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    // IMMALUB enabled for J I R instructions
     const instType = window.cpuData.parseResult.type.toUpperCase();
     if (instType !== "R" && instType !== "U") {
-      setPathState(cable, "enabled");
+      applyClass(element, "connection");
       window.cpuElements.state.IMMALUB.enabled = true;
-      console.log("[-IMMALUB] new instruction: ", " enabling.");
     } else {
-      setPathState(cable, "disabled");
+      applyClass(element, "connectionDisabled");
     }
   });
 }
 
-export function RUALUA(window, document, element) {
-  // Reference the UI elements
-  const cable = element.getElementsByTagName("path");
-  // Set initialization style
-  setPathState(cable, "disabled");
-  // Add event listeners
-  selectEvents("RUALUA", element, cable, "selected", "enabled");
+export function RUALUA(window, element) {
+  applyClass(element, "connectionDisabled");
+  element.parentNode.appendChild(element);
+  focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    // RUALUA enabled for R instructions
     const instType = window.cpuData.parseResult.type.toUpperCase();
     if (instType !== "J" && instType !== "B") {
-      setPathState(cable, "enabled");
-
       window.cpuElements.state.RUALUA.enabled = true;
-      console.log("[-RUALUA] new instruction: ", " enabling.");
+      applyClass(element, "connection");
     } else {
-      setPathState(cable, "disabled");
+      applyClass(element, "connectionDisabled");
     }
   });
 }
 
-export function RUALUB(window, document, element) {
-  // Reference the UI elements
-  const cable = element.getElementsByTagName("path");
-
-  // Set initialization style
-  setPathState(cable, "disabled");
-  // Add event listeners
-  selectEvents("RUALUB", element, cable, "selected", "enabled");
+export function RUALUB(window, element) {
+  applyClass(element, "connectionDisabled");
+  element.parentNode.appendChild(element);
+  focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    // RUALUB enabled for R instructions
     const instType = window.cpuData.parseResult.type.toUpperCase();
     if (instType === "R") {
-      setPathState(cable, "enabled");
-
+      applyClass(element, "connection");
       window.cpuElements.state.RUALUB.enabled = true;
-      console.log("[-RUALUB] new instruction: ", " enabling.");
     } else {
-      setPathState(cable, "disabled");
+      applyClass(element, "connectionDisabled");
     }
   });
 }
 
-export function RUDM(window, document, element) {
-  // Reference the UI elements
-  const cable = element.getElementsByTagName("path");
-  // Set initialization style
-  setPathState(cable, "disabled");
-  // Add event listeners
-  selectEvents("RUDM", element, cable, "selected", "enabled");
+export function RUDM(window, element) {
+  applyClass(element, "connectionDisabled");
+  focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    // RUDM enabled for S instructions
     const instType = window.cpuData.parseResult.type.toUpperCase();
     if (instType === "S") {
-      setPathState(cable, "enabled");
-
+      applyClass(element, "connection");
       window.cpuElements.state.RUDM.enabled = true;
-      console.log("[-RUDM] new instruction: ", " enabling.");
     } else {
-      setPathState(cable, "disabled");
+      applyClass(element, "connectionDisabled");
     }
   });
 }
 
-export function RURS1BU(window, document, element) {
-  // Reference the UI elements
-  const cable = element.getElementsByTagName("path");
-  // Set initialization style
-  setPathState(cable, "disabled");
-  // Add event listeners
-  selectEvents("RURS1BU", element, cable, "selected", "enabled");
+export function RURS1BU(window, element) {
+  applyClass(element, "connectionDisabled");
+  focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    // RURS1BU enabled for S instructions
     const instType = window.cpuData.parseResult.type.toUpperCase();
     if (instType === "B") {
-      setPathState(cable, "enabled");
       window.cpuElements.state.RURS1BU.enabled = true;
-      console.log("[-RURS1BU] new instruction: ", " enabling.");
+      applyClass(element, "connection");
     } else {
-      setPathState(cable, "disabled");
+      applyClass(element, "connectionDisabled");
     }
   });
 }
 
-export function RURS2BU(window, document, element) {
-  // Reference the UI elements
-  const cable = element.getElementsByTagName("path");
-  // Set initialization style
-  setPathState(cable, "disabled");
-  // Add event listeners
-  selectEvents("RURS2BU", element, cable, "selected", "enabled");
+export function RURS2BU(window, element) {
+  applyClass(element, "connectionDisabled");
+  focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    // RURS2BU enabled for S instructions
     const instType = window.cpuData.parseResult.type.toUpperCase();
     if (instType === "B") {
-      setPathState(cable, "enabled");
       window.cpuElements.state.RURS2BU.enabled = true;
-      console.log("[-RURS2BU] new instruction: ", " enabling.");
+      applyClass(element, "connection");
     } else {
-      setPathState(cable, "disabled");
+      applyClass(element, "connectionDisabled");
     }
   });
 }
 
-export function ALUAALU(window, document, element) {
-  // Reference the UI elements
-  const cable = element.getElementsByTagName("path");
-
-  // Set initialization style
-  setPathState(cable, "disabled");
-  // Add event listeners
-  selectEvents("ALUAALU", element, cable, "selected", "enabled");
+export function ALUAALU(window, element) {
+  applyClass(element, "connectionDisabled");
+  focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    // ALUAALU always enabled
-    const instType = window.cpuData.parseResult.type.toUpperCase();
-    setPathState(cable, "enabled");
     window.cpuElements.state.ALUAALU.enabled = true;
-    console.log("[-ALUAALU] new instruction: ", " enabling.");
+    applyClass(element, "connection");
   });
 }
 
-export function ALUBALU(window, document, element) {
-  // Reference the UI elements
-  const cable = element.getElementsByTagName("path");
-  // Set initialization style
-  setPathState(cable, "disabled");
-  // Add event listeners
-  selectEvents("ALUBALU", element, cable, "selected", "enabled");
+export function ALUBALU(window, element) {
+  applyClass(element, "connectionDisabled");
+  focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    // ALUBALU always enabled
-    const instType = window.cpuData.parseResult.type.toUpperCase();
-    setPathState(cable, "enabled");
     window.cpuElements.state.ALUBALU.enabled = true;
-    console.log("[-ALUBALU] new instruction: ", " enabling.");
+    applyClass(element, "connection");
   });
 }
 
-export function ALUDM(window, document, element) {
-  // Reference the UI elements
-  const cable = element.getElementsByTagName("path");
-  // Set initialization style
-  setPathState(cable, "disabled");
-  // Add event listeners
-  selectEvents("ALUDM", element, cable, "selected", "enabled");
+export function ALUDM(window, element) {
+  applyClass(element, "connectionDisabled");
+  focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    // ALUDM always enabled
-    const instType = window.cpuData.parseResult.type.toUpperCase();
-    setPathState(cable, "enabled");
     window.cpuElements.state.ALUDM.enabled = true;
-    console.log("[-ALUDM] new instruction: ", " enabling.");
+    const parseResult = window.cpuData.parseResult;
+    const instType = parseResult.type.toUpperCase();
+    if (instType === "S" || parseResult.opcode === "0000011") {
+      applyClass(element, "connection");
+    } else {
+      applyClass(element, "connectionDisabled");
+    }
   });
 }
 
-export function ALUWBMUX(window, document, element) {
-  // Reference the UI elements
-  const cable = element.getElementsByTagName("path");
-  // Set initialization style
-  setPathState(cable, "disabled");
-  // Add event listeners
-  selectEvents("ALUWBMUX", element, cable, "selected", "enabled");
+export function ALUWBMUX(window, element) {
+  applyClass(element, "connectionDisabled");
+  focus(element);
+  element.parentNode.appendChild(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    // ALUWBMUX always enabled
-    const instType = window.cpuData.parseResult.type.toUpperCase();
-    setPathState(cable, "enabled");
+    //! TODO ALUWBMUX always enabled
+    applyClass(element, "connection");
     window.cpuElements.state.ALUWBMUX.enabled = true;
-    console.log("[-ALUWBMUX] new instruction: ", " enabling.");
   });
 }
 
-export function DMWBMUX(window, document, element) {
-  // Reference the UI elements
-  const cable = element.getElementsByTagName("path");
-  // Set initialization style
-  setPathState(cable, "disabled");
-  // Add event listeners
-  selectEvents("DMWBMUX", element, cable, "selected", "enabled");
+export function DMWBMUX(window, element) {
+  applyClass(element, "connectionDisabled");
+  focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    // DMWBMUX always enabled
-    const instType = window.cpuData.parseResult.type.toUpperCase();
-    setPathState(cable, "enabled");
+    // ! TODO DMWBMUX always enabled
+    applyClass(element, "connection");
     window.cpuElements.state.DMWBMUX.enabled = true;
-    console.log("[-DMWBMUX] new instruction: ", " enabling.");
   });
 }
 
-export function ADD4WBMUX(window, document, element) {
-  // Reference the UI elements
-  const cable = element.getElementsByTagName("path");
-  // Set initialization style
-  setPathState(cable, "disabled");
-  // Add event listeners
-  selectEvents("ADD4WBMUX", element, cable, "selected", "enabled");
+export function ADD4WBMUX(window, element) {
+  applyClass(element, "connectionDisabled");
+  focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    // ADD4WBMUX always enabled
-    const instType = window.cpuData.parseResult.type.toUpperCase();
-    setPathState(cable, "enabled");
     window.cpuElements.state.ADD4WBMUX.enabled = true;
-    console.log("[-ADD4WBMUX] new instruction: ", " enabling.");
+    // ! TODO ADD4WBMUX always enabled
+    applyClass(element, "connection");
   });
 }
 
-export function BUBUMUX(window, document, element) {
-  // Reference the UI elements
-  const cable = element.getElementsByTagName("path");
-  // Set initialization style
-  setPathState(cable, "disabled");
-  // Add event listeners
-  selectEvents("ADD4WBMUX", element, cable, "selected", "enabled");
+export function BUBUMUX(window, element) {
+  applyClass(element, "connectionDisabled");
+  focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    // BUBUMUX always enabled
-    const instType = window.cpuData.parseResult.type.toUpperCase();
-    setPathState(cable, "enabled");
+    applyClass(element, "connection");
     window.cpuElements.state.BUBUMUX.enabled = true;
-    console.log("[-BUBUMUX] new instruction: ", " enabling.");
   });
 }
 
-export function ALUBUMUX(window, document, element) {
-  // Reference the UI elements
-  const cable = element.getElementsByTagName("path");
-  // Set initialization style
-  setPathState(cable, "disabled");
-  // Add event listeners
-  selectEvents("ALUBUMUX", element, cable, "selected", "enabled");
+export function ALUBUMUX(window, element) {
+  applyClass(element, "connectionDisabled");
+  focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // ALUBUMUX enabled on S and ILoad instructions
     const instType = window.cpuData.parseResult.type.toUpperCase();
     const instOC = window.cpuData.parseResult.opcode;
     if (instType === "S" || instOC === "0000011") {
-      setPathState(cable, "enabled");
+      applyClass(element, "connection");
       window.cpuElements.state.ALUBUMUX.enabled = true;
-      console.log("[-ALUBUMUX] new instruction: ", " enabling.");
     } else {
-      setPathState(cable, "disabled");
+      applyClass(element, "connectionDisabled");
     }
   });
 }
 
-export function ADD4BUMUX(window, document, element) {
-  // Reference the UI elements
-  const cable = element.getElementsByTagName("path");
-  // Set initialization style
-  setPathState(cable, "disabled");
-  // Add event listeners
-  selectEvents("ADD4BUMUX", element, cable, "selected", "enabled");
+export function ADD4BUMUX(window, element) {
+  applyClass(element, "connectionDisabled");
+  focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    // ADD4BUMUX always enabled
-    const instType = window.cpuData.parseResult.type.toUpperCase();
-    setPathState(cable, "enabled");
+    applyClass(element, "connection");
     window.cpuElements.state.ADD4BUMUX.enabled = true;
-    console.log("[-ADD4BUMUX] new instruction: ", " enabling.");
   });
 }
 
-export function BUMUXPC(window, document, element) {
-  // Reference the UI elements
-  const cable = element.getElementsByTagName("path");
-  // Set initialization style
-  setPathState(cable, "disabled");
-  // Add event listeners
-  selectEvents("BUMUXPC", element, cable, "selected", "enabled");
+export function BUMUXPC(window, element) {
+  applyClass(element, "connectionDisabled");
+  focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    // BUMUXPC always enabled
-    const instType = window.cpuData.parseResult.type.toUpperCase();
-    setPathState(cable, "enabled");
     window.cpuElements.state.BUMUXPC.enabled = true;
-    console.log("[-BUMUXPC] new instruction: ", " enabling.");
+    applyClass(element, "connection");
+  });
+}
+
+export function ADD4CT(window, element) {
+  applyClass(element, "connectionDisabled");
+  focus(element);
+  window.cpuData.buttonExecute.addEventListener("click", () => {
+    window.cpuElements.state.ADD4CT.enabled = true;
+    applyClass(element, "connection");
   });
 }
 // !LOG
-export function LOGTEXTASSEMBLER(window, document, element) {
-  const asmText = element.getElementsByTagName("div")[3];
-  asmText.innerHTML = "--no instruction loaded--";
+function setBinInstruction(window, html) {
+  const binText = window.cpuElements.LOGTEXTBIN.getElementsByTagName("div")[2];
+  binText.innerHTML = html;
+}
+
+function setAsmInstruction(window, html) {
+  const asmText =
+    window.cpuElements.LOGTEXTASSEMBLER.getElementsByTagName("div")[3];
+  asmText.innerHTML = html;
+}
+
+export function LOGTEXTASSEMBLER(window) {
+  setAsmInstruction(window, "--no instruction loaded--");
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    asmText.innerHTML = window.cpuData.instruction;
+    const inst = window.cpuData.instruction;
+    setAsmInstruction(window, inst);
   });
 }
 
-export function LOGTEXTBIN(window, document, element) {
-  const binText = element.getElementsByTagName("div")[2];
-  binText.innerHTML = "--no instruction loaded--";
+export function LOGTEXTBIN(window) {
+  setBinInstruction(window, "--no instruction loaded--");
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    binText.innerHTML = window.cpuData.parseResult.encoding.binEncoding;
+    const inst = window.cpuData.parseResult.encoding.binEncoding;
+    setBinInstruction(window, inst);
   });
 }
 
-function instructionType(rect, expected, actual) {
+function displayType(element, expected, e) {
+  const actual = window.cpuData.parseResult.type.toUpperCase();
   if (expected === actual) {
-    applyProps([rect], "selectedShapeView", [], "");
+    applyClass(element, "instTypeHigh");
   } else {
-    applyProps([rect], "disabledShapeView", [], "");
+    applyClass(element, "instType");
   }
 }
 
-export function LOGTYPER(window, document, element) {
-  const rect = element.getElementsByTagName("rect")[0];
-  const newInstruction = () => {
-    const actual = window.cpuData.parseResult.type.toUpperCase();
-    instructionType(rect, "R", actual);
-  };
-  window.cpuData.buttonExecute.addEventListener("click", newInstruction);
+const checkInstruction = _.curry(displayType);
+
+export function LOGTYPER(window, element) {
+  applyClass(element, "instType");
+  window.cpuData.buttonExecute.addEventListener(
+    "click",
+    checkInstruction(element, "R")
+  );
 }
 
-export function LOGTYPEI(window, document, element) {
-  const rect = element.getElementsByTagName("rect")[0];
-  const newInstruction = () => {
-    const actual = window.cpuData.parseResult.type.toUpperCase();
-    instructionType(rect, "I", actual);
-  };
-  window.cpuData.buttonExecute.addEventListener("click", newInstruction);
+export function LOGTYPEI(window, element) {
+  applyClass(element, "instType");
+  window.cpuData.buttonExecute.addEventListener(
+    "click",
+    checkInstruction(element, "I")
+  );
 }
 
-export function LOGTYPES(window, document, element) {
-  const rect = element.getElementsByTagName("rect")[0];
-  const newInstruction = () => {
-    const actual = window.cpuData.parseResult.type.toUpperCase();
-    instructionType(rect, "S", actual);
-  };
-  window.cpuData.buttonExecute.addEventListener("click", newInstruction);
+export function LOGTYPES(window, element) {
+  applyClass(element, "instType");
+  window.cpuData.buttonExecute.addEventListener(
+    "click",
+    checkInstruction(element, "S")
+  );
 }
 
-export function LOGTYPEB(window, document, element) {
-  const rect = element.getElementsByTagName("rect")[0];
-  const newInstruction = () => {
-    const actual = window.cpuData.parseResult.type.toUpperCase();
-    instructionType(rect, "B", actual);
-  };
-  window.cpuData.buttonExecute.addEventListener("click", newInstruction);
+export function LOGTYPEB(window, element) {
+  applyClass(element, "instType");
+  window.cpuData.buttonExecute.addEventListener(
+    "click",
+    checkInstruction(element, "B")
+  );
 }
 
-export function LOGTYPEU(window, document, element) {
-  const rect = element.getElementsByTagName("rect")[0];
-  const newInstruction = () => {
-    const actual = window.cpuData.parseResult.type.toUpperCase();
-    instructionType(rect, "U", actual);
-  };
-  window.cpuData.buttonExecute.addEventListener("click", newInstruction);
+export function LOGTYPEU(window, element) {
+  applyClass(element, "instType");
+  window.cpuData.buttonExecute.addEventListener(
+    "click",
+    checkInstruction(element, "U")
+  );
 }
 
-export function LOGTYPEJ(window, document, element) {
-  const rect = element.getElementsByTagName("rect")[0];
-  const newInstruction = () => {
-    const actual = window.cpuData.parseResult.type.toUpperCase();
-    instructionType(rect, "J", actual);
-  };
-  window.cpuData.buttonExecute.addEventListener("click", newInstruction);
+export function LOGTYPEJ(window, element) {
+  applyClass(element, "instType");
+  window.cpuData.buttonExecute.addEventListener(
+    "click",
+    checkInstruction(element, "J")
+  );
 }

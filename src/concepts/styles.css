@@ -1,0 +1,393 @@
+/**
+ * Properties that apply to everything in the page
+ */
+html {
+  font-size: 24px;
+  /**
+   * This is a color palette, these colors are used along all the styles. Prefer
+   * to change the colors here over changing them in the style sheet.
+   */
+  --color0: #FFFFFF;
+  --color1: #033E8C;
+  --color2: #034C8C;
+  --color3: #BFA004;
+  --color4: #A67F5D;
+  --color5: #F24949; 
+  --color6: #D5D6DB;
+  --color7: #E7E8EC; 
+
+  --component-fill:                  var(--color0);
+  --component-stroke:                var(--color2);
+  --component-text-color:            var(--color2);
+  --component-hover-fill:            var(--color6);
+  --component-hover-text-color:      var(--color5);
+  --logger-text-color-labels:        var(--color2);
+  --logger-text-color-values:        var(--color2);
+
+  --logger-type-color:               var(--color2);
+  --logger-type-stroke-color:        var(--color2);
+  --logger-type-fill:                var(--color7);
+  --logger-type-fill-selected:       var(--color6);
+  --logger-type-color-selected:      var(--color5);
+}
+
+/**
+ * Ensure consistency between properties of this elements
+ */
+input, select, button {
+  font: inherit;
+}
+
+/**
+ * Properties that affect the SVG tag.
+ *
+ * This tag contains  the cpu diagram.
+ */
+svg {
+  /* Properties general to all svg elements */
+}
+
+/**
+ * The look of elements in the diagram is controlled by style properties. There
+ * are three classes defined for each element:
+ *
+ * - Default: Styles the element in its normal state. That is, the element is
+ *   present in the processing of current instruction.
+ *
+ * - Hover: The element is under the mouse pointer. In this state, additional
+ *   information like tooltips and highlighting is presented.
+ *
+ * - Disabled: the element is not present in the current instruction processing.
+ *   In this state all the mouse events must be turned off.
+ *
+ * There are also different types of elements:
+ * - Components.
+ * - Connections.
+ * - Loggers.
+ *
+ * Each element has its own style rules. Take into account that those styles are
+ * styles on html and svg elements so change them accordingly. The way the
+ * elements appear in the document is handled by draw.io which is the
+ * application used to produce the svg. 
+ */
+
+ /** Style for enabled components. 
+  *
+  * Most of the components are svg rectangles, however, special shapes like the
+  * ALU are drawn as paths.
+  **/
+.component {
+  rect {
+    stroke-width: 3; 
+    stroke: var(--component-stroke);
+    fill: var(--component-fill);
+    transition: stroke-width 3s;
+  }
+  path {
+    stroke-width: 3;
+    stroke: var(--component-stroke);
+    fill: var(--component-fill);
+    transition: stroke-width 3s;
+  }
+  div {
+    color: var(--component-text-color) !important;
+    font-size: 16px !important;
+  }
+}
+ /* Style for hovered components. */
+.component:hover {
+  rect {
+    stroke-width: 6;
+    fill: var(--component-hover-fill);
+  }
+  path {
+    stroke-width: 6;
+    fill: var(--component-hover-fill);
+  }
+  div {
+    color: var(--component-hover-text-color) !important;
+  }
+}
+ /* Style for disabled components. */
+.componentDisabled {
+  rect {
+    opacity: 0.3;
+    fill: var(--color7);
+    pointer-events: none;
+  }
+
+  path {
+    opacity: 0.3;
+    fill: var(--color7);
+  }
+
+  div {
+    color: var(--color6) !important;
+    pointer-events: none !important;
+  }
+}
+
+.signal {
+  path {
+    stroke-width: 3;
+    stroke: var(--color2);
+    fill: var(--color2);
+  }
+  div {
+    color: var(--color2) !important;
+    font-size: 12px !important;
+  }
+}
+
+.signal:hover {
+  path {
+    stroke-width: 6;
+    stroke: var(--color5);
+    fill: var(--color5);
+    animation: blinker 1.5s linear infinite;
+  }
+  div {
+    color: var(--color5) !important;
+    font-size: 14px !important;
+    animation: blinker 1.5s linear infinite;
+  }
+}
+
+.signalDisabled {
+  path {
+      stroke-width: 3;
+      fill: var(--color7);
+      stroke: var(--color7);
+    }
+    
+    div {
+      color: var(--color6) !important;
+      font-size: 12px !important;
+    }
+}
+/**
+ * Path style.
+ *
+ * Should be called path instead but that will conflict with all the other path
+ * tags in the svg.
+ */
+.connection {
+  path {
+    stroke-width: 3;
+    stroke: var(--color2);
+    transition: stroke-width 3s;
+  }
+  div div div{
+    color: var(--color2) !important;
+    font-size: 14px !important;
+  }
+}
+
+.connection:hover {
+  path {
+    stroke-width: 6;
+    stroke: var(--color5);
+    animation: blinker 1.5s linear infinite;
+  }
+  div div div {
+    color: var(--color5) !important;
+    font-size: 14px !important;
+    animation: blinker 1.5s linear infinite;
+  }
+}
+
+@keyframes blinker {
+  25% {
+    stroke-width: 4;
+    opacity: 0.25;
+  }
+  50% {
+    stroke-width: 5;
+    opacity: 0.5;
+  }
+  75% {
+    stroke-width: 6;
+    opacity: 1;
+  }
+}
+
+.connectionDisabled {
+  path {
+    stroke-width: 3;
+    stroke: var(--color6);
+    pointer-events: none;
+    }
+    div {
+      color: var(--color6) !important;
+      font-size: 12px !important;
+    }
+  /* path :nth-child(1) {
+    fill: var(--color6);
+  } */
+}
+
+.muxPath {
+  visibility: visible;
+}
+
+.muxPathDisabled {
+  visibility: hidden ;
+}
+
+
+.inputText {
+  div div div {
+    pointer-events: auto;
+  }
+}
+
+.inputTextDisabled {
+  div div div {
+    color: var(--color6) !important;
+    pointer-events: none !important;
+  }
+}
+/* [data-cpuCompIn] {
+  div div div  {
+    background-color: #F24949;
+  }
+} */
+
+#tooltip {
+  position: absolute;
+  display: none;
+  background: var(--color6);
+  border: 2px solid var(--color1);
+  border-radius: 3px;
+  padding: 10px;
+  transform: translateY(-50%);
+  font-family: 'Roboto mono';
+  font-size: smaller;
+}
+
+.tooltipinfo {
+  font-size: .75rem;
+  h1 {
+    padding: 0;
+    margin: 0;
+    font-size: inherit;
+  }
+  p {
+    padding: 0;
+    margin: 0;
+    margin-left: 1ch;
+  }
+  ul {
+    /* border-style: dashed; */
+    padding: 1ch;
+    margin: 0;
+    margin-left: 1ch;
+  }
+}
+
+.instHigh {
+  color: var(--color5) !important;
+  font-size: 24px !important;
+  font-weight: 700;
+  animation: blinker 1.5s linear infinite;
+}
+.instDis {
+  color: var(--color2) !important;
+  font-size: 24px !important;
+}
+
+.instType {
+  div {
+    color: var(--color6) !important;
+    font-weight: 400;
+  }
+
+  rect {
+    opacity: 0.3;
+    stroke-width: 3;
+    stroke: --var(--color2);
+    fill: var(--logger-type-fill);
+  }
+}
+
+.instTypeHigh {
+  div {
+    color: var(--color5) !important;
+    font-weight: 700;
+  }
+
+  rect {
+    stroke-width: 3;
+    stroke: var(--color2);
+    fill: var(--logger-type-fill-selected);
+  }
+}
+/**
+ * This will affect all the text inside the svg.
+ *
+ * This is tightly related to the way draw.io generates the svg.
+ */
+/* svg foreignObject div div div {
+  color:red !important;
+} */
+
+/**
+ * This style is applied to all cpu components.
+ *
+ * Notice is only applied for the components and not to the paths. The only
+ * difference is the ALU path because the ALU has to be drawn as a path.
+ */
+/* svg rect, svg [data-cpuName="ALU"]  path {
+    stroke-width: 6;
+    stroke: purple;
+
+}  */
+
+svg {
+  [data-cpuName="CLKCLK"] path {
+      stroke: var(--color2);
+  }
+  [data-cpuName="ALUTEXT"] div {
+    color: var(--color2) !important;
+  }
+  [data-cpuName="ADD4"], [data-cpuName="ADD4"]:hover { 
+    div div div {
+      color: var(--color2) !important;
+      font-size: 28px !important;
+    }
+  }
+  
+  [data-cpuLog$="LBL"] {
+    div {
+        color: var(--logger-text-color-labels) !important;
+      }
+  }
+
+  [data-cpuLog^="LOGTEXT"] {
+    div div {
+      color: var(--logger-text-color-values) !important;
+      font-size: 24px !important;
+    }
+  }
+/*   
+  [data-cpuLog^="LOGTYPE"] {
+    div {
+      color: var(--logger-type-color) !important;
+      font-weight: 700;
+    }
+    rect {
+      stroke: --var(--logger-type-stroke-color);
+      fill: var(--logger-type-fill-color);
+    }
+  } */
+
+  [data-cpuBusWidth] {
+    path {
+      visibility: hidden;
+    }
+    div div div {
+      visibility: hidden;
+    }
+  }
+}
+
