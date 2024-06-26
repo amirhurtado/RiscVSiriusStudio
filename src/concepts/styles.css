@@ -247,11 +247,6 @@ svg {
     pointer-events: none !important;
   }
 }
-/* [data-cpuCompIn] {
-  div div div  {
-    background-color: #F24949;
-  }
-} */
 
 #tooltip {
   position: absolute;
@@ -322,26 +317,6 @@ svg {
     fill: var(--logger-type-fill-selected);
   }
 }
-/**
- * This will affect all the text inside the svg.
- *
- * This is tightly related to the way draw.io generates the svg.
- */
-/* svg foreignObject div div div {
-  color:red !important;
-} */
-
-/**
- * This style is applied to all cpu components.
- *
- * Notice is only applied for the components and not to the paths. The only
- * difference is the ALU path because the ALU has to be drawn as a path.
- */
-/* svg rect, svg [data-cpuName="ALU"]  path {
-    stroke-width: 6;
-    stroke: purple;
-
-}  */
 
 svg {
   [data-cpuName="CLKCLK"] path {
