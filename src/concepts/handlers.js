@@ -98,9 +98,19 @@ function tooltipEvt(name, window, element, htmlGen, htmlDet) {
   });
 }
 
+/**
+ * Installs a hover listener on element. The purpose of it is to bring the
+ * element to the front when is active and hovered by the pointer. This is very
+ * draw.io dependant and should be checked. As element is sometimes put inside a
+ * group this will only work if the group is moved.
+ *
+ */
 function focus(element) {
   element.addEventListener("mousemove", () => {
-    element.parentNode.append(element);
+    const realElement = element.parentElement;
+    realElement.parentElement.appendChild(realElement);
+    // element.parentNode.append(element);
+    //element.parentElement.appendChild(element);
   });
 }
 
@@ -121,7 +131,7 @@ function mouseHover(element, mmove, mout) {
  * disabled during the execution of that instruction.
  *
  */
-export function CLK(window, element) {
+export function CLK(window, document, element) {
   applyClass(element, "component");
   window.cpuData.buttonExecute.addEventListener("click", () => {
     applyClass(element, "component");
@@ -130,7 +140,7 @@ export function CLK(window, element) {
   });
 }
 
-export function PC(window, element) {
+export function PC(window, document, element) {
   [element, window.cpuElements.PCCLOCK].forEach((e) => {
     applyClass(e, "componentDisabled");
   });
@@ -155,7 +165,7 @@ export function PC(window, element) {
   });
 }
 
-export function ADD4(window, element) {
+export function ADD4(window, document, element) {
   applyClass(element, "componentDisabled");
   window.cpuData.buttonExecute.addEventListener("click", () => {
     applyClass(element, "component");
@@ -163,7 +173,7 @@ export function ADD4(window, element) {
   });
 }
 
-export function IM(window, element) {
+export function IM(window, document, element) {
   const { IMADDRESSTEXT: addressText, IMINSTRUCTIONTEXT: instText } =
     window.cpuElements;
   "div"[2];
@@ -217,7 +227,7 @@ export function IM(window, element) {
   });
 }
 
-export function CU(window, element) {
+export function CU(window, document, element) {
   const arrow = window.cpuElements.CUArrow;
   [element, arrow].forEach((e) => {
     applyClass(e, "componentDisabled");
@@ -242,7 +252,7 @@ export function CU(window, element) {
   });
 }
 
-export function RU(window, element) {
+export function RU(window, document, element) {
   [element, window.cpuElements.RUCLOCK].forEach((e) => {
     applyClass(e, "componentDisabled");
   });
@@ -336,7 +346,7 @@ export function RU(window, element) {
   });
 }
 
-export function IMM(window, element) {
+export function IMM(window, document, element) {
   applyClass(element, "componentDisabled");
   tooltipEvt(
     "IMM",
@@ -376,7 +386,7 @@ export function IMM(window, element) {
   });
 }
 
-export function ALUA(window, element) {
+export function ALUA(window, document, element) {
   applyClass(element, "componentDisabled");
   const { ALUAMUXIC1: path1, ALUAMUXIC0: path0 } = window.cpuElements;
   [path1, path0].forEach((x) => {
@@ -406,7 +416,7 @@ export function ALUA(window, element) {
   });
 }
 
-export function ALUB(window, element) {
+export function ALUB(window, document, element) {
   applyClass(element, "componentDisabled");
   const { ALUBMUXIC1: path1, ALUBMUXIC0: path0 } = window.cpuElements;
   [path1, path0].forEach((x) => {
@@ -430,7 +440,7 @@ export function ALUB(window, element) {
   });
 }
 
-export function ALU(window, element) {
+export function ALU(window, document, element) {
   const { ALUTEXTINA: textA, ALUTEXTINB: textB } = window.cpuElements;
 
   applyClass(element, "componentDisabled");
@@ -487,7 +497,7 @@ export function ALU(window, element) {
   });
 }
 
-export function BU(window, element) {
+export function BU(window, document, element) {
   applyClass(element, "componentDisabled");
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // Branch unit is always enabled as it controls NextPCSrc. When in a branch
@@ -497,7 +507,7 @@ export function BU(window, element) {
   });
 }
 
-export function DM(window, element) {
+export function DM(window, document, element) {
   const {
     DMTEXTINADDRESS: addressText,
     DMTEXTINDATAWR: datawrText,
@@ -543,7 +553,7 @@ export function DM(window, element) {
   });
 }
 
-export function BUMUX(window, element) {
+export function BUMUX(window, document, element) {
   applyClass(element, "componentDisabled");
   const { BUMUXIC1: path1, BUMUXIC0: path0 } = window.cpuElements;
   [path1, path0].forEach((x) => {
@@ -567,7 +577,7 @@ export function BUMUX(window, element) {
   });
 }
 
-export function WBMUX(window, element) {
+export function WBMUX(window, document, element) {
   const {
     WBMUXIC00: path00,
     WBMUXIC01: path01,
@@ -625,7 +635,7 @@ export function WBMUX(window, element) {
 
 // !PATHS
 
-export function CLKPC(window, element) {
+export function CLKPC(window, document, element) {
   applyClass(element, "connectionDisabled");
   focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
@@ -634,7 +644,7 @@ export function CLKPC(window, element) {
   });
 }
 
-export function CLKRU(window, element) {
+export function CLKRU(window, document, element) {
   applyClass(element, "connectionDisabled");
   focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
@@ -643,7 +653,7 @@ export function CLKRU(window, element) {
   });
 }
 
-export function CLKDM(window, element) {
+export function CLKDM(window, document, element) {
   applyClass(element, "connectionDisabled");
   focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
@@ -652,7 +662,7 @@ export function CLKDM(window, element) {
   });
 }
 
-export function PCIM(window, element) {
+export function PCIM(window, document, element) {
   applyClass(element, "connectionDisabled");
   focus(element);
   tooltipEvt(
@@ -673,7 +683,7 @@ export function PCIM(window, element) {
   });
 }
 
-export function PCADD4(window, element) {
+export function PCADD4(window, document, element) {
   applyClass(element, "connectionDisabled");
   // focus(element);
   tooltipEvt(
@@ -694,7 +704,7 @@ export function PCADD4(window, element) {
   });
 }
 
-export function PCALUA(window, element) {
+export function PCALUA(window, document, element) {
   applyClass(element, "connectionDisabled");
   focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
@@ -708,7 +718,7 @@ export function PCALUA(window, element) {
   });
 }
 
-export function IMCUOPCODE(window, element) {
+export function IMCUOPCODE(window, document, element) {
   applyClass(element, "connectionDisabled");
   element.parentNode.appendChild(element);
   focus(element);
@@ -732,7 +742,7 @@ export function IMCUOPCODE(window, element) {
   });
 }
 
-export function IMCUFUNCT3(window, element) {
+export function IMCUFUNCT3(window, document, element) {
   applyClass(element, "connectionDisabled");
   focus(element);
   mouseHover(
@@ -755,7 +765,7 @@ export function IMCUFUNCT3(window, element) {
   });
 }
 
-export function IMCUFUNCT7(window, element) {
+export function IMCUFUNCT7(window, document, element) {
   applyClass(element, "connectionDisabled");
   focus(element);
   mouseHover(
@@ -778,7 +788,7 @@ export function IMCUFUNCT7(window, element) {
   });
 }
 
-export function IMRURS1(window, element) {
+export function IMRURS1(window, document, element) {
   applyClass(element, "connectionDisabled");
   focus(element);
   mouseHover(
@@ -801,7 +811,7 @@ export function IMRURS1(window, element) {
   });
 }
 
-export function IMRURS2(window, element) {
+export function IMRURS2(window, document, element) {
   applyClass(element, "connectionDisabled");
   focus(element);
   mouseHover(
@@ -824,7 +834,7 @@ export function IMRURS2(window, element) {
   });
 }
 
-export function IMRURDEST(window, element) {
+export function IMRURDEST(window, document, element) {
   applyClass(element, "connectionDisabled");
   focus(element);
   mouseHover(
@@ -847,7 +857,7 @@ export function IMRURDEST(window, element) {
   });
 }
 
-export function IMIMM(window, element) {
+export function IMIMM(window, document, element) {
   applyClass(element, "connectionDisabled");
   focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
@@ -861,7 +871,7 @@ export function IMIMM(window, element) {
   });
 }
 
-export function WBMUXRU(window, element) {
+export function WBMUXRU(window, document, element) {
   applyClass(element, "connectionDisabled");
   focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
@@ -875,7 +885,7 @@ export function WBMUXRU(window, element) {
   });
 }
 
-export function IMMALUB(window, element) {
+export function IMMALUB(window, document, element) {
   applyClass(element, "connectionDisabled");
   focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
@@ -889,7 +899,7 @@ export function IMMALUB(window, element) {
   });
 }
 
-export function RUALUA(window, element) {
+export function RUALUA(window, document, element) {
   applyClass(element, "connectionDisabled");
   element.parentNode.appendChild(element);
   focus(element);
@@ -904,7 +914,7 @@ export function RUALUA(window, element) {
   });
 }
 
-export function RUALUB(window, element) {
+export function RUALUB(window, document, element) {
   applyClass(element, "connectionDisabled");
   element.parentNode.appendChild(element);
   focus(element);
@@ -919,7 +929,7 @@ export function RUALUB(window, element) {
   });
 }
 
-export function RUDM(window, element) {
+export function RUDM(window, document, element) {
   applyClass(element, "connectionDisabled");
   focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
@@ -933,7 +943,7 @@ export function RUDM(window, element) {
   });
 }
 
-export function RURS1BU(window, element) {
+export function RURS1BU(window, docuemtn, element) {
   applyClass(element, "connectionDisabled");
   focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
@@ -947,7 +957,7 @@ export function RURS1BU(window, element) {
   });
 }
 
-export function RURS2BU(window, element) {
+export function RURS2BU(window, document, element) {
   applyClass(element, "connectionDisabled");
   focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
@@ -961,7 +971,7 @@ export function RURS2BU(window, element) {
   });
 }
 
-export function ALUAALU(window, element) {
+export function ALUAALU(window, document, element) {
   applyClass(element, "connectionDisabled");
   focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
@@ -970,7 +980,7 @@ export function ALUAALU(window, element) {
   });
 }
 
-export function ALUBALU(window, element) {
+export function ALUBALU(window, document, element) {
   applyClass(element, "connectionDisabled");
   focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
@@ -979,7 +989,7 @@ export function ALUBALU(window, element) {
   });
 }
 
-export function ALUDM(window, element) {
+export function ALUDM(window, document, element) {
   applyClass(element, "connectionDisabled");
   focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
@@ -994,7 +1004,7 @@ export function ALUDM(window, element) {
   });
 }
 
-export function ALUWBMUX(window, element) {
+export function ALUWBMUX(window, document, element) {
   applyClass(element, "connectionDisabled");
   focus(element);
   element.parentNode.appendChild(element);
@@ -1005,7 +1015,7 @@ export function ALUWBMUX(window, element) {
   });
 }
 
-export function DMWBMUX(window, element) {
+export function DMWBMUX(window, document, element) {
   applyClass(element, "connectionDisabled");
   focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
@@ -1015,7 +1025,7 @@ export function DMWBMUX(window, element) {
   });
 }
 
-export function ADD4WBMUX(window, element) {
+export function ADD4WBMUX(window, document, element) {
   applyClass(element, "connectionDisabled");
   focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
@@ -1025,7 +1035,7 @@ export function ADD4WBMUX(window, element) {
   });
 }
 
-export function BUBUMUX(window, element) {
+export function BUBUMUX(window, document, element) {
   applyClass(element, "connectionDisabled");
   focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
@@ -1034,7 +1044,7 @@ export function BUBUMUX(window, element) {
   });
 }
 
-export function ALUBUMUX(window, element) {
+export function ALUBUMUX(window, document, element) {
   applyClass(element, "connectionDisabled");
   focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
@@ -1050,7 +1060,7 @@ export function ALUBUMUX(window, element) {
   });
 }
 
-export function ADD4BUMUX(window, element) {
+export function ADD4BUMUX(window, document, element) {
   applyClass(element, "connectionDisabled");
   focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
@@ -1059,7 +1069,7 @@ export function ADD4BUMUX(window, element) {
   });
 }
 
-export function BUMUXPC(window, element) {
+export function BUMUXPC(window, document, element) {
   applyClass(element, "connectionDisabled");
   focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
@@ -1068,7 +1078,7 @@ export function BUMUXPC(window, element) {
   });
 }
 
-export function ADD4CT(window, element) {
+export function ADD4CT(window, document, element) {
   applyClass(element, "connectionDisabled");
   focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
@@ -1088,7 +1098,7 @@ function setAsmInstruction(window, html) {
   asmText.innerHTML = html;
 }
 
-export function LOGTEXTASSEMBLER(window) {
+export function LOGTEXTASSEMBLER(window, document, element) {
   setAsmInstruction(window, "--no instruction loaded--");
   window.cpuData.buttonExecute.addEventListener("click", () => {
     const inst = window.cpuData.instruction;
@@ -1096,7 +1106,7 @@ export function LOGTEXTASSEMBLER(window) {
   });
 }
 
-export function LOGTEXTBIN(window) {
+export function LOGTEXTBIN(window, document, element) {
   setBinInstruction(window, "--no instruction loaded--");
   window.cpuData.buttonExecute.addEventListener("click", () => {
     const inst = window.cpuData.parseResult.encoding.binEncoding;
@@ -1115,7 +1125,7 @@ function displayType(element, expected, e) {
 
 const checkInstruction = _.curry(displayType);
 
-export function LOGTYPER(window, element) {
+export function LOGTYPER(window, document, element) {
   applyClass(element, "instType");
   window.cpuData.buttonExecute.addEventListener(
     "click",
@@ -1123,7 +1133,7 @@ export function LOGTYPER(window, element) {
   );
 }
 
-export function LOGTYPEI(window, element) {
+export function LOGTYPEI(window, document, element) {
   applyClass(element, "instType");
   window.cpuData.buttonExecute.addEventListener(
     "click",
@@ -1131,7 +1141,7 @@ export function LOGTYPEI(window, element) {
   );
 }
 
-export function LOGTYPES(window, element) {
+export function LOGTYPES(window, document, element) {
   applyClass(element, "instType");
   window.cpuData.buttonExecute.addEventListener(
     "click",
@@ -1139,7 +1149,7 @@ export function LOGTYPES(window, element) {
   );
 }
 
-export function LOGTYPEB(window, element) {
+export function LOGTYPEB(window, document, element) {
   applyClass(element, "instType");
   window.cpuData.buttonExecute.addEventListener(
     "click",
@@ -1147,7 +1157,7 @@ export function LOGTYPEB(window, element) {
   );
 }
 
-export function LOGTYPEU(window, element) {
+export function LOGTYPEU(window, document, element) {
   applyClass(element, "instType");
   window.cpuData.buttonExecute.addEventListener(
     "click",
@@ -1155,7 +1165,7 @@ export function LOGTYPEU(window, element) {
   );
 }
 
-export function LOGTYPEJ(window, element) {
+export function LOGTYPEJ(window, document, element) {
   applyClass(element, "instType");
   window.cpuData.buttonExecute.addEventListener(
     "click",

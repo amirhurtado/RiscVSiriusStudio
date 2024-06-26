@@ -2,7 +2,7 @@ import * as Handlers from "./handlers.js";
 import { parse } from "./riscv.js";
 
 export function initSimulatorEvents(window, document) {
-  //console.log("Initializing simulator events", document);
+  console.log("Initializing simulator events", document);
 
   window["cpuData"] = {};
   const instText = document.querySelector(".instText");
@@ -35,23 +35,36 @@ export function initSimulatorEvents(window, document) {
   window["cpuData"]["instruction"] = null;
   window["cpuData"]["parseResult"] = null;
 
-  const elements = document.querySelectorAll("[data-cpuName]");
+  fetchSVGElements();
+  initSVGElements();
+}
+
+/**
+ * Fetches all the elements present in the SVG image with the tag "data-cpuName"
+ * defined. Every element is stored in the cpuElements object inside the window
+ * object under the value of the attribute..
+ */
+function fetchSVGElements() {
+  const elements = document.querySelectorAll("[data-cpuname]");
   elements.forEach((element) => {
     const name = element.getAttributeNS(null, "data-cpuname");
     // Add the element to the cpuElements object
     window.cpuElements[name] = element;
   });
+  console.log("[info] ", Object.keys(window.cpuElements).length, " fetched.");
+}
 
-  elements.forEach((element) => {
-    const name = element.getAttributeNS(null, "data-cpuname");
-    // Call the function associated to each element (if one exists). That must
-    // be in charge of registering the event listeners.
+function initSVGElements() {
+  for (const name in window.cpuElements) {
+    // console.log(name, window.cpuElements[name]);
     if (name in Handlers) {
       window.cpuElements.state[name] = { enabled: false };
-      window["cpuHandlers"][name](window, document, element);
+      const element = window.cpuElements[name];
+      window.cpuHandlers[name](window, document, element);
     } else {
+      // console.log(name, " does not have a handler");
     }
-  });
+  }
 }
 
 function instructionReady(srcInst) {
@@ -68,6 +81,6 @@ function parseInstruction(instText) {
   } catch (error) {
     console.error(error);
   }
-  // console.log("Finished instruction loading");
+  console.log("Finished instruction loading");
   return result;
 }
