@@ -26,7 +26,16 @@ const extensionConfig = {
     copy({
       resolveFrom: "cwd",
       assets: {
-        from: ["./src/webview/cpu0SVG.js", "./src/webview/Parser.js"],
+        from: [
+              //  "./src/webview/cpu0SVG.js",
+              //  "./src/webview/Parser.js",
+              //  "./src/webview/handlers.js",
+              //  "./src/webview/riscv.js",
+              //  "./src/webview/riscv-pre.js",
+
+               "./src/webview/styles.css",
+               "./src/webview/cpu0Events.js",
+              ],
         to: ["./out"],
       },
     }),

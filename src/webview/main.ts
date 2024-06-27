@@ -1,8 +1,11 @@
 import { provideVSCodeDesignSystem, vsCodeButton, Button, TextField } from "@vscode/webview-ui-toolkit";
 
-import { init, pathTypeR, pathTypeI, pathTypeILoad, pathTypeS, pathTypeB, pathTypeJ } from './cpu0SVG.js';
+//import { init, pathTypeR, pathTypeI, pathTypeILoad, pathTypeS, pathTypeB, pathTypeJ } from './cpu0SVG.js';
+import {
+  initSimulatorEvents
+} from "./cpu0Events.js";
 
-import { parse } from '../utilities/riscv.js';
+import { parse } from '../utilities/riscv.js'; 
 
 import { InputBox } from "vscode";
 
@@ -30,46 +33,49 @@ const vscode = acquireVsCodeApi();
 window.addEventListener("load", main);
 
 function main() {
-  const style = getComputedStyle(document.documentElement);
+  console.log("Main function called!");
+  initSimulatorEvents(window, document);
+  // const style = getComputedStyle(document.documentElement);
 
-  var vscColors = {
-    // 'componentBackground': '#005FB8',
-    'componentBackground': style.getPropertyValue('--vscode-button-background'),
-    'pathBackground': style.getPropertyValue('--vscode-badge-foreground'),
-    'canvasBackground': style.getPropertyValue('--vscode-tab-activeBackground'),
-  }
-  init(document, vscColors);
+  // var vscColors = {
+  //   // 'componentBackground': '#005FB8',
+  //   'componentBackground': style.getPropertyValue('--vscode-button-background'),
+  //   'pathBackground': style.getPropertyValue('--vscode-badge-foreground'),
+  //   'canvasBackground': style.getPropertyValue('--vscode-tab-activeBackground'),
+  // };
+
+  // init(document, vscColors);
   /**
    * Bind elements in the webview to their respective functions in the code.
    */ 
     
   // Button with id=r-type to function handleRType
-  const RTypeButton = document.getElementById("r-type") as Button;
-  RTypeButton?.addEventListener("click", handleRType);
+  // const RTypeButton = document.getElementById("r-type") as Button;
+  // RTypeButton?.addEventListener("click", handleRType);
 
   // Button with id=i-type to function handleRIype
-  const ITypeButton = document.getElementById("i-type") as Button;
-  ITypeButton?.addEventListener("click", handleIType);
+  // const ITypeButton = document.getElementById("i-type") as Button;
+  // ITypeButton?.addEventListener("click", handleIType);
 
   // Button with id=iload-type to function handleRIype
-  const ILoadTypeButton = document.getElementById("iload-type") as Button;
-  ILoadTypeButton?.addEventListener("click", handleILoadType);
+  // const ILoadTypeButton = document.getElementById("iload-type") as Button;
+  // ILoadTypeButton?.addEventListener("click", handleILoadType);
 
   // Button with id=sload-type to function handleRIype
-  const STypeButton = document.getElementById("s-type") as Button;
-  STypeButton?.addEventListener("click", handleSType);
+  // const STypeButton = document.getElementById("s-type") as Button;
+  // STypeButton?.addEventListener("click", handleSType);
 
   // Button with id=sload-type to function handleRIype
-  const BTypeButton = document.getElementById("b-type") as Button;
-  BTypeButton?.addEventListener("click", handleBType);
+  // const BTypeButton = document.getElementById("b-type") as Button;
+  // BTypeButton?.addEventListener("click", handleBType);
 
   // Button with id=sload-type to function handleRIype
-  const JTypeButton = document.getElementById("j-type") as Button;
-  JTypeButton?.addEventListener("click", handleJType);
+  // const JTypeButton = document.getElementById("j-type") as Button;
+  // JTypeButton?.addEventListener("click", handleJType);
 
   // Button with id=run-instruction to function handleRunInstruction
-  const RunInstruction = document.getElementById("run-instruction") as Button;
-  RunInstruction?.addEventListener("click", handleRunInstruction);
+  // const RunInstruction = document.getElementById("run-instruction") as Button;
+  // RunInstruction?.addEventListener("click", handleRunInstruction);
   
 }
 
@@ -84,42 +90,42 @@ function handleRunInstruction() {
 }
 
 function handleRType() {
-  pathTypeR();
+  // pathTypeR();
   vscode.postMessage(
     { command: "hello", text: "Highlighting R-Type instruction.",}
   );
 }
 
 function handleIType() {
-  pathTypeI();
+  // pathTypeI();
   vscode.postMessage(
     { command: "hello", text: "Highlighting I-Type instruction.",}
   );
 }
 
 function handleILoadType() {
-  pathTypeILoad();
+  // pathTypeILoad();
   vscode.postMessage(
     { command: "hello", text: "Highlighting I-LoadType instruction.",}
   );
 }
 
 function handleSType() {
-  pathTypeS();
+  // pathTypeS();
   vscode.postMessage(
     { command: "hello", text: "Highlighting S-Type instruction.",}
   );
 }
 
 function handleBType() {
-  pathTypeB();
+  // pathTypeB();
   vscode.postMessage(
     { command: "hello", text: "Highlighting B-Type instruction.",}
   );
 }
 
 function handleJType() {
-  pathTypeJ();
+  // pathTypeJ();
   vscode.postMessage(
     { command: "hello", text: "Highlighting J-Type instruction.",}
   );
