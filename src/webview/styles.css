@@ -38,19 +38,16 @@ input, select, button {
   font: inherit;
 }
 
-/* .scaling-svg-container {
-  position: relative; 
-  height: 100%; 
-  width: 100%; 
-  padding: 0;
-  padding-bottom: 60%;
-} */
-.scaling-svg {
-  /* position: absolute; 
-  height: 90%; 
-  width: 90%; 
-  left: 0; 
-  top:0; */
+.grid-container {
+  display: grid;
+  place-items: center;
+  /* grid-template-columns: repeat(auto-fill, minmax(1050px, 1fr));; */
+  /* background-color: purple; */
+  border: 2px dashed black;
+}
+
+.grid-item {
+  border: 1px solid red;
 }
 
 /**
@@ -59,6 +56,7 @@ input, select, button {
  * This tag contains  the cpu diagram.
  */
 svg {
+  height: 95vh;
   /* Properties general to all svg elements */
   /* width: fit-content; */
   /* background-color: rgb(32, 237, 97); */
