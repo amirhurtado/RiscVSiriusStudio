@@ -35,8 +35,12 @@ export class HelloWorldPanel {
 
     // Set an event listener to listen for messages passed from the webview context
     this._setWebviewMessageListener(this._panel.webview);
-  }
 
+  }
+  public static getPanel(extensionUri: Uri) {
+    HelloWorldPanel.render(extensionUri);
+    return HelloWorldPanel.currentPanel;
+  }
   /**
    * Renders the current webview panel if it exists otherwise a new webview panel
    * will be created and displayed.
@@ -118,7 +122,7 @@ export class HelloWorldPanel {
 
 <body>
   <div id="tooltip" display="none"></div>
-  <div><label>Insert an instruction:</label>
+  <div style="display: none;" ><label>XInsert an instruction:</label>
     <input class="instText" type="text" id="instText" value="add x2, a0, sp">
   </input>    
   <label> or select an example:</label>
@@ -129,9 +133,8 @@ export class HelloWorldPanel {
     <option value="sltiu x2, a5, 100">(I-arith) sltiu x2, a5, 100</option>
     <option value="lw x2, 16(a5)">(I-load) lw x2,16(a5)</option>
     <option value="beq x2, x3, -2048">(B) beq x2, x3, -2048</option>
-  
   </select>
-  <vscode-button class="executeInstruction" type="button" >Execute</vscode-button>
+  <vscode-button id="execute-button" class="executeInstruction" type="button" >Execute</vscode-button>
   </div>
   <div>
   <div>
@@ -170,5 +173,9 @@ export class HelloWorldPanel {
       undefined,
       this._disposables
     );
+  }
+  public postMessage(message: Object) {
+    HelloWorldPanel.currentPanel?._panel.webview.postMessage(message);
+    console.log("hola");
   }
 }

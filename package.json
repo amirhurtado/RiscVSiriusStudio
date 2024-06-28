@@ -13,6 +13,10 @@
       {
         "command": "rv-simulator.showHelloWorld",
         "title": "RISCV simulator: Show"
+      },
+      {
+        "command": "rv-simulator.sendInstruction",
+        "title": "RISCV simulator: Instruction"
       }
     ]
   },

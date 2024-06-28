@@ -35,99 +35,39 @@ window.addEventListener("load", main);
 function main() {
   console.log("Main function called!");
   initSimulatorEvents(window, document);
-  // const style = getComputedStyle(document.documentElement);
-
-  // var vscColors = {
-  //   // 'componentBackground': '#005FB8',
-  //   'componentBackground': style.getPropertyValue('--vscode-button-background'),
-  //   'pathBackground': style.getPropertyValue('--vscode-badge-foreground'),
-  //   'canvasBackground': style.getPropertyValue('--vscode-tab-activeBackground'),
-  // };
-
-  // init(document, vscColors);
   /**
    * Bind elements in the webview to their respective functions in the code.
    */ 
-    
-  // Button with id=r-type to function handleRType
-  // const RTypeButton = document.getElementById("r-type") as Button;
-  // RTypeButton?.addEventListener("click", handleRType);
-
-  // Button with id=i-type to function handleRIype
-  // const ITypeButton = document.getElementById("i-type") as Button;
-  // ITypeButton?.addEventListener("click", handleIType);
-
-  // Button with id=iload-type to function handleRIype
-  // const ILoadTypeButton = document.getElementById("iload-type") as Button;
-  // ILoadTypeButton?.addEventListener("click", handleILoadType);
-
-  // Button with id=sload-type to function handleRIype
-  // const STypeButton = document.getElementById("s-type") as Button;
-  // STypeButton?.addEventListener("click", handleSType);
-
-  // Button with id=sload-type to function handleRIype
-  // const BTypeButton = document.getElementById("b-type") as Button;
-  // BTypeButton?.addEventListener("click", handleBType);
-
-  // Button with id=sload-type to function handleRIype
-  // const JTypeButton = document.getElementById("j-type") as Button;
-  // JTypeButton?.addEventListener("click", handleJType);
-
-  // Button with id=run-instruction to function handleRunInstruction
-  // const RunInstruction = document.getElementById("run-instruction") as Button;
-  // RunInstruction?.addEventListener("click", handleRunInstruction);
-  
+  const executeButton = document.getElementById("execute-button") as Button;
+  executeButton?.addEventListener("click", handleExecute);
+  window.addEventListener('message',(event)=>{
+    const message = event.data;
+    const instTextField = document.getElementById("instText") as TextField;
+    instTextField.value = message["instruction"];
+    const executeButton = document.getElementById("execute-button") as Button;
+    executeButton.click();
+  });
 }
 
 function handleRunInstruction() {
-  const RunInstruction = document.getElementById("input-instruction") as TextField;
-
-  const instruction = RunInstruction.value;
+  console.log("Handling instruction");
+  const runInstruction = document.getElementById("input-instruction") as TextField;
+  const instruction = runInstruction.value;
   const result = parse(instruction);
   vscode.postMessage(
     { command: "hello", text: "Instruction to run: " + result}
   );
 }
 
-function handleRType() {
-  // pathTypeR();
-  vscode.postMessage(
-    { command: "hello", text: "Highlighting R-Type instruction.",}
-  );
-}
+function handleExecute() {
+  const instTextField = document.getElementById("instText") as TextField;
+  const instruction = instTextField.value;
+  console.log("Handling instruction ", instruction);
 
-function handleIType() {
-  // pathTypeI();
-  vscode.postMessage(
-    { command: "hello", text: "Highlighting I-Type instruction.",}
-  );
-}
+  // parse the instruction here
 
-function handleILoadType() {
-  // pathTypeILoad();
   vscode.postMessage(
-    { command: "hello", text: "Highlighting I-LoadType instruction.",}
-  );
-}
-
-function handleSType() {
-  // pathTypeS();
-  vscode.postMessage(
-    { command: "hello", text: "Highlighting S-Type instruction.",}
-  );
-}
-
-function handleBType() {
-  // pathTypeB();
-  vscode.postMessage(
-    { command: "hello", text: "Highlighting B-Type instruction.",}
-  );
-}
-
-function handleJType() {
-  // pathTypeJ();
-  vscode.postMessage(
-    { command: "hello", text: "Highlighting J-Type instruction.",}
+    { command: "hello", text: "Instruction to execute: " + instruction}
   );
 }
 

@@ -34,7 +34,7 @@ function binFormattedDisplay(window, selection) {
   const parsed = window.cpuData.parseResult;
   const type = parsed.type.toUpperCase();
   let s = [];
-  if (selection === "funct7" && type == "R") {
+  if (selection === "funct7" && type === "R") {
     s.push(1);
   } else {
     s = selectors[selection];
