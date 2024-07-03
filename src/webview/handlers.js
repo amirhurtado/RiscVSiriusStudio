@@ -55,9 +55,9 @@ function splitInstruction(binInst, specL) {
 function formatInstruction(parsed, type, selected) {
   const pieces = splitInstruction(parsed.encoding.binEncoding, type);
   // console.log("pieces ", pieces);
-  const selectedStag = `<span class="instHigh">`;
+  const selectedStag = `<span class="instructionHighlighted">`;
   const selectedEetag = "</span>";
-  const disabledStag = `<span class="instDis">`;
+  const disabledStag = `<span class="instructionDisabled">`;
   const disabledEetag = "</span>";
   let html = "";
   // const selected = 7;
@@ -99,18 +99,24 @@ function tooltipEvt(name, window, element, htmlGen, htmlDet) {
 }
 
 /**
- * Installs a hover listener on element. The purpose of it is to bring the
- * element to the front when is active and hovered by the pointer. This is very
- * draw.io dependant and should be checked. As element is sometimes put inside a
+ * Redraws element to be on top of all the other svg elements it overlaps with.
+ * @param {*} element to be moved to the top of the svg 
+ * 
+ * This is very draw.io dependant and should be checked. As element is sometimes put inside a
  * group this will only work if the group is moved.
+ */
+function pathOnTop(element) {
+  const realElement = element.parentElement;
+  realElement.parentElement.appendChild(realElement);
+}
+/**
+ * Installs a hover listener on element. The purpose of it is to bring the
+ * element to the top when is active and hovered by the pointer.
  *
  */
 function focus(element) {
   element.addEventListener("mousemove", () => {
-    const realElement = element.parentElement;
-    realElement.parentElement.appendChild(realElement);
-    // element.parentNode.append(element);
-    //element.parentElement.appendChild(element);
+    pathOnTop(element);
   });
 }
 
@@ -166,10 +172,16 @@ export function PC(window, document, element) {
 }
 
 export function ADD4(window, document, element) {
+  const {
+    ADD4WBMUX: add4WBMux
+  } = window.cpuElements;
   applyClass(element, "componentDisabled");
+  applyClass(add4WBMux, "connectionDisabled");
+
   window.cpuData.buttonExecute.addEventListener("click", () => {
     applyClass(element, "component");
     window.cpuElements.state.ADD4.enabled = true;
+    applyClass(add4WBMux, "connectionDisabled");
   });
 }
 
@@ -262,11 +274,17 @@ export function RU(window, document, element) {
     RUTEXTINRD: rdText,
     RUTEXTINDATAWR: datawrText,
     RUTEXTINWE: ruwrText,
+    SgnRUWRPTH: ruwrSignal,
+    SgnRUWRVAL: ruwrSignalVal,
   } = window.cpuElements;
 
   [rs1Text, rs2Text, rdText, datawrText, ruwrText].forEach((e) => {
     applyClass(e, "inputTextDisabled");
   });
+  [ruwrSignal, ruwrSignalVal].forEach((e) => {
+    applyClass(e, "signalDisabled");
+  });
+
   // !TODO: It would be nice to compute if the register has sense in the current
   // instruction and show something accordingly in the tooltip text.
   tooltipEvt(
@@ -342,12 +360,19 @@ export function RU(window, document, element) {
     [rs1Text, rs2Text, rdText, datawrText, ruwrText].forEach((e) => {
       applyClass(e, "inputText");
     });
+    [ruwrSignal, ruwrSignalVal].forEach((e) => {
+      applyClass(e, "signal");
+    });
     window.cpuElements.state.RU.enabled = true;
   });
 }
 
 export function IMM(window, document, element) {
   applyClass(element, "componentDisabled");
+  const { SgnIMMSrcPTH: signal, SgnIMMSRCVAL: value } = window.cpuElements;
+  [signal, value].forEach((e) => {
+    applyClass(e, "signalDisabled");
+  });
   tooltipEvt(
     "IMM",
     window,
@@ -378,9 +403,15 @@ export function IMM(window, document, element) {
     const parseResult = window.cpuData.parseResult;
     if (parseResult.type.toUpperCase() !== "R") {
       applyClass(element, "component");
+      [signal, value].forEach((e) => {
+        applyClass(e, "signal");
+      });
       window.cpuElements.state.IMM.enabled = true;
     } else {
       applyClass(element, "componentDisabled");
+      [signal, value].forEach((e) => {
+        applyClass(e, "signalDisabled");
+      });
       window.cpuElements.state.IMM.enabled = false;
     }
   });
@@ -388,10 +419,11 @@ export function IMM(window, document, element) {
 
 export function ALUA(window, document, element) {
   applyClass(element, "componentDisabled");
-  const { ALUAMUXIC1: path1, ALUAMUXIC0: path0 } = window.cpuElements;
+  const { ALUAMUXIC1: path1, ALUAMUXIC0: path0, SgnALUASrcPTH:signal } = window.cpuElements;
   [path1, path0].forEach((x) => {
     applyClass(x, "connectionDisabled muxPathDisabled");
   });
+  applyClass(signal, "signalDisabled");
   const path0Visible = (inst) => {
     return inst === "R" || inst === "I" || inst === "S";
   };
@@ -400,6 +432,7 @@ export function ALUA(window, document, element) {
     window.cpuElements.state.ALUA.enabled = instType !== "U";
     if (window.cpuElements.state.ALUA.enabled) {
       applyClass(element, "component");
+      applyClass(signal, "signal");
       if (path0Visible(instType)) {
         applyClass(path0, "connection muxPath");
         applyClass(path1, "connectionDisabled muxPathDisabled");
@@ -409,6 +442,7 @@ export function ALUA(window, document, element) {
       }
     } else {
       applyClass(element, "componentDisabled");
+      applyClass(signal, "signalDisabled");
       [path1, path0].forEach((x) => {
         applyClass(x, "connectionDisabled muxPathDisabled");
       });
@@ -418,10 +452,11 @@ export function ALUA(window, document, element) {
 
 export function ALUB(window, document, element) {
   applyClass(element, "componentDisabled");
-  const { ALUBMUXIC1: path1, ALUBMUXIC0: path0 } = window.cpuElements;
+  const { ALUBMUXIC1: path1, ALUBMUXIC0: path0, SgnALUBSrcPTH: signal } = window.cpuElements;
   [path1, path0].forEach((x) => {
     applyClass(x, "connectionDisabled muxPathDisabled");
   });
+  applyClass(signal, "signalDisabled");
   const path0Visible = (inst) => {
     return inst === "R" || inst === "B" || inst === "J";
   };
@@ -429,6 +464,7 @@ export function ALUB(window, document, element) {
     // Always enabled for all instructions
     window.cpuElements.state.ALUB.enabled = true;
     applyClass(element, "component");
+    applyClass(signal, "signal");
     const instType = window.cpuData.parseResult.type.toUpperCase();
     if (path0Visible(instType)) {
       applyClass(path0, "connection muxPath");
@@ -441,12 +477,22 @@ export function ALUB(window, document, element) {
 }
 
 export function ALU(window, document, element) {
-  const { ALUTEXTINA: textA, ALUTEXTINB: textB } = window.cpuElements;
+  const {
+    ALUTEXTINA: textA,
+    ALUTEXTINB: textB,
+    SgnALUOPPTH: aluSignal,
+    SgnALUOPVAL: aluSignalValue,
+  } = window.cpuElements;
 
   applyClass(element, "componentDisabled");
   [textA, textB].forEach((e) => {
     applyClass(e, "inputTextDisabled");
   });
+
+  [aluSignal, aluSignalValue].forEach((e) => {
+    applyClass(e, "signalDisabled");
+  });
+
   tooltipEvt(
     "ALU",
     window,
@@ -492,18 +538,28 @@ export function ALU(window, document, element) {
     window.cpuElements.state.ALU.enabled = true;
     applyClass(element, "component");
     [textA, textB].forEach((e) => {
-      applyClass(e, "inputTextDisabled");
+      applyClass(e, "inputText");
+    });
+    [aluSignal, aluSignalValue].forEach((e) => {
+      applyClass(e, "signal");
     });
   });
 }
 
 export function BU(window, document, element) {
+  const { SgnBUBROPPTH: signal, SgnBUBROPVAL: signalVal } = window.cpuElements;
   applyClass(element, "componentDisabled");
+  [signal, signalVal].forEach((e) => {
+    applyClass(e, "signalDisabled");
+  });
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // Branch unit is always enabled as it controls NextPCSrc. When in a branch
     // instruction its inputs coming from the registers will be enabled.
-    applyClass(element, "component");
     window.cpuElements.state.BU.enabled = true;
+    applyClass(element, "component");
+    [signal, signalVal].forEach((e) => {
+      applyClass(e, "signal");
+    });
   });
 }
 
@@ -513,7 +569,11 @@ export function DM(window, document, element) {
     DMTEXTINDATAWR: datawrText,
     // DMTEXTDATARD: dataRdText,
     SgnDMCTRLPTH: ctrlSignal,
+    SgnDMCTRLVAL: ctrlSignalVal,
     SgnDMWRPTH: wrSignal,
+    SgnDMWRVAL: wrSignalVal,
+    CLKDM: clkConnection,
+    DMWBMUX: wbmuxConnection,
   } = window.cpuElements;
   [ctrlSignal, wrSignal].forEach((e) => {
     applyClass(e, "signalDisabled");
@@ -523,6 +583,9 @@ export function DM(window, document, element) {
   });
   [addressText, datawrText].forEach((e) => {
     applyClass(e, "inputTextDisabled");
+  });
+  [clkConnection, wbmuxConnection, ctrlSignalVal, wrSignalVal].forEach((e) => {
+    applyClass(e, "connectionDisabled");
   });
   window.cpuData.buttonExecute.addEventListener("click", () => {
     const parseResult = window.cpuData.parseResult;
@@ -539,6 +602,11 @@ export function DM(window, document, element) {
       [addressText, datawrText].forEach((e) => {
         applyClass(e, "inputText");
       });
+      [clkConnection, wbmuxConnection, ctrlSignalVal, wrSignalVal].forEach(
+        (e) => {
+          applyClass(e, "connection");
+        }
+      );
     } else {
       [ctrlSignal, wrSignal].forEach((e) => {
         applyClass(e, "signalDisabled");
@@ -549,6 +617,11 @@ export function DM(window, document, element) {
       [addressText, datawrText].forEach((e) => {
         applyClass(e, "inputTextDisabled");
       });
+      [clkConnection, wbmuxConnection, ctrlSignalVal, wrSignalVal].forEach(
+        (e) => {
+          applyClass(e, "connectionDisabled");
+        }
+      );
     }
   });
 }
@@ -582,8 +655,10 @@ export function WBMUX(window, document, element) {
     WBMUXIC00: path00,
     WBMUXIC01: path01,
     WBMUXIC10: path10,
+    SgnWBPTH: signal
   } = window.cpuElements;
   applyClass(element, "componentDisabled");
+  applyClass(signal, "signalDisabled");
   [path00, path01, path10].forEach((x) => {
     applyClass(x, "connectionDisabled muxPathDisabled");
   });
@@ -605,6 +680,7 @@ export function WBMUX(window, document, element) {
       const instType = window.cpuData.parseResult.type.toUpperCase();
       const instOC = window.cpuData.parseResult.opcode;
       applyClass(element, "component");
+      applyClass(signal, "signal");
       if (path00Visible(instType, instOC)) {
         [path00].forEach((x) => {
           applyClass(x, "connection muxPath");
@@ -629,17 +705,19 @@ export function WBMUX(window, document, element) {
       }
     } else {
       applyClass(element, "componentDisabled");
+      applyClass(signal, "signalDisabled");
     }
   });
 }
 
-// !PATHS
+// PATHS
 
 export function CLKPC(window, document, element) {
   applyClass(element, "connectionDisabled");
   focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
     window.cpuElements.state.CLKPC.enabled = true;
+    pathOnTop(element);
     applyClass(element, "connection");
   });
 }
@@ -649,6 +727,7 @@ export function CLKRU(window, document, element) {
   focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
     window.cpuElements.state.CLKRU.enabled = true;
+    pathOnTop(element);
     applyClass(element, "connection");
   });
 }
@@ -656,10 +735,6 @@ export function CLKRU(window, document, element) {
 export function CLKDM(window, document, element) {
   applyClass(element, "connectionDisabled");
   focus(element);
-  window.cpuData.buttonExecute.addEventListener("click", () => {
-    window.cpuElements.state.CLKDM.enabled = true;
-    applyClass(element, "connection");
-  });
 }
 
 export function PCIM(window, document, element) {
@@ -738,6 +813,7 @@ export function IMCUOPCODE(window, document, element) {
   );
   window.cpuData.buttonExecute.addEventListener("click", () => {
     window.cpuElements.state.IMCUOPCODE.enabled = true;
+    pathOnTop(element);
     applyClass(element, "connection");
   });
 }
@@ -761,6 +837,7 @@ export function IMCUFUNCT3(window, document, element) {
   );
   window.cpuData.buttonExecute.addEventListener("click", () => {
     applyClass(element, "connection");
+    pathOnTop(element);
     window.cpuElements.state.IMCUFUNCT3.enabled = true;
   });
 }
@@ -784,6 +861,7 @@ export function IMCUFUNCT7(window, document, element) {
   );
   window.cpuData.buttonExecute.addEventListener("click", () => {
     applyClass(element, "connection");
+    pathOnTop(element);
     window.cpuElements.state.IMCUFUNCT7.enabled = true;
   });
 }
@@ -807,6 +885,7 @@ export function IMRURS1(window, document, element) {
   );
   window.cpuData.buttonExecute.addEventListener("click", () => {
     applyClass(element, "connection");
+    pathOnTop(element);
     window.cpuElements.state.IMRURS1.enabled = true;
   });
 }
@@ -830,6 +909,7 @@ export function IMRURS2(window, document, element) {
   );
   window.cpuData.buttonExecute.addEventListener("click", () => {
     applyClass(element, "connection");
+    pathOnTop(element);
     window.cpuElements.state.IMRURS2.enabled = true;
   });
 }
@@ -853,6 +933,7 @@ export function IMRURDEST(window, document, element) {
   );
   window.cpuData.buttonExecute.addEventListener("click", () => {
     applyClass(element, "connection");
+    pathOnTop(element);
     window.cpuElements.state.IMRURDEST.enabled = true;
   });
 }
@@ -907,6 +988,7 @@ export function RUALUA(window, document, element) {
     const instType = window.cpuData.parseResult.type.toUpperCase();
     if (instType !== "J" && instType !== "B") {
       window.cpuElements.state.RUALUA.enabled = true;
+      pathOnTop(element);
       applyClass(element, "connection");
     } else {
       applyClass(element, "connectionDisabled");
@@ -921,8 +1003,9 @@ export function RUALUB(window, document, element) {
   window.cpuData.buttonExecute.addEventListener("click", () => {
     const instType = window.cpuData.parseResult.type.toUpperCase();
     if (instType === "R") {
-      applyClass(element, "connection");
       window.cpuElements.state.RUALUB.enabled = true;
+      pathOnTop(element);
+      applyClass(element, "connection");
     } else {
       applyClass(element, "connectionDisabled");
     }
@@ -1020,8 +1103,8 @@ export function DMWBMUX(window, document, element) {
   focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
     // ! TODO DMWBMUX always enabled
-    applyClass(element, "connection");
-    window.cpuElements.state.DMWBMUX.enabled = true;
+    // applyClass(element, "connection");
+    // window.cpuElements.state.DMWBMUX.enabled = true;
   });
 }
 
@@ -1029,9 +1112,7 @@ export function ADD4WBMUX(window, document, element) {
   applyClass(element, "connectionDisabled");
   focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
-    window.cpuElements.state.ADD4WBMUX.enabled = true;
-    // ! TODO ADD4WBMUX always enabled
-    applyClass(element, "connection");
+    //window.cpuElements.state.ADD4WBMUX.enabled = true;
   });
 }
 
@@ -1065,6 +1146,7 @@ export function ADD4BUMUX(window, document, element) {
   focus(element);
   window.cpuData.buttonExecute.addEventListener("click", () => {
     applyClass(element, "connection");
+    pathOnTop(element);
     window.cpuElements.state.ADD4BUMUX.enabled = true;
   });
 }
@@ -1100,17 +1182,22 @@ function setAsmInstruction(window, html) {
 
 export function LOGTEXTASSEMBLER(window, document, element) {
   setAsmInstruction(window, "--no instruction loaded--");
+  applyClass(element, "instructionDisabled");
   window.cpuData.buttonExecute.addEventListener("click", () => {
     const inst = window.cpuData.instruction;
     setAsmInstruction(window, inst);
+    applyClass(element, "instruction");
   });
 }
 
 export function LOGTEXTBIN(window, document, element) {
   setBinInstruction(window, "--no instruction loaded--");
+  applyClass(element, "instructionDisabled");
   window.cpuData.buttonExecute.addEventListener("click", () => {
     const inst = window.cpuData.parseResult.encoding.binEncoding;
     setBinInstruction(window, inst);
+    applyClass(element, "instruction");
+
   });
 }
 

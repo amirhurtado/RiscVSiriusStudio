@@ -1,4 +1,4 @@
-import { provideVSCodeDesignSystem, vsCodeButton, Button, TextField } from "@vscode/webview-ui-toolkit";
+import { provideVSCodeDesignSystem, vsCodeButton, Button, TextField, allComponents } from "@vscode/webview-ui-toolkit";
 
 //import { init, pathTypeR, pathTypeI, pathTypeILoad, pathTypeS, pathTypeB, pathTypeJ } from './cpu0SVG.js';
 import {
@@ -27,7 +27,8 @@ import { InputBox } from "vscode";
 //
 // provideVSCodeDesignSystem().register(allComponents);
 // 
-provideVSCodeDesignSystem().register(vsCodeButton());
+// provideVSCodeDesignSystem().register(vsCodeButton());
+provideVSCodeDesignSystem().register(allComponents);
 
 const vscode = acquireVsCodeApi();
 window.addEventListener("load", main);

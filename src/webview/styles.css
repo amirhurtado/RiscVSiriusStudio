@@ -1,62 +1,49 @@
-/**
- * Properties that apply to everything in the page
- */
 html {
-  font-size: 24px;
-  /**
-   * This is a color palette, these colors are used along all the styles. Prefer
-   * to change the colors here over changing them in the style sheet.
-   */
-  --color0: #FFFFFF;
-  --color1: #033E8C;
-  --color2: #034C8C;
-  --color3: #BFA004;
-  --color4: #A67F5D;
-  --color5: #F24949; 
-  --color6: #D5D6DB;
-  --color7: #E7E8EC; 
+  --stroke-width: 3;
+  --stroke-width-highlighted: 6;
+  --font-size: 14px;
+  --connection-font-size: 12px;
+  --transition-time: 3s;
+  --component-fill:                var(--vscode-editor-selectionHighlightBackground);
+  --component-fill-hover:          var(--vscode-editor-selectionBackground);  
+  --component-fill-inactive:       var(--vscode-editor-inactiveSelectionBackground);  
+  --component-stroke:              var(--vscode-focusBorder);
+  --component-text-color:          var(--vscode-descriptionForeground);
+  --component-text-color-hover:    var(--vscode-errorForeground);
+  --component-text-color-disabled: var(--vscode-editor-findMatchBackground);
+  --connection-stroke:             var(--vscode-focusBorder);
+  --connection-stroke-hover:       var(--vscode-errorForeground);
+  --connection-stroke-disabled:    var(--vscode-input-border);
+  --connection-text-color:         var(--vscode-descriptionForeground);
+  --connection-text-color-hover:   var(--vscode-errorForeground);
+  --connection-text-color-disabled:var(--vscode-editor-findMatchBackground);
+  --signal-stroke:                 var(--vscode-focusBorder);
+  --signal-stroke-hover:           var(--vscode-errorForeground);
+  --signal-stroke-disabled:        var(--vscode-input-border);
+  --signal-text-color:             var(--vscode-descriptionForeground);
+  --signal-text-color-hover:       var(--vscode-errorForeground);
+  --signal-text-color-disabled:    var(--vscode-editor-findMatchBackground);
+  --tooltip-background:            var(--vscode-badge-background);
+  --tooltip-border:                var(--vscode-editorHint-foreground);
+  --tooltip-text-color-h1:         var(--vscode-focusBorder);
+  --inst-type-text-color:          var(--vscode-editor-findMatchBackground);
+  --inst-type-text-color-high:     var(--vscode-errorForeground);
+  --inst-type-stroke:              var(--vscode-focusBorder);
+  --inst-type-stroke-high:         var(--vscode-focusBorder);
+  --inst-type-fill:                var(--vscode-editor-inactiveSelectionBackground);
+  --inst-type-fill-high:           var(--vscode-editor-selectionBackground);
+  --inst-val:                      var(--vscode-descriptionForeground);
+  --inst-val-disabled:             var(--vscode-editor-findMatchBackground);
+  --inst-val-highlighted:          var(--vscode-errorForeground);
 
-  --component-fill:                  var(--color0);
-  --component-stroke:                var(--color2);
-  --component-text-color:            var(--color2);
-  --component-hover-fill:            var(--color6);
-  --component-hover-text-color:      var(--color5);
-  --logger-text-color-labels:        var(--color2);
-  --logger-text-color-values:        var(--color2);
-
-  --logger-type-color:               var(--color2);
-  --logger-type-stroke-color:        var(--color2);
-  --logger-type-fill:                var(--color7);
-  --logger-type-fill-selected:       var(--color6);
-  --logger-type-color-selected:      var(--color5);
+  background-color: var(--vscode-editor-background);
 }
 
-/**
- * Ensure consistency between properties of this elements
- */
-input, select, button {
-  font: inherit;
-}
-
-.grid-container {
-  display: grid;
-  place-items: center;
-  /* grid-template-columns: repeat(auto-fill, minmax(1050px, 1fr));; */
-  /* background-color: purple; */
-  border: 2px dashed black;
-}
-
-.grid-item {
-  border: 1px solid red;
-}
-
-/**
- * Properties that affect the SVG tag.
- *
- * This tag contains  the cpu diagram.
- */
 svg {
-  height: 95vh;
+  /* Scale the height of the image to fit the text editor without needing an
+   * scroll bar
+   */
+  height: 98vh;
 }
 
 /**
@@ -90,122 +77,144 @@ svg {
   **/
 .component {
   rect {
-    stroke-width: 3; 
+    stroke-width: var(--stroke-width); 
     stroke: var(--component-stroke);
     fill: var(--component-fill);
     transition: stroke-width 3s;
   }
   path {
-    stroke-width: 3;
+    stroke-width: var(--stroke-width);
     stroke: var(--component-stroke);
     fill: var(--component-fill);
-    transition: stroke-width 3s;
+    transition: stroke-width var(--transition-time);
   }
-  div {
+  div div div {
     color: var(--component-text-color) !important;
-    font-size: 16px !important;
+    font-size: var(--font-size) !important;
   }
 }
- /* Style for hovered components. */
+
+/* Style for hovered components. */
 .component:hover {
   rect {
-    stroke-width: 6;
-    fill: var(--component-hover-fill);
+    stroke-width: var(--stroke-width-highlighted);
+    fill: var(--component-fill-hover);
   }
   path {
-    stroke-width: 6;
-    fill: var(--component-hover-fill);
+    stroke-width: var(--stroke-width-highlighted);
+    fill: var(--component-fill-hover);
   }
-  div {
-    color: var(--component-hover-text-color) !important;
+  div div div {
+    color: var(--component-text-color-hover) !important;
   }
 }
+
  /* Style for disabled components. */
-.componentDisabled {
+ .componentDisabled {
   rect {
     opacity: 0.3;
-    fill: var(--color7);
+    fill: var(--component-fill-inactive);
     pointer-events: none;
   }
 
   path {
     opacity: 0.3;
-    fill: var(--color7);
+    fill: var(--component-fill-inactive);
   }
 
-  div {
-    color: var(--color6) !important;
+  div div div {
+    color: var(--component-text-color-disabled) !important;
     pointer-events: none !important;
   }
 }
 
-.signal {
-  path {
-    stroke-width: 3;
-    stroke: var(--color2);
-    fill: var(--color2);
-  }
-  div {
-    color: var(--color2) !important;
-    font-size: 12px !important;
-  }
-}
-
-.signal:hover {
-  path {
-    stroke-width: 6;
-    stroke: var(--color5);
-    fill: var(--color5);
-    animation: blinker 1.5s linear infinite;
-  }
-  div {
-    color: var(--color5) !important;
-    font-size: 14px !important;
-    animation: blinker 1.5s linear infinite;
-  }
-}
-
-.signalDisabled {
-  path {
-      stroke-width: 3;
-      fill: var(--color7);
-      stroke: var(--color7);
-    }
-    
-    div {
-      color: var(--color6) !important;
-      font-size: 12px !important;
-    }
-}
 /**
  * Path style.
  *
  * Should be called path instead but that will conflict with all the other path
  * tags in the svg.
  */
-.connection {
+ .connection {
   path {
-    stroke-width: 3;
-    stroke: var(--color2);
-    transition: stroke-width 3s;
+    stroke-width: var(--stroke-width);
+    stroke: var(--connection-stroke);
+    transition: stroke-width var(--transition-time);
   }
   div div div{
-    color: var(--color2) !important;
-    font-size: 14px !important;
+    color: var(--component-text-color) !important;
+    font-size: var(--connection-font-size) !important;
   }
 }
 
 .connection:hover {
   path {
-    stroke-width: 6;
-    stroke: var(--color5);
-    animation: blinker 1.5s linear infinite;
+    stroke-width: var(--stroke-width-highlighted);
+    stroke: var(--connection-stroke-hover);
+    animation: blinker var(--transition-time) linear infinite;
   }
   div div div {
-    color: var(--color5) !important;
-    font-size: 14px !important;
+    color: var(--connection-text-color-hover) !important;
+    font-size: var(--connection-font-size) !important;
+    animation: blinker var(--transition-time) linear infinite;
+  }
+}
+
+.connectionDisabled {
+  path {
+    opacity: 0.5;
+    stroke-width: var(--stroke-width);
+    stroke: var(--connection-stroke-disabled);
+    pointer-events: none;
+  }
+  div div div {
+    color: var(--connection-text-color-disabled) !important;
+  }
+}
+
+.muxPath {
+  visibility: visible;
+}
+
+.muxPathDisabled {
+  visibility: hidden ;
+}
+
+
+.signal {
+  path {
+    stroke-width: var(--stroke-width);
+    stroke: var(--signal-stroke);
+    fill: var(--signal-stroke);
+  }
+  div {
+    color: var(--signal-text-color) !important;
+  }
+}
+
+.signal:hover {
+  path {
+    stroke-width: var(--stroke-width-highlighted);
+    stroke: var(--signal-stroke-hover);
+    fill: var(--signal-stroke-hover);
     animation: blinker 1.5s linear infinite;
   }
+  div {
+    color: var(--signal-text-color-hover) !important;
+  }
+}
+
+.signalDisabled {
+  path {
+      stroke-width: var(--stroke-width);
+      stroke: var(--signal-stroke-disabled);
+      fill: var(--signal-stroke-disabled);
+      opacity: 0.3;
+      pointer-events: none
+    }
+    
+    div {
+      color: var(--signal-text-color-disabled) !important;
+    }
 }
 
 @keyframes blinker {
@@ -223,158 +232,128 @@ svg {
   }
 }
 
-.connectionDisabled {
-  path {
-    stroke-width: 3;
-    stroke: var(--color6);
-    pointer-events: none;
-    }
-    div {
-      color: var(--color6) !important;
-      font-size: 12px !important;
-    }
-  /* path :nth-child(1) {
-    fill: var(--color6);
-  } */
-}
-
-.muxPath {
-  visibility: visible;
-}
-
-.muxPathDisabled {
-  visibility: hidden ;
-}
-
-
 .inputText {
   div div div {
-    pointer-events: auto;
+    color: var(--component-text-color) !important;
+    /* pointer-events: auto; */
+  }
+}
+
+.inputText:hover {
+  div div div {
+    /* pointer-events: auto; */
+    color: var(--component-text-color-hover) !important;
+    font-weight: 800;
   }
 }
 
 .inputTextDisabled {
   div div div {
-    color: var(--color6) !important;
-    pointer-events: none !important;
+    color: var(--component-text-color-disabled) !important;
+    /* pointer-events: none !important; */
   }
 }
 
-#tooltip {
-  position: absolute;
-  display: none;
-  background: var(--color6);
-  border: 2px solid var(--color1);
-  border-radius: 3px;
-  padding: 10px;
-  transform: translateY(-50%);
-  font-family: 'Roboto mono';
-  font-size: smaller;
-}
-
-.tooltipinfo {
-  font-size: .75rem;
-  h1 {
-    padding: 0;
-    margin: 0;
-    font-size: inherit;
-  }
-  p {
-    padding: 0;
-    margin: 0;
-    margin-left: 1ch;
-  }
-  ul {
-    /* border-style: dashed; */
-    padding: 1ch;
-    margin: 0;
-    margin-left: 1ch;
+.instruction {
+  div div div {
+    color: var(--inst-val) !important;
+    font-size: 1.7rem !important;
+    font-weight: 400 !important;
   }
 }
 
-.instHigh {
-  color: var(--color5) !important;
-  font-size: 24px !important;
-  font-weight: 700;
-  animation: blinker 1.5s linear infinite;
+.instructionDisabled {
+  color: var(--inst-val-disabled) !important;
+  opacity: 0.8;
+  font-size: 1.7rem !important;
+  font-weight: 400 !important;
 }
-.instDis {
-  color: var(--color2) !important;
-  font-size: 24px !important;
+
+.instructionHighlighted {
+  color: var(--inst-val-highlighted) !important;
+  font-size: 1.7rem !important;
+  font-weight: 800 !important;
 }
 
 .instType {
   div {
-    color: var(--color6) !important;
+    color: var(--inst-type-text-color) !important;
     font-weight: 400;
   }
 
   rect {
     opacity: 0.3;
-    stroke-width: 3;
-    stroke: --var(--color2);
-    fill: var(--logger-type-fill);
+    stroke-width: var(--stroke-width);
+    stroke: var(--inst-type-stroke);
+    fill: var(--inst-type-fill);
   }
 }
 
 .instTypeHigh {
   div {
-    color: var(--color5) !important;
-    font-weight: 700;
+    color: var(--inst-type-text-color-high) !important;
+    font-weight: 800;
   }
 
   rect {
-    stroke-width: 3;
-    stroke: var(--color2);
-    fill: var(--logger-type-fill-selected);
+    stroke-width: var(--stroke-width);
+    stroke: var(--inst-type-stroke-high);
+    fill: var(--inst-type-fill-high);
   }
 }
 
-svg {
-  [data-cpuName="CLKCLK"] path {
-      stroke: var(--color2);
-  }
-  [data-cpuName="ALUTEXT"] div {
-    color: var(--color2) !important;
-  }
-  [data-cpuName="ADD4"], [data-cpuName="ADD4"]:hover { 
-    div div div {
-      color: var(--color2) !important;
-      font-size: 28px !important;
-    }
-  }
-  
-  [data-cpuLog$="LBL"] {
-    div {
-        color: var(--logger-text-color-labels) !important;
-      }
+[data-cpuName="ADD4"], [data-cpuName="ADD4"]:hover { 
+  path {
+    fill: var(--component-text-color);
   }
 
-  [data-cpuLog^="LOGTEXT"] {
-    div div {
-      color: var(--logger-text-color-values) !important;
-      font-size: 24px !important;
-    }
+  div div div {
+    font-size: 32px !important;
   }
-/*   
-  [data-cpuLog^="LOGTYPE"] {
-    div {
-      color: var(--logger-type-color) !important;
-      font-weight: 700;
-    }
-    rect {
-      stroke: --var(--logger-type-stroke-color);
-      fill: var(--logger-type-fill-color);
-    }
-  } */
+}
 
-  [data-cpuBusWidth] {
-    path {
-      visibility: hidden;
-    }
-    div div div {
-      visibility: hidden;
-    }
+[data-cpuBusWidth] {
+  visibility: hidden;
+}
+
+#tooltip {
+  position: absolute;
+  display: none;
+  /* background: var(--vscode-problemsInfoIcon-foreground); */
+  /* background: var(--vscode-minimap-selectionHighlight); */
+  /* background: var(--vscode-inputValidation-errorBorder); */
+  background: var(--tooltip-background);
+  border: 2px solid var(--tooltip-border);
+  border-radius: 3px;
+  padding: 10px;
+  transform: translateY(-50%);
+  font-family: 'Roboto mono';
+}
+
+.tooltipinfo {
+  font-size: 1rem;
+  font-family: monospace;
+  h1 {
+    font-size: inherit;
+    font-style: italic;
+    font-weight: 700;
+    color: var(--tooltip-text-color-h1);
+    padding: 0;
+    margin: 0;
+  }
+  p {
+    font-size: 0.8em;
+    color: var(--tooltip-text-color);
+    padding: 0;
+    margin: 0;
+    margin-left: 1ch;
+  }
+  ul {
+    font-size: inherit;
+    color: var(--tooltip-text-color);
+    padding: 1ch;
+    margin: 0;
+    margin-left: 1ch;
   }
 }
 
