@@ -257,7 +257,7 @@ svg {
 .instruction {
   div div div {
     color: var(--inst-val) !important;
-    font-size: 1.7rem !important;
+    font-size: 1.4rem !important;
     font-weight: 400 !important;
   }
 }
@@ -265,13 +265,13 @@ svg {
 .instructionDisabled {
   color: var(--inst-val-disabled) !important;
   opacity: 0.8;
-  font-size: 1.7rem !important;
+  font-size: 1.4rem !important;
   font-weight: 400 !important;
 }
 
 .instructionHighlighted {
   color: var(--inst-val-highlighted) !important;
-  font-size: 1.7rem !important;
+  font-size: 1.4rem !important;
   font-weight: 800 !important;
 }
 

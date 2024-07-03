@@ -1180,6 +1180,18 @@ function setAsmInstruction(window, html) {
   asmText.innerHTML = html;
 }
 
+function setImmInstruction(window, html) {
+  const immText =
+    window.cpuElements.LOGTEXTIMM.getElementsByTagName("div")[2];
+  immText.innerHTML = html;
+}
+
+function setHexInstruction(window, html) {
+  const hexText =
+    window.cpuElements.LOGTEXTHEX.getElementsByTagName("div")[2];
+  hexText.innerHTML = html;
+}
+
 export function LOGTEXTASSEMBLER(window, document, element) {
   setAsmInstruction(window, "--no instruction loaded--");
   applyClass(element, "instructionDisabled");
@@ -1198,6 +1210,26 @@ export function LOGTEXTBIN(window, document, element) {
     setBinInstruction(window, inst);
     applyClass(element, "instruction");
 
+  });
+}
+
+export function LOGTEXTIMM(window, document, element) {
+  setImmInstruction(window, "--no immediate for instruction--");
+  applyClass(element, "instructionDisabled");
+  window.cpuData.buttonExecute.addEventListener("click", () => {
+    // const inst = window.cpuData.instruction;
+    // setAsmInstruction(window, inst);
+    applyClass(element, "instruction");
+  });
+}
+
+export function LOGTEXTHEX(window, document, element) {
+  setHexInstruction(window, "--no hex --");
+  applyClass(element, "instructionDisabled");
+  window.cpuData.buttonExecute.addEventListener("click", () => {
+    // const inst = window.cpuData.instruction;
+    // setAsmInstruction(window, inst);
+    applyClass(element, "instruction");
   });
 }
 
