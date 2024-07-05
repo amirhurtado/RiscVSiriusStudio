@@ -51,15 +51,24 @@ export class LeftPanelWebview implements WebviewViewProvider {
       <html>
         <head>
           <link rel="stylesheet", href="${cssFile}">
+          <style type = "text/css">
+            @font-face {
+              font-family: "Roboto Mono";
+              src: url("media/RobotoMono[wght].ttf");
+            }
+          </style>
           <meta charSet="utf-8"/>
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
         <body>
+        <p>Drag a register between groups to improve traceability and interaction with its values.</p>
           <div>
-            <vscode-button id="search-button" class="registers-search" type="button" >Search</vscode-button>
-
+            <section slot="end" style="display: flex; flex-direction: row; align-items: center;">
+            <vscode-text-field type="text" name="example-vscode-text-field">
+            </vscode-text-field>
+            <vscode-button id="search-button" class="registers-search", appearance="primary">Search</vscode-button>
           </div>
-          <div id="registers-table"></div>
+          <div id="registers-table" style="margin-top:1rem;"></div>
           <script type="module" nonce="${nonce}" src="${registerswUri}"></script>
 
         </body>
