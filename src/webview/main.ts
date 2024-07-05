@@ -1,11 +1,14 @@
-import { provideVSCodeDesignSystem, vsCodeButton, Button, TextField, allComponents } from "@vscode/webview-ui-toolkit";
-
-//import { init, pathTypeR, pathTypeI, pathTypeILoad, pathTypeS, pathTypeB, pathTypeJ } from './cpu0SVG.js';
 import {
-  initSimulatorEvents
-} from "./cpu0Events.js";
+  provideVSCodeDesignSystem,
+  vsCodeButton,
+  Button,
+  TextField,
+  allComponents
+} from "@vscode/webview-ui-toolkit";
 
-import { parse } from '../utilities/riscv.js'; 
+import { initSimulatorEvents } from "./cpu0Events.js";
+
+import { parse } from "../utilities/riscv.js";
 
 import { InputBox } from "vscode";
 
@@ -26,7 +29,7 @@ import { InputBox } from "vscode";
 // components at once, there's a handy convenience function:
 //
 // provideVSCodeDesignSystem().register(allComponents);
-// 
+//
 // provideVSCodeDesignSystem().register(vsCodeButton());
 provideVSCodeDesignSystem().register(allComponents);
 
@@ -38,10 +41,10 @@ function main() {
   initSimulatorEvents(window, document);
   /**
    * Bind elements in the webview to their respective functions in the code.
-   */ 
+   */
   const executeButton = document.getElementById("execute-button") as Button;
   executeButton?.addEventListener("click", handleExecute);
-  window.addEventListener('message',(event)=>{
+  window.addEventListener("message", (event) => {
     const message = event.data;
     const instTextField = document.getElementById("instText") as TextField;
     instTextField.value = message["instruction"];
@@ -52,12 +55,15 @@ function main() {
 
 function handleRunInstruction() {
   console.log("Handling instruction");
-  const runInstruction = document.getElementById("input-instruction") as TextField;
+  const runInstruction = document.getElementById(
+    "input-instruction"
+  ) as TextField;
   const instruction = runInstruction.value;
   const result = parse(instruction);
-  vscode.postMessage(
-    { command: "hello", text: "Instruction to run: " + result}
-  );
+  vscode.postMessage({
+    command: "hello",
+    text: "Instruction to run: " + result
+  });
 }
 
 function handleExecute() {
@@ -67,9 +73,10 @@ function handleExecute() {
 
   // parse the instruction here
 
-  vscode.postMessage(
-    { command: "hello", text: "Instruction to execute: " + instruction}
-  );
+  vscode.postMessage({
+    command: "hello",
+    text: "Instruction to execute: " + instruction
+  });
 }
 
 // Callback function that is executed when the howdy button is clicked
@@ -107,6 +114,6 @@ function handleHowdyClick() {
   //
   vscode.postMessage({
     command: "hello",
-    text: "Hey there partner! 🤠",
+    text: "Hey there partner! 🤠"
   });
 }

@@ -21,6 +21,7 @@ const extensionConfig = {
   format: "cjs",
   entryPoints: ["./src/extension.ts"],
   outfile: "./out/extension.js",
+  // watch: true,
   plugins: [
     // Copy webview css files to `out` directory unaltered
     copy({
@@ -38,7 +39,8 @@ const extensionConfig = {
               ],
         to: ["./out"],
       },
-    }),
+      // watch: true
+    })
   ],
   external: ["vscode"],
 };

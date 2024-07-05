@@ -107,9 +107,7 @@ export class HelloWorldPanel {
     const nonce = getNonce();
     const cssFile = getUri(webview, extensionUri, ["out", "styles.css"]);
 
-  // <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; img-src ${webview.cspSource} https:; script-src 'nonce-${nonce}';">
-    
-    return /*html*/ `
+    return `
 <!DOCTYPE html>
 <html lang="en">
 
@@ -176,6 +174,5 @@ export class HelloWorldPanel {
   }
   public postMessage(message: Object) {
     HelloWorldPanel.currentPanel?._panel.webview.postMessage(message);
-    console.log("hola");
   }
 }

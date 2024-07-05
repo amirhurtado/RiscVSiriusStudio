@@ -18,7 +18,29 @@
         "command": "rv-simulator.sendInstruction",
         "title": "RISCV simulator: Instruction"
       }
-    ]
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "riscv",
+          "title": "RISCV",
+          "icon": "media/cpu-chip-svgrepo-com.svg"
+        }
+      ]
+    },
+    "views": {
+      "riscv": [
+        {
+          "id": "testView",
+          "name": "Test View"
+        },
+        {
+          "type": "webview",
+          "id": "rv-simulator.registers",
+          "name": "Registers"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
@@ -37,6 +59,7 @@
     "@typescript-eslint/eslint-plugin": "^5.42.0",
     "@typescript-eslint/parser": "^5.42.0",
     "esbuild": "^0.16.10",
+    "esbuild-plugin-copy": "^2.1.1",
     "eslint": "^8.57.0",
     "glob": "^8.0.3",
     "peggy": "^4.0.2",
@@ -45,9 +68,9 @@
   },
   "dependencies": {
     "@vscode/webview-ui-toolkit": "^1.2.2",
-    "esbuild-plugin-copy": "^2.1.1",
     "lodash": "^4.17.21",
     "lodash-cli": "^3.10.1",
-    "lodash-es": "^4.17.21"
+    "lodash-es": "^4.17.21",
+    "tabulator-tables": "^6.2.1"
   }
 }

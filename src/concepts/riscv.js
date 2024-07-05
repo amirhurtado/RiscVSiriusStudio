@@ -879,7 +879,7 @@ function peg$parse(input, options) {
     // addresses. At this point we only check that everything is ok and every 
     // label we find is already in labelTable
 
-    if (!id['name'] in labelTable) {
+    if (!(id['name'] in labelTable)) {
       console.error("Label not found!");
     }
 
