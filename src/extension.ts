@@ -1,6 +1,5 @@
 import { commands, ExtensionContext, window } from "vscode";
 import { HelloWorldPanel } from "./panels/HelloWorldPanel";
-import { TestView } from './testView';
 import { LeftPanelWebview } from "./panels/RegisterPanel";
 
 export function activate(context: ExtensionContext) {
@@ -35,7 +34,5 @@ export function activate(context: ExtensionContext) {
     window.registerWebviewViewProvider("rv-simulator.registers",
       new LeftPanelWebview(context.extensionUri,{})
     )
-  );
-  new TestView(context);
-  
+  );  
 }

@@ -67,8 +67,8 @@ const registersviewConfig = {
       resolveFrom: "cwd",
       assets: {
         from: [
-          "./src/registersciew/tabulator.min.css",
-        ],
+          "./src/registersview/tabulator.min.css",
+          "./src/registersview/registersview.css"],
         to: ["./out"],
       },
       // watch: true

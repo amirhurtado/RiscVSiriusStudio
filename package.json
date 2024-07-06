@@ -31,10 +31,6 @@
     "views": {
       "riscv": [
         {
-          "id": "testView",
-          "name": "Test View"
-        },
-        {
           "type": "webview",
           "id": "rv-simulator.registers",
           "name": "Registers"
