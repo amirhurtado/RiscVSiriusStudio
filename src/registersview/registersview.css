@@ -1,0 +1,29 @@
+
+@font-face {
+  font-family: "Roboto Mono";
+  src: url("media/RobotoMono[wght].ttf");
+}
+
+.search-container {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
+}
+
+.search-element {
+  margin-right: 1em;
+}
+
+.register-name, .register-value {
+  font-family: Roboto Mono;
+  font-size: 120%;
+}
+
+.register-name {
+  font-weight: 700;
+}
+
+.register-value:hover {
+  font-family: Roboto Mono;
+  font-weight: 700;
+}
