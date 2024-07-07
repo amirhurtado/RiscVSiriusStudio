@@ -63,6 +63,7 @@ export class LeftPanelWebview implements WebviewViewProvider {
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
         <body>
+        <vscode-text-area id="debug-text" type="text" name="example-vscode-text-area" style="width:100%;"></vscode-text-area>
         <p>Drag a register between groups to improve traceability and interaction with its values.</p>
           <div class="search-container">
             <div class="search-element">
@@ -78,7 +79,6 @@ export class LeftPanelWebview implements WebviewViewProvider {
               </div>
           <div id="registers-table" style="margin-top:1rem;"></div>
           <script type="module" nonce="${nonce}" src="${registerswUri}"></script>
-
         </body>
       </html>`;
   }

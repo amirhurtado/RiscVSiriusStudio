@@ -22,24 +22,25 @@ const extensionConfig = {
   outfile: "./out/extension.js",
   // watch: true,
   plugins: [
-    // Copy webview css files to `out` directory unaltered
     copy({
       resolveFrom: "cwd",
-      assets: {
-        from: [
-              //  "./src/webview/cpu0SVG.js",
-              //  "./src/webview/Parser.js",
-              //  "./src/webview/handlers.js",
-              //  "./src/webview/riscv.js",
-              //  "./src/webview/riscv-pre.js",
-
-               "./src/webview/styles.css",
-               "./src/webview/cpu0Events.js",
-              ],
-        to: ["./out"],
-      },
+      // dryRun: true,
+      // verbose:true,
+      assets: [
+        {
+          from: [
+            "./src/webview/styles.css",
+            "./src/webview/cpu0Events.js",
+          ],
+          to: ["./out"],
+        },
+        {
+          from: './media/RobotoMono.ttf',
+          to: './out'
+        }
       // watch: true
-    }),
+    ]
+}),
   ],
   external: ["vscode"],
 };
