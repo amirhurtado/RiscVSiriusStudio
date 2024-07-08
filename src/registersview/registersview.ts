@@ -25,22 +25,6 @@ function debug(s: string) {
 function main() {
   let table = tableSetup();
 
-  const searchText = document.getElementById("search-text") as TextField;
-  searchText.addEventListener("keyup", () => {
-    handleSearch(table);
-  });
-
-  const searchButton = document.getElementById("search-button") as Button;
-  searchButton.addEventListener("click", () => {
-    handleSearch(table);
-  });
-
-  const clearButton = document.getElementById("clear-button") as Button;
-  clearButton.addEventListener("click", () => {
-    table.clearFilter(true);
-    searchText.value = "";
-  });
-
   const lastModifiedCB = document.getElementById("sort-last-modified") as Checkbox;
   lastModifiedCB.addEventListener("change", () => {
     if (lastModifiedCB.checked) {
@@ -109,7 +93,8 @@ function tableSetup(): Tabulator {
         field: "name",
         visible: true,
         headerSort: false,
-        headerFilter: "input"
+        headerFilter: "input",
+        
       },
       {
         title: "Value",
@@ -123,7 +108,7 @@ function tableSetup(): Tabulator {
             maxLength: "32",
           },
         },
-        headerFilter: "input"
+        headerFilter: "input",
       },
       { title: "Value2", field: "base2", visible: false },
       { title: "Value10", field: "base10", visible: false },
@@ -145,7 +130,7 @@ function tableSetup(): Tabulator {
       modified: 0
     });
   });
-
+  
   table.on("cellEdited", onCellChanged);
   return table;
 }
@@ -171,16 +156,3 @@ function toDecimal(rawValue: string) {
 function toHex(rawValue: string) {
   return parseInt(rawValue).toString(16);
 }
-
-function handleSearch(table: Tabulator) {
-  const searchText = document.getElementById("search-text") as TextField;
-  let pattern = searchText.value;
-  if (pattern === "") {
-    table.clearFilter(true);
-  }
-  // table.setFilter("value", "like", pattern);
-  table.addFilter("name", "like", pattern);
-  table.addFilter("value", "like", pattern);
-}
-
-function handleParagraph() {}

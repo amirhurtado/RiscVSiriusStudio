@@ -71,16 +71,6 @@ export class LeftPanelWebview implements WebviewViewProvider {
         <p>Drag a register between groups to improve traceability and interaction with its values.</p>
           <div class="search-container">
             <div class="search-element">
-              <vscode-text-field id="search-text" type="text" name="example-vscode-text-field">
-              </vscode-text-field>
-            </div>
-            <div class="search-element">
-              <vscode-button id="search-button" class="registers-search", appearance="primary">Search</vscode-button>
-            </div>
-            <div class="search-element">
-              <vscode-button id="clear-button" class="registers-search", appearance="secondary">Clear</vscode-button>
-            </div>
-            <div>
               <vscode-checkbox id="sort-last-modified">Sort by last modified</vscode-checkbox>
             </div>
           </div>
