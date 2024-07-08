@@ -55,8 +55,6 @@ const webviewConfig = {
   outfile: "./out/webview.js",
 };
 
-// Config for webview source code (to be run in a web-based context)
-/** @type BuildOptions */
 const registersviewConfig = {
   ...baseConfig,
   target: "es2020",
@@ -70,6 +68,24 @@ const registersviewConfig = {
         from: [
           "./src/registersview/tabulator.min.css",
           "./src/registersview/registersview.css"],
+        to: ["./out"],
+      },
+      // watch: true
+    }),
+  ],
+};
+
+const progmemviewConfig = {
+  ...baseConfig,
+  target: "es2020",
+  format: "esm",
+  entryPoints: ["./src/progmemview/progmemview.ts"],
+  outfile: "./out/progmemview.js",
+  plugins: [
+    copy({
+      resolveFrom: "cwd",
+      assets: {
+        from: ["./src/progmemview/tabulator.min.css", "./src/progmemview/progmemview.css"],
         to: ["./out"],
       },
       // watch: true
@@ -116,12 +132,17 @@ const watchConfig = {
         ...registersviewConfig,
         ...watchConfig,
       });
+      await build({
+        ...progmemviewConfig,
+        ...watchConfig,
+      });
       console.log("[watch] build finished");
     } else {
       // Build extension and webview code
       await build(extensionConfig);
       await build(webviewConfig);
       await build(registersviewConfig);
+      await build(progmemviewConfig);
       console.log("build complete");
     }
   } catch (err) {

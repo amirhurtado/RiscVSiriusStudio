@@ -1,6 +1,5 @@
 import {
   provideVSCodeDesignSystem,
-  vsCodeButton,
   Button,
   TextField,
   allComponents,

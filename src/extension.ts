@@ -1,6 +1,7 @@
 import { commands, ExtensionContext, window } from "vscode";
 import { HelloWorldPanel } from "./panels/HelloWorldPanel";
 import { LeftPanelWebview } from "./panels/RegisterPanel";
+import { ProgMemPanelView } from "./panels/ProgMemPanel";
 import {compile} from "./utilities/riscvc";
 
 export function activate(context: ExtensionContext) {
@@ -37,6 +38,14 @@ export function activate(context: ExtensionContext) {
     )
   ); 
   
+  
+  context.subscriptions.push(
+    window.registerWebviewViewProvider(
+      "rv-simulator.progmem",
+      new ProgMemPanelView(context.extensionUri, {})
+    )
+  ); 
+
   context.subscriptions.push(
     commands.registerCommand("rv-simulator.assembleFile", () => {
       const editor = window.activeTextEditor;
