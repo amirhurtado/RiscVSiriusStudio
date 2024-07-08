@@ -6,6 +6,7 @@ import {
   allComponents,
   TextArea,
   Dropdown,
+  Checkbox,
 } from "@vscode/webview-ui-toolkit";
 
 import { CellComponent, TabulatorFull as Tabulator } from "tabulator-tables";
@@ -17,8 +18,8 @@ const vscode = acquireVsCodeApi();
 window.addEventListener("load", main);
 
 function debug(s: string) {
-  const debugText = document.getElementById("debug-text") as TextArea;
-  debugText.value = debugText.value.concat("\n", s); // = s + debugText.value;
+  // const debugText = document.getElementById("debug-text") as TextArea;
+  // debugText.value = debugText.value.concat("\n", s); // = s + debugText.value;
 }
 
 function main() {
@@ -39,9 +40,17 @@ function main() {
     table.clearFilter(true);
     searchText.value = "";
   });
+
+  const lastModifiedCB = document.getElementById("sort-last-modified") as Checkbox;
+  lastModifiedCB.addEventListener("change", () => {
+    if (lastModifiedCB.checked) {
+      table.setSort("modified","desc");
+    } else {
+      table.setSort("id","desc");
+    }
+  });
 }
 function tableSetup(): Tabulator {
-  //    name: `<span class="register-name">x0 zero</span>`,
   const registers = [
     "x0 zero",
     "x1 ra",
@@ -81,7 +90,7 @@ function tableSetup(): Tabulator {
     height: "100%", // set height of table to enable virtual DOM
     maxHeight: "100%",
     data: tableData, //load initial data into table
-    layout: "fitDataTable", //fit columns to width of table (optional)
+    layout: "fitDataStretch", //fit columns to width of table (optional)
     movableRows: true,
     reactiveData: true,
     groupBy: "watched",
@@ -95,122 +104,83 @@ function tableSetup(): Tabulator {
     },
     // headerVisible: false,
     columns: [
-      { title: "RawName", field: "rawName", visible: true },
-      { title: "RawValue", field: "rawValue", visible: true },
       {
         title: "Name",
         field: "name",
         visible: true,
-        formatter: "html",
         headerSort: false,
+        headerFilter: "input"
       },
       {
         title: "Value",
         field: "value",
         visible: true,
-        formatter: "html",
         headerSort: false,
-        // editor: valueEditor,
         editor: "input",
         editorParams: {
           selectContents: true,
           elementAttributes: {
-            maxLength: "32"
-          }
-        }
+            maxLength: "32",
+          },
+        },
+        headerFilter: "input"
       },
-      { title: "Value2", field: "base2", visible: true },
-      { title: "Value10", field: "base10", visible: true },
-      { title: "Value16", field: "base16", visible: true },
+      { title: "Value2", field: "base2", visible: false },
+      { title: "Value10", field: "base10", visible: false },
+      { title: "Value16", field: "base16", visible: false },
       { title: "Watched", field: "watched", visible: false },
+      { title: "Modified", field: "modified", visible: false },
     ],
   });
   registers.forEach((e) => {
     const [xname, abi] = e.split(" ");
     const zeros32 = "00000000000000000000000000000000";
     tableData.push({
-      name: `<span class="register-name">${xname}</span> (<span class="register-abi">${abi}</span>)`,
-      rawName: e,
-      rawValue: zeros32,
+      name: `${xname} (${abi})`,
       value: zeros32,
       base2: zeros32,
       base10: "0",
       base16: "0x0",
       watched: false,
+      modified: 0
     });
   });
 
-  table.on("dataChanged", (data) => {
-    debug("Cell changed!!!!");
-
-    onCellChanged(data, table);
-  });
+  table.on("cellEdited", onCellChanged);
   return table;
 }
 
-function onCellChanged(
-  data: any,
-  table: Tabulator
-) {
-  debug("Cell changed!!!! " + data);
+function onCellChanged(cell: CellComponent) {
+  const newVal = cell.getValue() as string;
+  const data = cell.getRow().getData();
+  data.base2 = toBinary(newVal);
+  data.base10 = toDecimal(newVal);
+  data.base16 = toHex(newVal);
+  data.value = newVal;
+  data.modified = Number(new Date());
 }
 
-function valueEditor(cell: any, onRendered: any, success: any, cancel: any) {
-  //cell - the cell component for the editable cell
-  //onRendered - function to call when the editor has been rendered
-  //success - function to call to pass thesuccessfully updated value to Tabulator
-  //cancel - function to call to abort the edit and return to a normal cell
-
-  //create and style input
-  var cellValue = cell.getValue();
-  const inputHTML = `<vscode-text-field class="input-value-cell"></vscode-text-field>`;
-  // const input = fromHTML(inputHTML, true) as HTMLTextAreaElement;
-  const input = fromHTML(inputHTML, true) as TextArea;
-  input.maxlength = 32;
-
-  onRendered(function () {
-    input.value = cellValue;
-    input.focus();
-  });
-
-  function onChange() {
-    if (input.value !== cellValue && input.value !== "") {
-      success(input.value);
-    } else {
-      cancel();
-    }
-  }
-  input.addEventListener("blur", onChange);
-
-  input.addEventListener("keydown", function (e) {
-    if (e.key === "Enter") {
-      onChange();
-    }
-    if (e.key === "Escape") {
-      cancel();
-    }
-  });
-  return input;
+function toBinary(rawValue: string) {
+  return parseInt(rawValue).toString(2);
 }
 
-function fromHTML(html: string, trim = true): Element {
-  // Process the HTML string.
-  html = trim ? html.trim() : html;
+function toDecimal(rawValue: string) {
+  return rawValue;
+}
 
-  // Then set up a new template element.
-  const template = document.createElement("template");
-  template.innerHTML = html;
-  const result = template.content.children;
-
-  // Then return either an HTMLElement or HTMLCollection,
-  // based on whether the input HTML had one or more roots.
-  return result[0];
+function toHex(rawValue: string) {
+  return parseInt(rawValue).toString(16);
 }
 
 function handleSearch(table: Tabulator) {
   const searchText = document.getElementById("search-text") as TextField;
   let pattern = searchText.value;
-  table.setFilter("rawValue", "like", pattern);
+  if (pattern === "") {
+    table.clearFilter(true);
+  }
+  // table.setFilter("value", "like", pattern);
+  table.addFilter("name", "like", pattern);
+  table.addFilter("value", "like", pattern);
 }
 
 function handleParagraph() {}

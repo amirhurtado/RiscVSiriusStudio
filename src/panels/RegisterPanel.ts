@@ -52,8 +52,13 @@ export class LeftPanelWebview implements WebviewViewProvider {
           "registersview.css",
         ]);
 
-    // Get the local path to main script run in the webview, then convert it to a uri we can use in the webview.
-    // Script to handle user action
+        //  <vscode-text-area
+        //    id="debug-text"
+        //    type="text"
+        //    name="example-vscode-text-area"
+        //    style="width:100%;"
+        //  ></vscode-text-area>;
+
     return `
       <html>
         <head>
@@ -63,7 +68,6 @@ export class LeftPanelWebview implements WebviewViewProvider {
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
         <body>
-        <vscode-text-area id="debug-text" type="text" name="example-vscode-text-area" style="width:100%;"></vscode-text-area>
         <p>Drag a register between groups to improve traceability and interaction with its values.</p>
           <div class="search-container">
             <div class="search-element">
@@ -76,7 +80,10 @@ export class LeftPanelWebview implements WebviewViewProvider {
             <div class="search-element">
               <vscode-button id="clear-button" class="registers-search", appearance="secondary">Clear</vscode-button>
             </div>
-              </div>
+            <div>
+              <vscode-checkbox id="sort-last-modified">Sort by last modified</vscode-checkbox>
+            </div>
+          </div>
           <div id="registers-table" style="margin-top:1rem;"></div>
           <script type="module" nonce="${nonce}" src="${registerswUri}"></script>
         </body>
