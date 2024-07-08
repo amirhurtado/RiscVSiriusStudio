@@ -3,79 +3,61 @@ import {
   vsCodeButton,
   Button,
   TextField,
-  allComponents
+  allComponents,
+  TextArea,
 } from "@vscode/webview-ui-toolkit";
 
 import { initSimulatorEvents } from "./cpu0Events.js";
 
-import { parse } from "../utilities/riscv.js";
-
-import { InputBox } from "vscode";
-
-// In order to use the Webview UI Toolkit web components they
-// must be registered with the browser (i.e. webview) using the
-// syntax below.
-//
-// To register more toolkit components, simply import the component
-// registration function and call it from within the register
-// function, like so:
-//
-// provideVSCodeDesignSystem().register(
-//   vsCodeButton(),
-//   vsCodeCheckbox()
-// );
-//
-// Finally, if you would like to register all of the toolkit
-// components at once, there's a handy convenience function:
-//
-// provideVSCodeDesignSystem().register(allComponents);
-//
-// provideVSCodeDesignSystem().register(vsCodeButton());
 provideVSCodeDesignSystem().register(allComponents);
 
 const vscode = acquireVsCodeApi();
 window.addEventListener("load", main);
 
-function main() {
-  console.log("Main function called!");
-  initSimulatorEvents(window, document);
-  /**
-   * Bind elements in the webview to their respective functions in the code.
-   */
-  const executeButton = document.getElementById("execute-button") as Button;
-  executeButton?.addEventListener("click", handleExecute);
-  window.addEventListener("message", (event) => {
-    const message = event.data;
-    const instTextField = document.getElementById("instText") as TextField;
-    instTextField.value = message["instruction"];
-    const executeButton = document.getElementById("execute-button") as Button;
-    executeButton.click();
-  });
+function debug(str: string) {
+  const debugTextArea = document.getElementById("debug-text") as TextArea;
+  debugTextArea.value = debugTextArea.value + "\n" + str;
 }
 
-function handleRunInstruction() {
-  console.log("Handling instruction");
-  const runInstruction = document.getElementById(
-    "input-instruction"
-  ) as TextField;
-  const instruction = runInstruction.value;
-  const result = parse(instruction);
-  vscode.postMessage({
-    command: "hello",
-    text: "Instruction to run: " + result
-  });
+function debugIR(str: string) {
+  const irTextArea = document.getElementById("ir-text") as TextArea;
+  irTextArea.value = str;
+}
+
+function main() {
+  initSimulatorEvents(window, document);
+
+  const executeButton = document.getElementById("execute-button") as Button;
+  executeButton?.addEventListener("click", handleExecute);
+  window.addEventListener("message", messageDispatch);
+}
+
+function messageDispatch(event: MessageEvent) {
+  const message = event.data;
+  switch (message.operation) {
+    case "runInstruction":
+      const instTextField = document.getElementById("instText") as TextField;
+      const executeButton = document.getElementById("execute-button") as Button;
+      instTextField.value = message.operationArgs.instruction;
+      executeButton.click();
+      debug("runInstruction event: " + JSON.stringify(event.data));
+      break;
+    default:
+      debug("Message not recognized");
+      break;
+  }
 }
 
 function handleExecute() {
   const instTextField = document.getElementById("instText") as TextField;
   const instruction = instTextField.value;
-  console.log("Handling instruction ", instruction);
+  debug("Handling instruction " + instruction);
 
   // parse the instruction here
 
   vscode.postMessage({
     command: "hello",
-    text: "Instruction to execute: " + instruction
+    text: "Instruction to execute: " + instruction,
   });
 }
 
@@ -114,6 +96,6 @@ function handleHowdyClick() {
   //
   vscode.postMessage({
     command: "hello",
-    text: "Hey there partner! 🤠"
+    text: "Hey there partner! 🤠",
   });
 }

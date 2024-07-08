@@ -1,6 +1,6 @@
 {{
   var instcounter = 0;
-  let labelTable = {}
+  let labelTable = {};
 
 /* Support functions */
 

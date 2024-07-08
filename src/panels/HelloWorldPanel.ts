@@ -120,19 +120,26 @@ export class HelloWorldPanel {
 
 <body>
   <div id="tooltip" display="none"></div>
-  <div style="display: none;" ><label>XInsert an instruction:</label>
+  <div>
+    <div>
+    <vscode-text-area id="debug-text" style="width: 100%;">Debug</vscode-text-area>
+    </div>
+    <div>
+    <vscode-text-area id="ir-text" style="width: 100%;">Program IR</vscode-text-area>
+    </div>
+    <label>Insert an instruction:</label>
     <input class="instText" type="text" id="instText" value="add x2, a0, sp">
-  </input>    
-  <label> or select an example:</label>
-  <select id="dropInstruction">
-    <option value="add x2, a0, sp">(R) add x2, a0, sp</option>
-    <option value="sub x2, a0, sp">(R) sub x2, a0, sp</option>
-    <option value="xori x2, a0, 100">(I-arith) xori x2, a0, 100</option>
-    <option value="sltiu x2, a5, 100">(I-arith) sltiu x2, a5, 100</option>
-    <option value="lw x2, 16(a5)">(I-load) lw x2,16(a5)</option>
-    <option value="beq x2, x3, -2048">(B) beq x2, x3, -2048</option>
-  </select>
-  <vscode-button id="execute-button" class="executeInstruction" type="button" >Execute</vscode-button>
+    </input>    
+    <label> or select an example:</label>
+    <select id="dropInstruction">
+      <option value="add x2, a0, sp">(R) add x2, a0, sp</option>
+      <option value="sub x2, a0, sp">(R) sub x2, a0, sp</option>
+      <option value="xori x2, a0, 100">(I-arith) xori x2, a0, 100</option>
+      <option value="sltiu x2, a5, 100">(I-arith) sltiu x2, a5, 100</option>
+      <option value="lw x2, 16(a5)">(I-load) lw x2,16(a5)</option>
+      <option value="beq x2, x3, -2048">(B) beq x2, x3, -2048</option>
+    </select>
+    <vscode-button id="execute-button" class="executeInstruction" type="button">Execute</vscode-button>
   </div>
   <div>
   <div>

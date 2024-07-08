@@ -17,6 +17,10 @@
       {
         "command": "rv-simulator.sendInstruction",
         "title": "RISCV simulator: Instruction"
+      },
+      {
+        "command": "rv-simulator.assembleFile",
+        "title": "RISCV simulator: assemble file"
       }
     ],
     "viewsContainers": {
@@ -44,8 +48,8 @@
     "package": "NODE_ENV=production node ./esbuild.js",
     "watch": "node ./esbuild.js --watch",
     "lint": "eslint src --ext ts",
-    "parser": "npx peggy --allowed-start-rules Start,Instruction,SourceElement -o src/concepts/riscv.js --format es src/utilities/riscv.peg",
-    "preparser": "npx peggy --allowed-start-rules Start -o src/concepts/riscv-pre.js --format es src/utilities/riscv-pre.peg"
+    "parser": "npx peggy --allowed-start-rules Start,Instruction,SourceElement -o src/utilities/riscv.js --format es src/utilities/riscv.peg",
+    "preparser": "npx peggy --allowed-start-rules Start -o src/utilities/riscv-pre.js --format es src/utilities/riscv-pre.peg"
   },
   "devDependencies": {
     "@types/glob": "^8.0.0",
