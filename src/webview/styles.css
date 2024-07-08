@@ -31,9 +31,9 @@ html {
   --signal-text-color-hover:       var(--vscode-errorForeground);
   --signal-text-color-disabled:    var(--vscode-editor-findMatchBackground);
   /** Tooltip's settings */
-  --tooltip-background:            var(--vscode-badge-background);
-  --tooltip-border:                var(--vscode-editorHint-foreground);
-  --tooltip-text-color-h1:         var(--vscode-focusBorder);
+  --tooltip-background:            var(--vscode-editorWidget-background);
+  --tooltip-border:                var(--vscode-editorWidget-border);
+  --tooltip-text-color-h1:         var(--vscode-editorInfo-foreground);--tooltip-text-color-p:          var(--vscode-editorHint-foreground);
   /** Overview frame settings */
   --inst-type-text-color:          var(--vscode-editor-findMatchBackground);
   --inst-type-text-color-high:     var(--vscode-errorForeground);
@@ -340,7 +340,7 @@ svg {
 }
 
 .tooltipinfo {
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-family: monospace;
   h1 {
     font-size: inherit;
@@ -352,8 +352,9 @@ svg {
   }
   p {
     font-size: 0.8em;
-    color: var(--tooltip-text-color);
-    padding: 0;
+    font-weight: 400;
+    color: var(--tooltip-text-color-p);
+    padding: 0.5em;
     margin: 0;
     margin-left: 1ch;
   }
