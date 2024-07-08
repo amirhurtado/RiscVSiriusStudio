@@ -2,11 +2,13 @@
  * Styles used for the simulator view.
  */
 html {
+  /** General settings */
   --stroke-width: 3;
   --stroke-width-highlighted: 6;
   --font-size: 14px;
   --connection-font-size: 12px;
   --transition-time: 3s;
+  /** Component's settings */
   --component-fill:                var(--vscode-editor-selectionHighlightBackground);
   --component-fill-hover:          var(--vscode-editor-selectionBackground);  
   --component-fill-inactive:       var(--vscode-editor-inactiveSelectionBackground);  
@@ -14,21 +16,25 @@ html {
   --component-text-color:          var(--vscode-descriptionForeground);
   --component-text-color-hover:    var(--vscode-errorForeground);
   --component-text-color-disabled: var(--vscode-editor-findMatchBackground);
+  /** Connection's settings */
   --connection-stroke:             var(--vscode-focusBorder);
   --connection-stroke-hover:       var(--vscode-errorForeground);
-  --connection-stroke-disabled:    var(--vscode-input-border);
+  --connection-stroke-disabled:    var(--vscode-editorWidget-foreground);
   --connection-text-color:         var(--vscode-descriptionForeground);
   --connection-text-color-hover:   var(--vscode-errorForeground);
   --connection-text-color-disabled:var(--vscode-editor-findMatchBackground);
+  /** Signal's settings */
   --signal-stroke:                 var(--vscode-focusBorder);
   --signal-stroke-hover:           var(--vscode-errorForeground);
-  --signal-stroke-disabled:        var(--vscode-input-border);
+  --signal-stroke-disabled:        var(--vscode-editorWidget-foreground);
   --signal-text-color:             var(--vscode-descriptionForeground);
   --signal-text-color-hover:       var(--vscode-errorForeground);
   --signal-text-color-disabled:    var(--vscode-editor-findMatchBackground);
+  /** Tooltip's settings */
   --tooltip-background:            var(--vscode-badge-background);
   --tooltip-border:                var(--vscode-editorHint-foreground);
   --tooltip-text-color-h1:         var(--vscode-focusBorder);
+  /** Overview frame settings */
   --inst-type-text-color:          var(--vscode-editor-findMatchBackground);
   --inst-type-text-color-high:     var(--vscode-errorForeground);
   --inst-type-stroke:              var(--vscode-focusBorder);
@@ -73,7 +79,7 @@ svg {
  * application used to produce the svg. 
  */
 
- /** Style for enabled components. 
+/** Style for enabled components. 
   *
   * Most of the components are svg rectangles, however, special shapes like the
   * ALU are drawn as paths.
@@ -113,7 +119,7 @@ svg {
 }
 
  /* Style for disabled components. */
- .componentDisabled {
+.componentDisabled {
   rect {
     opacity: 0.3;
     fill: var(--component-fill-inactive);
@@ -137,7 +143,7 @@ svg {
  * Should be called path instead but that will conflict with all the other path
  * tags in the svg.
  */
- .connection {
+.connection {
   path {
     stroke-width: var(--stroke-width);
     stroke: var(--connection-stroke);
@@ -164,7 +170,7 @@ svg {
 
 .connectionDisabled {
   path {
-    opacity: 0.5;
+    opacity: 0.3;
     stroke-width: var(--stroke-width);
     stroke: var(--connection-stroke-disabled);
     pointer-events: none;
