@@ -1,7 +1,7 @@
 import { parse as preparse } from "./riscv-pre.js";
 import { parse  } from "./riscv.js";
 
-export function compile(inputSrc:any, inputName:any) {
+export function compile(inputSrc:any, inputName:any) : Array<any> {
   console.log("Reading from file: ", inputName);
   let labelTable = {};
   console.log("Processing labels:");

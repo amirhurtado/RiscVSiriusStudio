@@ -21,6 +21,10 @@
       {
         "command": "rv-simulator.assembleFile",
         "title": "RISCV simulator: assemble file"
+      },
+      {
+        "command": "rv-simulator.test",
+        "title": "RISCV simulator: test message"
       }
     ],
     "viewsContainers": {

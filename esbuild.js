@@ -37,6 +37,10 @@ const extensionConfig = {
         {
           from: './media/RobotoMono.ttf',
           to: './out'
+        },
+        {
+          from: './media/tabulator.min.css',
+          to: './out'
         }
       // watch: true
     ]
@@ -65,10 +69,8 @@ const registersviewConfig = {
     copy({
       resolveFrom: "cwd",
       assets: {
-        from: [
-          "./src/registersview/tabulator.min.css",
-          "./src/registersview/registersview.css"],
-        to: ["./out"],
+        from: './src/registersview/registersview.css',
+        to: './out',
       },
       // watch: true
     }),
@@ -85,8 +87,8 @@ const progmemviewConfig = {
     copy({
       resolveFrom: "cwd",
       assets: {
-        from: ["./src/progmemview/tabulator.min.css", "./src/progmemview/progmemview.css"],
-        to: ["./out"],
+        from: './src/progmemview/progmemview.css',
+        to: './out',
       },
       // watch: true
     }),
