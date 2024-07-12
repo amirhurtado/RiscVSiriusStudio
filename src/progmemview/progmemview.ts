@@ -5,17 +5,23 @@ import {
   Checkbox
 } from "@vscode/webview-ui-toolkit";
 import _ from "lodash";
-import { TabulatorFull as Tabulator } from "tabulator-tables";
+import { RowComponent, TabulatorFull as Tabulator } from "tabulator-tables";
 
 provideVSCodeDesignSystem().register(allComponents);
 
 const vscode = acquireVsCodeApi();
 window.addEventListener("load", main);
 
-function debug(s: string) {
-  const debugArea = document.getElementById("debug-area") as TextArea;
-  debugArea.value = debugArea.value.concat("\n", s);
-  debugArea.scrollTop = debugArea.scrollHeight;
+/**
+ * Log functionality. The logger that is actually used is in the extension. This
+ * function sends the message to the extension with all the information required
+ * to log it.
+ *
+ * @param kind the logger type. Can be info, error, etc.
+ * @param object the object to be logged/
+ */
+function log(kind: string, object: any = {}) {
+  vscode.postMessage({ command: "log-" + kind, obj: { object } });
 }
 
 type MemInstruction = {
@@ -28,6 +34,8 @@ type MemInstruction = {
 };
 
 function main() {
+  log("info", { message: "Initializing progmem view [STARTED]" });
+
   // Table setup
   let tableData = [] as Array<MemInstruction>;
   let table = tableSetup(tableData);
@@ -36,6 +44,16 @@ function main() {
   window.addEventListener("message", (event) => {
     dispatch(event, table, tableData);
   });
+  // Table events
+  table.on("rowDblClick", function (e, row) {
+    const line = getSourceLineForInstruction(row);
+    sendMessageToExtension({ command: "highlightCodeLine", lineNumber: line });
+    //e - the click event object
+    //row - row component
+    // row.getData();
+    log("info", { message: "double click on row" });
+  });
+  log("info", { message: "Initializing progmem view [FINISHED]" });
 }
 /**
  * Handles the messages received from the extension.
@@ -61,26 +79,34 @@ function dispatch(
       });
       break;
     case "selectInstruction":
-      debug("select instruction " + data.sourceLine);
-      const codeSync = document.getElementById("code-sync") as Checkbox;
-      if (codeSync.checked) {
-        selectInstruction(data.sourceLine, table, tableData);
-      }
+      log("info", "select instruction " + data.sourceLine);
+      selectInstructionInTable(data.sourceLine, table, tableData);
       break;
     default:
-      debug("unknown option");
+      log("info", "unknown option");
       break;
   }
 }
+function getSourceLineForInstruction(row: RowComponent): number {
+  const line = row.getData().ir.location.start.line;
+  log("info", { message: "getSource for row", lineNumber: line });
+  return line - 1;
+}
 
-function selectInstruction(
+function selectInstructionInTable(
   line: number,
   table: Tabulator,
   tableData: Array<MemInstruction>
 ) {
+  const codeSync = document.getElementById("code-sync") as Checkbox;
+  if (!codeSync.checked) {
+    log("info", "instruction selection disabled by user");
+    return;
+  }
+
   const sourceLine = line + 1;
   table.deselectRow();
-  debug("selectInstruction on line " + sourceLine);
+  // debug("selectInstruction on line " + sourceLine);
   const data = table.getData() as Array<MemInstruction>;
   const instruction = data.find((e) => {
     const currentPos = e.ir.location.start.line;
@@ -89,7 +115,7 @@ function selectInstruction(
   if (instruction) {
     table.selectRow(instruction.address);
   } else {
-    debug("Not found");
+    // debug("Not found");
   }
 }
 

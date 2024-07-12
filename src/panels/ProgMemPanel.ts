@@ -8,6 +8,8 @@ import {
 } from "vscode";
 import { getUri } from "../utilities/getUri";
 import { getNonce } from "../utilities/getNonce";
+import { applyDecoration } from "../utilities/editor-utils";
+import { logger } from "../utilities/logger";
 
 export class ProgMemPanelView implements WebviewViewProvider {
   public static currentview: ProgMemPanelView | undefined;
@@ -57,12 +59,22 @@ export class ProgMemPanelView implements WebviewViewProvider {
 
   private activateMessageListener() {
     this._view.webview.onDidReceiveMessage((message: any) => {
-      switch (message.operation) {
+      switch (message.command) {
+        case "highlightCodeLine":
+          if (window.activeTextEditor) {
+            applyDecoration(message.lineNumber, window.activeTextEditor);
+            console.log("Should highlight line ", message);
+          } else {
+            console.log("no editor active!");
+          }
+          break;
+        case "log-info":
+          logger().info("info", message.obj);
+          // console.log("log-info ", message.obj);
+          //log("trace", "simulator view " + text, message.meta);
+          break;
         case "SHOW_WARNING_LOG":
           window.showWarningMessage(message.data.message);
-          break;
-        case "log":
-          console.log(message);
           break;
         default:
           window.showWarningMessage("Unrecognized messaged from the view");
