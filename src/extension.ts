@@ -88,6 +88,10 @@ export async function activate(context: ExtensionContext) {
       highlightInstructionInMemory(evt.textEditor);
     });
   });
+
+  window.onDidChangeActiveTextEditor((editor) => {
+    highlightInstructionInMemory(editor);
+  });
 }
 
 function simulateProgram(editor: TextEditor | undefined, extensionUri: Uri) {
