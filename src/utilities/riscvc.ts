@@ -15,14 +15,14 @@ export function compile(inputSrc: any, inputName: any): ParserResult {
   try {
     preparse(inputSrc, {
       grammarSource: inputName,
-      symbols: labelTable,
+      symbols: labelTable
     });
   } catch (obj) {
     return {
       sucess: false,
       ir: undefined,
       info: "First pass failure",
-      extra: obj,
+      extra: obj
     };
   }
   console.table(labelTable);
@@ -33,21 +33,21 @@ export function compile(inputSrc: any, inputName: any): ParserResult {
     console.log("Parsing file:");
     parserOutput = parse(inputSrc, {
       grammarSource: inputName,
-      symbols: labelTable,
+      symbols: labelTable
     });
   } catch (obj) {
     return {
       sucess: false,
       ir: undefined,
       info: "Second pass failure",
-      extra: obj,
+      extra: obj
     };
   }
   console.log("Second pass done!");
   return {
     sucess: true,
-    ir: parserOutput,
+    ir: parserOutput as any[],
     info: "Sucess",
-    extra: undefined,
+    extra: undefined
   };
 }

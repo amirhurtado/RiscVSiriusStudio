@@ -4,7 +4,7 @@ import {
   Webview,
   Uri,
   EventEmitter,
-  window,
+  window
 } from "vscode";
 import { getUri } from "../utilities/getUri";
 import { getNonce } from "../utilities/getNonce";
@@ -45,7 +45,7 @@ export class ProgMemPanelView implements WebviewViewProvider {
   resolveWebviewView(webviewView: WebviewView): void | Thenable<void> {
     webviewView.webview.options = {
       enableScripts: true,
-      localResourceRoots: [this.extensionUri],
+      localResourceRoots: [this.extensionUri]
     };
     webviewView.webview.html = this._getHtmlForWebview(
       webviewView.webview,
@@ -76,11 +76,11 @@ export class ProgMemPanelView implements WebviewViewProvider {
     const nonce = getNonce();
     const tabulatorCSS = getUri(webview, extensionUri, [
       "out",
-      "tabulator.min.css",
+      "tabulator.min.css"
     ]);
     const progmemviewCSS = getUri(webview, extensionUri, [
       "out",
-      "progmemview.css",
+      "progmemview.css"
     ]);
 
     return `
@@ -92,13 +92,10 @@ export class ProgMemPanelView implements WebviewViewProvider {
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
         <body>
-          <div style="display:none;">
-            <vscode-text-area id="debug-area" style="width:100%;">Debug
-            </vscode-text-area>
-          </div>
           <div>
             <legend>Options</legend>
-            <vscode-checkbox id="code-sync">Code synchronization</vscode-checkbox>
+            <vscode-checkbox id="code-sync" checked>Code synchronization
+            </vscode-checkbox>
           </div>
           <div id="progmem-table" style="margin-top:1rem;"></div>
           <script type="module" nonce="${nonce}" src="${progmemUri}"></script>

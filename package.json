@@ -11,10 +11,6 @@
   "contributes": {
     "commands": [
       {
-        "command": "rv-simulator.showHelloWorld",
-        "title": "RISCV simulator: Show"
-      },
-      {
         "command": "rv-simulator.sendInstruction",
         "title": "RISCV simulator: Instruction"
       },
@@ -27,8 +23,8 @@
         "title": "RISCV simulator: select current instruction in memory"
       },
       {
-        "command": "rv-simulator.test",
-        "title": "RISCV simulator: test message"
+        "command": "rv-simulator.simulate",
+        "title": "RISCV simulator: simulate program execution"
       }
     ],
     "viewsContainers": {
@@ -57,7 +53,7 @@
     "keybindings": [
       {
         "key": "ctrl+f12",
-        "command": "rv-simulator.test"
+        "command": "rv-simulator.simulate"
       }
     ]
   },
@@ -72,6 +68,7 @@
   },
   "devDependencies": {
     "@types/glob": "^8.0.0",
+    "@types/lodash": "^4.17.6",
     "@types/node": "16.x",
     "@types/tabulator-tables": "^6.2.2",
     "@types/vscode": "^1.74.0",

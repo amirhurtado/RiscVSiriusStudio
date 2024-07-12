@@ -6,15 +6,22 @@ import {
   TextArea
 } from "@vscode/webview-ui-toolkit";
 
-import { initSimulatorEvents } from "./cpu0Events.js";
 import * as Handlers from "./handlers.js";
-import { compile, ParseResult } from "./utilities/riscvc";
+import { compile, ParserResult } from "../utilities/riscvc";
 
 provideVSCodeDesignSystem().register(allComponents);
 
 const vscode = acquireVsCodeApi();
 window.addEventListener("load", main);
 
+/**
+ * Log functionality. The logger that is actually used is in the extension. This
+ * function sends the message to the extension with all the information required
+ * to log it.
+ *
+ * @param kind the logger type. Can be info, error, etc.
+ * @param object the object to be logged/
+ */
 function log(kind: string, object: any = {}) {
   vscode.postMessage({ command: "log-" + kind, obj: { object } });
 }
@@ -27,7 +34,6 @@ let cpuData = {
   instruction: {}, // Current instruction
   cpuElements: {}, // All the cpu elements with the attribute "data-cpuname" set to something.
   cpuElemStates: {}, // All the cpu elements with the attribute "data-cpuname" set to something.
-  // Hack!
   logger: log
 };
 
@@ -42,7 +48,7 @@ function messageDispatch(event: MessageEvent) {
   switch (message.operation) {
     case "executeProgram":
       log("executeProgram event ");
-      const program = message.program as ParseResult;
+      const program = message.program as ParserResult;
       executeProgram(program);
       break;
     default:
@@ -77,7 +83,7 @@ function messageDispatch(event: MessageEvent) {
  *
  * The complete output from the parser is stored at: cpuData.parser
  */
-function executeProgram(program: ParseResult) {
+function executeProgram(program: ParserResult) {
   if (!program.sucess) {
     log("error", { message: "Nothing to execute, parsing failure." });
     return;
@@ -92,18 +98,22 @@ function executeProgram(program: ParseResult) {
   });
 }
 
-function setupSimulatorData(program: ParseResult) {
+function setupSimulatorData(program: ParserResult) {
   log("info", { message: "simulator data setup" });
   (cpuData.parser as any) = program;
   cpuData.stepButton = document.getElementById("step-execution") as Button;
   cpuData.instIndex = 0;
-  cpuData.instruction = program.ir[0];
+  if (program.ir) {
+    cpuData.instruction = program.ir[0];
+  } else {
+    log("error", { message: "No intermediate representation for program." });
+  }
   log("info", { message: "simulator data setup finished " });
 }
 /**
  * Fetches all the elements present in the SVG image with the tag "data-cpuName"
- * defined. Every element is stored in the cpuElements object inside the window
- * object under the value of the attribute..
+ * defined. Every element is stored in the cpuElements object inside the cpuData
+ * object under the value of the attribute.
  */
 function fetchSVGElements() {
   log("info", { message: "simulator SVG elements fetch" });

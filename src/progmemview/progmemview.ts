@@ -2,9 +2,9 @@ import {
   provideVSCodeDesignSystem,
   allComponents,
   TextArea,
-  Checkbox,
+  Checkbox
 } from "@vscode/webview-ui-toolkit";
-import _ from "../../node_modules/lodash-es/lodash.js";
+import _ from "lodash";
 import { TabulatorFull as Tabulator } from "tabulator-tables";
 
 provideVSCodeDesignSystem().register(allComponents);
@@ -57,7 +57,7 @@ function dispatch(
       sendMessageToExtension({
         operation: "log",
         m: "program updated new",
-        tblData: table.getData(),
+        tblData: table.getData()
       });
       break;
     case "selectInstruction":
@@ -103,7 +103,7 @@ function updateProgram(
     const {
       inst: addr,
       encoding: { binEncoding: enc },
-      location: loc,
+      location: loc
     } = program[i];
     const instruction = parseInstruction(addr, enc, program[i]);
     if (!_.isEqual(instruction, tableData[i])) {
@@ -114,7 +114,7 @@ function updateProgram(
   while (i < program.length) {
     const {
       inst: addr,
-      encoding: { binEncoding: enc },
+      encoding: { binEncoding: enc }
     } = program[i];
     const instruction = parseInstruction(addr, enc, program[i]);
     table.updateOrAddData([instruction]);
@@ -139,7 +139,7 @@ function parseInstruction(
     value1: v1,
     value2: v2,
     value3: v3,
-    ir: repr,
+    ir: repr
   };
 }
 
@@ -160,34 +160,34 @@ function tableSetup(tableData: Array<MemInstruction>): Tabulator {
         title: "Address",
         field: "address",
         visible: true,
-        headerSort: false,
+        headerSort: false
       },
       {
         title: "0x3",
         field: "value3",
         visible: true,
-        headerSort: false,
+        headerSort: false
       },
       {
         title: "0x2",
         field: "value2",
         visible: true,
-        headerSort: false,
+        headerSort: false
       },
       {
         title: "0x1",
         field: "value1",
         visible: true,
-        headerSort: false,
+        headerSort: false
       },
 
       {
         title: "0x0",
         field: "value0",
         visible: true,
-        headerSort: false,
-      },
-    ],
+        headerSort: false
+      }
+    ]
   });
   return table;
 }

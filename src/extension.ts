@@ -12,19 +12,10 @@ import { HelloWorldPanel } from "./panels/HelloWorldPanel";
 import { LeftPanelWebview } from "./panels/RegisterPanel";
 import { ProgMemPanelView } from "./panels/ProgMemPanel";
 import { compile, ParserResult } from "./utilities/riscvc";
-import { log, logger } from "./utilities/logger";
+import { logger } from "./utilities/logger";
 
 export async function activate(context: ExtensionContext) {
-  logger().error("Activating extension");
-  HelloWorldPanel.render(context.extensionUri);
-  logger().error("Panel rendered");
-
-  context.subscriptions.push(
-    commands.registerCommand("rv-simulator.showHelloWorld", () => {
-      logger().info("Old code!!!");
-      HelloWorldPanel.render(context.extensionUri);
-    })
-  );
+  logger().info("Activating extension");
 
   context.subscriptions.push(
     commands.registerCommand("rv-simulator.sendInstruction", () => {
@@ -69,13 +60,6 @@ export async function activate(context: ExtensionContext) {
   );
 
   context.subscriptions.push(
-    commands.registerCommand("rv-simulator.simulate", () => {
-      const editor = window.activeTextEditor;
-      buildAndUploadProgram(editor);
-    })
-  );
-
-  context.subscriptions.push(
     commands.registerCommand("rv-simulator.selectInstructionInMemory", () => {
       const editor = window.activeTextEditor;
       highlightInstructionInMemory(editor);
@@ -83,8 +67,9 @@ export async function activate(context: ExtensionContext) {
   );
 
   context.subscriptions.push(
-    commands.registerCommand("rv-simulator.test", () => {
+    commands.registerCommand("rv-simulator.simulate", () => {
       HelloWorldPanel.render(context.extensionUri);
+      commands.executeCommand("rv-simulator.selectInstructionInMemory");
       const editor = window.activeTextEditor;
       simulateProgram(editor, context.extensionUri);
       // const progmem = ProgMemPanelView.currentview?.getWebView();
@@ -100,7 +85,7 @@ export async function activate(context: ExtensionContext) {
 
   workspace.onDidSaveTextDocument((document) => {
     window.onDidChangeTextEditorSelection((evt) => {
-      //   highlightInstructionInMemory(evt.textEditor);
+      highlightInstructionInMemory(evt.textEditor);
     });
   });
 }
