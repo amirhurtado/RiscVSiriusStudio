@@ -11,10 +11,6 @@
   "contributes": {
     "commands": [
       {
-        "command": "rv-simulator.sendInstruction",
-        "title": "RISCV simulator: Instruction"
-      },
-      {
         "command": "rv-simulator.assembleFile",
         "title": "RISCV simulator: assemble file"
       },
