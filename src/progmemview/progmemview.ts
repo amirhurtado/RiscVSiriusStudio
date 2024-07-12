@@ -2,6 +2,7 @@ import {
   provideVSCodeDesignSystem,
   allComponents,
   TextArea,
+  Checkbox,
 } from "@vscode/webview-ui-toolkit";
 import _ from "../../node_modules/lodash-es/lodash.js";
 import { TabulatorFull as Tabulator } from "tabulator-tables";
@@ -23,6 +24,7 @@ type MemInstruction = {
   value1: string;
   value2: string;
   value3: string;
+  ir: any;
 };
 
 function main() {
@@ -34,7 +36,6 @@ function main() {
   window.addEventListener("message", (event) => {
     dispatch(event, table, tableData);
   });
-  sendMessageToExtension({ operation: "FOOO" });
 }
 /**
  * Handles the messages received from the extension.
@@ -52,28 +53,43 @@ function dispatch(
   //const {data:{operation:op}} = event;
   switch (data.operation) {
     case "updateProgram":
-      debug("Update program");
       updateProgram(data.program, table, tableData);
       sendMessageToExtension({
         operation: "log",
         m: "program updated new",
-        tblData: tableData,
+        tblData: table.getData(),
       });
       break;
-    case "pushInstruction":
-      debug("push event " + data.encoding);
-      const instParsed = parseInstruction(data.address, data.encoding);
-      tableData.push(instParsed);
-      break;
-    case "clearMem":
-      debug("clear mem arrived");
-      while (tableData.length > 0) {
-        tableData.pop();
+    case "selectInstruction":
+      debug("select instruction " + data.sourceLine);
+      const codeSync = document.getElementById("code-sync") as Checkbox;
+      if (codeSync.checked) {
+        selectInstruction(data.sourceLine, table, tableData);
       }
       break;
     default:
       debug("unknown option");
       break;
+  }
+}
+
+function selectInstruction(
+  line: number,
+  table: Tabulator,
+  tableData: Array<MemInstruction>
+) {
+  const sourceLine = line + 1;
+  table.deselectRow();
+  debug("selectInstruction on line " + sourceLine);
+  const data = table.getData() as Array<MemInstruction>;
+  const instruction = data.find((e) => {
+    const currentPos = e.ir.location.start.line;
+    return currentPos === sourceLine;
+  });
+  if (instruction) {
+    table.selectRow(instruction.address);
+  } else {
+    debug("Not found");
   }
 }
 
@@ -87,8 +103,9 @@ function updateProgram(
     const {
       inst: addr,
       encoding: { binEncoding: enc },
+      location: loc,
     } = program[i];
-    const instruction = parseInstruction(addr, enc);
+    const instruction = parseInstruction(addr, enc, program[i]);
     if (!_.isEqual(instruction, tableData[i])) {
       table.updateData([instruction]);
     }
@@ -99,8 +116,7 @@ function updateProgram(
       inst: addr,
       encoding: { binEncoding: enc },
     } = program[i];
-    const instruction = parseInstruction(addr, enc);
-    // tableData.push(instruction);
+    const instruction = parseInstruction(addr, enc, program[i]);
     table.updateOrAddData([instruction]);
     i++;
   }
@@ -110,15 +126,20 @@ function updateProgram(
   }
 }
 
-function parseInstruction(address: string, inst: string): MemInstruction {
+function parseInstruction(
+  address: string,
+  inst: string,
+  repr: any
+): MemInstruction {
   const hexAddr = Number(address).toString(16);
-  const [v0, v1, v2, v3] = inst.match(/.{1,8}/g) as Array<string>;
+  const [v3, v2, v1, v0] = inst.match(/.{1,8}/g) as Array<string>;
   return {
     address: hexAddr,
     value0: v0,
     value1: v1,
     value2: v2,
     value3: v3,
+    ir: repr,
   };
 }
 
@@ -142,14 +163,8 @@ function tableSetup(tableData: Array<MemInstruction>): Tabulator {
         headerSort: false,
       },
       {
-        title: "0x0",
-        field: "value0",
-        visible: true,
-        headerSort: false,
-      },
-      {
-        title: "0x1",
-        field: "value1",
+        title: "0x3",
+        field: "value3",
         visible: true,
         headerSort: false,
       },
@@ -160,8 +175,15 @@ function tableSetup(tableData: Array<MemInstruction>): Tabulator {
         headerSort: false,
       },
       {
-        title: "0x3",
-        field: "value3",
+        title: "0x1",
+        field: "value1",
+        visible: true,
+        headerSort: false,
+      },
+
+      {
+        title: "0x0",
+        field: "value0",
         visible: true,
         headerSort: false,
       },

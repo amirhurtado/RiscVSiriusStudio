@@ -1,7 +1,14 @@
 import { parse as preparse } from "./riscv-pre.js";
-import { parse  } from "./riscv.js";
+import { parse } from "./riscv.js";
 
-export function compile(inputSrc:any, inputName:any) : Array<any> {
+export type ParserResult = {
+  sucess: boolean;
+  ir: Array<any> | undefined;
+  info: string;
+  extra: any | undefined;
+};
+
+export function compile(inputSrc: any, inputName: any): ParserResult {
   console.log("Reading from file: ", inputName);
   let labelTable = {};
   console.log("Processing labels:");
@@ -11,9 +18,13 @@ export function compile(inputSrc:any, inputName:any) : Array<any> {
       symbols: labelTable,
     });
   } catch (obj) {
-    console.log(obj);
+    return {
+      sucess: false,
+      ir: undefined,
+      info: "First pass failure",
+      extra: obj,
+    };
   }
-  console.log("First pass done!");
   console.table(labelTable);
 
   let parserOutput = {};
@@ -25,31 +36,18 @@ export function compile(inputSrc:any, inputName:any) : Array<any> {
       symbols: labelTable,
     });
   } catch (obj) {
-    console.log(obj);
-    console.log(parserOutput);
+    return {
+      sucess: false,
+      ir: undefined,
+      info: "Second pass failure",
+      extra: obj,
+    };
   }
   console.log("Second pass done!");
-  // parserOutput.forEach((elem) => {
-  //   const type = elem["Type"];
-  //   const srcline = elem["location"]["start"]["line"];
-  //   switch (type) {
-  //     case "SrcLabel":
-  //       console.log({ type: "label", line: srcline });
-  //       break;
-  //     case "SrcDirective":
-  //       console.log({ type: elem["Type"] });
-  //       break;
-  //     case "SrcInstruction":
-  //       // console.log("----> ", elem);
-  //       console.log({
-  //         mem: elem["inst"].toString(16),
-  //         type: elem["type"],
-  //         line: srcline,
-  //         binEncoding: elem["encoding"]["binEncoding"],
-  //         hexEncoding: elem["encoding"]["hexEncoding"],
-  //       });
-  //       break;
-  //   }
-  // });
-  return parserOutput;
+  return {
+    sucess: true,
+    ir: parserOutput,
+    info: "Sucess",
+    extra: undefined,
+  };
 }

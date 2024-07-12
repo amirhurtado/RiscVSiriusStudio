@@ -23,6 +23,10 @@
         "title": "RISCV simulator: assemble file"
       },
       {
+        "command": "rv-simulator.selectInstructionInMemory",
+        "title": "RISCV simulator: select current instruction in memory"
+      },
+      {
         "command": "rv-simulator.test",
         "title": "RISCV simulator: test message"
       }
@@ -49,7 +53,13 @@
           "name": "Program memory"
         }
       ]
-    }
+    },
+    "keybindings": [
+      {
+        "key": "ctrl+f12",
+        "command": "rv-simulator.test"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
@@ -78,9 +88,12 @@
     "typescript": "^4.8.4"
   },
   "dependencies": {
+    "@vscode/codicons": "^0.0.36",
     "@vscode/webview-ui-toolkit": "^1.2.2",
     "lodash": "^4.17.21",
     "lodash-cli": "^3.10.1",
-    "lodash-es": "^4.17.21"
+    "lodash-es": "^4.17.21",
+    "winston": "^3.13.1",
+    "winston-transport-vscode": "^0.1.0"
   }
 }

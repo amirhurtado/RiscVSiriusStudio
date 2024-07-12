@@ -1,42 +1,58 @@
 import * as Handlers from "./handlers.js";
-import { parse } from "./riscv.js";
 
-export function initSimulatorEvents(window, document) {
+
+/**
+ * Simulator initialization.
+ *
+ * @param {*} window A reference to the window element
+ * @param {*} document A reference to the document element
+ *
+ * The simulator will execute the instructions of a program once at the time. To
+ * do that it follows a very simple approach:
+ *
+ * - The data memory is initialized along with the registers values. This is
+ *   done before starting any simulation.
+ * - The intermediate representation of the program (IR) is loaded referenced
+ *   from the window object. This representation is an array of objects
+ *   representing every instruction in the source program.
+ * - While there are still instructions to execute:
+ *    - The next instruction IR is stored in window.cpuData.instruction
+ *    - A click event is sent to the (invisible) button in
+ *      window.cpuData.buttonExecute.
+ *    - Every element of the CPU (component, connection, signal) that is
+ *      subscribed to that event will be executed changing its state
+ *      accordingly.
+ *
+ * The statefull components of the cpu will retrieve and persist its data to
+ * their respective objects:
+ *  - The registers unit data is stored in window.cpuData.ruData
+ *  - The data memory unit data is stored in window.cpuData.dmData
+ *
+ * The complete program representation is stored at: window.cpuData.progIR.
+ */
+export function initSimulatorEvents(window, document, programIR) {
+  debug("hola");
   console.log("Initializing simulator events", document);
 
   window["cpuData"] = {};
-  const instText = document.querySelector(".instText");
-  const executeButton = document.querySelector(".executeInstruction");
-  const dropdownExample = document.getElementById("dropInstruction");
-  // Keep a reference to these two elements to avoid computing them over and
-  // over in the handlers.
-  window["cpuData"]["inputInst"] = instText;
-  window["cpuData"]["buttonExecute"] = executeButton;
+  window["cpuData"]["progIR"] = programIR;
+  const stepButton = document.getElementById("step-execution");
+  window["cpuData"]["buttonExecute"] = stepButton;
+  window["cpuData"]["instructionIndex"] = 0;
+  window["cpuData"]["instruction"] = programIR[window.cpuData.instructionIndex];
 
-  instText.addEventListener("keypress", (e) => {
-    if (e.key === "Enter") {
-      instructionReady(instText.value);
-      executeButton.click();
-    } else {
-      console.log("key pressed on instruction");
-    }
-  });
-  executeButton.addEventListener("click", (e) => {
-    instructionReady(instText.value);
-  });
-
-  dropdownExample.addEventListener("change", (e) => {
-    instText.value = dropdownExample.value;
-  });
+  // stepButton.addEventListener("click", (evt) => {
+  //   window.cpuData.instructionIndex++;
+  //   window.cpuData.instruction =
+  //     window.cpuData.progIR[window.cpuData.instructionIndex];
+  // });
 
   window["cpuHandlers"] = Handlers;
   window["cpuElements"] = {};
   window["cpuElements"]["state"] = {};
-  window["cpuData"]["instruction"] = null;
-  window["cpuData"]["parseResult"] = null;
 
   fetchSVGElements();
-  initSVGElements();
+  //initSVGElements();
 }
 
 /**
@@ -48,7 +64,6 @@ function fetchSVGElements() {
   const elements = document.querySelectorAll("[data-cpuname]");
   elements.forEach((element) => {
     const name = element.getAttributeNS(null, "data-cpuname");
-    // Add the element to the cpuElements object
     window.cpuElements[name] = element;
   });
   console.log("[info] ", Object.keys(window.cpuElements).length, " fetched.");
@@ -56,31 +71,12 @@ function fetchSVGElements() {
 
 function initSVGElements() {
   for (const name in window.cpuElements) {
-    // console.log(name, window.cpuElements[name]);
     if (name in Handlers) {
       window.cpuElements.state[name] = { enabled: false };
       const element = window.cpuElements[name];
       window.cpuHandlers[name](window, document, element);
     } else {
-      // console.log(name, " does not have a handler");
+      //console.log(name, " does not have a handler");
     }
   }
-}
-
-function instructionReady(srcInst) {
-  const parseResult = parseInstruction(srcInst);
-  window["cpuData"]["instruction"] = srcInst;
-  window["cpuData"]["parseResult"] = parseResult;
-}
-
-function parseInstruction(instText) {
-  let result = null;
-  try {
-    result = parse(instText, { startRule: "Instruction" });
-    console.log("Parser result: ", result);
-  } catch (error) {
-    console.error(error);
-  }
-  console.log("Finished instruction loading");
-  return result;
 }

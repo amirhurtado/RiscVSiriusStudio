@@ -92,9 +92,13 @@ export class ProgMemPanelView implements WebviewViewProvider {
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
         <body>
-          <div>
+          <div style="display:none;">
             <vscode-text-area id="debug-area" style="width:100%;">Debug
             </vscode-text-area>
+          </div>
+          <div>
+            <legend>Options</legend>
+            <vscode-checkbox id="code-sync">Code synchronization</vscode-checkbox>
           </div>
           <div id="progmem-table" style="margin-top:1rem;"></div>
           <script type="module" nonce="${nonce}" src="${progmemUri}"></script>
