@@ -71,10 +71,6 @@ function formatInstruction(instruction, type, selected) {
   return html;
 }
 
-function currentInst(window) {
-  return window.cpuData.instruction;
-}
-
 function currentBinInst(cpuData) {
   const {
     instruction: {
@@ -82,10 +78,6 @@ function currentBinInst(cpuData) {
     },
   } = cpuData;
   return bin;
-}
-
-function isEnabled(name) {
-  return window.cpuElements.state[name].enabled;
 }
 
 function tooltipEvt(name, cpuData, element, htmlGen, htmlDet) {
@@ -136,10 +128,10 @@ function mouseHover(element, mmove, mout) {
  *
  * Every exported function will be executed automatically. It is the
  * responsibility of the function to install all the listeners of the object and
- * to add a listener on window.cpuData.buttonExecute when clicked. That way the
- * listener will be called every time a new instruction is executed. It is also
- * up to the installed listener to decide if the component is enabled or
- * disabled during the execution of that instruction.
+ * to add a listener on cpuData.stepButton when clicked. That way the listener
+ * will be called every time a new instruction is executed. It is also up to the
+ * installed listener to decide if the component is enabled or disabled during
+ * the execution of that instruction.
  *
  */
 export function CLK(element, cpuData) {
@@ -163,7 +155,7 @@ export function PC(element, cpuData) {
     stepButton: step,
   } = cpuData;
 
-  const components = [element, cpuData.cpuElements.PCCLOCK];
+  const components = [element, clock];
   components.forEach((e) => {
     applyClass(e, "componentDisabled");
   });
@@ -1516,8 +1508,6 @@ export function LOGTEXTIMM(element, cpuData) {
   setImmInstruction(cpuData, "--no immediate for instruction--");
   applyClass(element, "instructionDisabled");
   step.addEventListener("click", () => {
-    // const inst = window.cpuData.instruction;
-    // setAsmInstruction(window, inst);
     applyClass(element, "instruction");
   });
 }
@@ -1532,8 +1522,6 @@ export function LOGTEXTHEX(element, cpuData) {
   setHexInstruction(cpuData, "--no hex --");
   applyClass(element, "instructionDisabled");
   step.addEventListener("click", () => {
-    // const inst = window.cpuData.instruction;
-    // setAsmInstruction(window, inst);
     applyClass(element, "instruction");
   });
 }
