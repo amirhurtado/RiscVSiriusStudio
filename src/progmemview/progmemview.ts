@@ -173,36 +173,63 @@ function sendMessageToExtension(messageObject: any) {
   vscode.postMessage(messageObject);
 }
 
+function charWidth(): number {
+  // Taken from:
+  // https://w3schools.invisionzone.com/topic/23955-get-character-width/
+  // document.write(
+  //   "<span id='spn' style='position:absolute;top:-200;font-family:monospace'>w</span>"
+  // );
+  // const width = document.getElementById("spn")?.offsetWidth;
+  // return width ? width : 20;
+  return 9;
+}
+
+function sectionWidth() {
+  return charWidth() * 8;
+}
+
 function tableSetup(tableData: Array<MemInstruction>): Tabulator {
+  const minWidth = sectionWidth();
+  const maxWidth = sectionWidth();
   let table = new Tabulator("#progmem-table", {
     height: "100%",
     maxHeight: "100%",
     data: tableData,
-    layout: "fitDataStretch",
+    layout: "fitDataTable",
     reactiveData: true,
     index: "address",
     columns: [
       {
-        title: "Address",
+        title: "Addr.",
         field: "address",
+        headerHozAlign: "center",
         visible: true,
         headerSort: false
       },
       {
         title: "0x3",
         field: "value3",
+        headerHozAlign: "center",
+        minWidth: minWidth,
+        maxWidth: maxWidth,
         visible: true,
         headerSort: false
       },
       {
         title: "0x2",
         field: "value2",
+        headerHozAlign: "center",
+        minWidth: minWidth,
+        maxWidth: maxWidth,
         visible: true,
         headerSort: false
       },
       {
         title: "0x1",
         field: "value1",
+        headerHozAlign: "center",
+        minWidth: minWidth,
+        maxWidth: maxWidth,
         visible: true,
         headerSort: false
       },
@@ -210,6 +237,9 @@ function tableSetup(tableData: Array<MemInstruction>): Tabulator {
       {
         title: "0x0",
         field: "value0",
+        headerHozAlign: "center",
+        minWidth: minWidth,
+        maxWidth: maxWidth,
         visible: true,
         headerSort: false
       }
