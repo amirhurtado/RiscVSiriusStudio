@@ -1,7 +1,6 @@
 import {
   provideVSCodeDesignSystem,
   allComponents,
-  TextArea,
   Checkbox
 } from "@vscode/webview-ui-toolkit";
 import _ from "lodash";
@@ -48,9 +47,6 @@ function main() {
   table.on("rowDblClick", function (e, row) {
     const line = getSourceLineForInstruction(row);
     sendMessageToExtension({ command: "highlightCodeLine", lineNumber: line });
-    //e - the click event object
-    //row - row component
-    // row.getData();
     log("info", { message: "double click on row" });
   });
   log("info", { message: "Initializing progmem view [FINISHED]" });
@@ -106,7 +102,6 @@ function selectInstructionInTable(
 
   const sourceLine = line + 1;
   table.deselectRow();
-  // debug("selectInstruction on line " + sourceLine);
   const data = table.getData() as Array<MemInstruction>;
   const instruction = data.find((e) => {
     const currentPos = e.ir.location.start.line;
@@ -115,7 +110,7 @@ function selectInstructionInTable(
   if (instruction) {
     table.selectRow(instruction.address);
   } else {
-    // debug("Not found");
+    log("info", "line not found");
   }
 }
 

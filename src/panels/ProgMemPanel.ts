@@ -70,8 +70,6 @@ export class ProgMemPanelView implements WebviewViewProvider {
           break;
         case "log-info":
           logger().info("info", message.obj);
-          // console.log("log-info ", message.obj);
-          //log("trace", "simulator view " + text, message.meta);
           break;
         case "SHOW_WARNING_LOG":
           window.showWarningMessage(message.data.message);
