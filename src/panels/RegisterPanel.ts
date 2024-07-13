@@ -1,37 +1,56 @@
-import { WebviewViewProvider, WebviewView, Webview, Uri, EventEmitter, window } from "vscode";
+import {
+  WebviewViewProvider,
+  WebviewView,
+  Webview,
+  Uri,
+  EventEmitter,
+  window
+} from "vscode";
 import { getUri } from "../utilities/getUri";
 import { getNonce } from "../utilities/getNonce";
+import { logger } from "../utilities/logger";
 
 export class LeftPanelWebview implements WebviewViewProvider {
   constructor(
     private readonly extensionUri: Uri,
     private data: any,
     private _view: any = null
-  ) { 
-        this.extensionUri = extensionUri;
-    }
-  private onDidChangeTreeData: EventEmitter<any | undefined | null | void> = new EventEmitter<any | undefined | null | void>();
+  ) {
+    this.extensionUri = extensionUri;
+  }
+  private onDidChangeTreeData: EventEmitter<any | undefined | null | void> =
+    new EventEmitter<any | undefined | null | void>();
 
   refresh(context: any): void {
     this.onDidChangeTreeData.fire(null);
-    this._view.webview.html = this._getHtmlForWebview(this._view?.webview, this.extensionUri);
+    this._view.webview.html = this._getHtmlForWebview(
+      this._view?.webview,
+      this.extensionUri
+    );
   }
 
   //called when a view first becomes visible
   resolveWebviewView(webviewView: WebviewView): void | Thenable<void> {
     webviewView.webview.options = {
       enableScripts: true,
-      localResourceRoots: [this.extensionUri],
+      localResourceRoots: [this.extensionUri]
     };
-    webviewView.webview.html = this._getHtmlForWebview(webviewView.webview, this.extensionUri);
+    webviewView.webview.html = this._getHtmlForWebview(
+      webviewView.webview,
+      this.extensionUri
+    );
     this._view = webviewView;
     this.activateMessageListener();
   }
 
   private activateMessageListener() {
     this._view.webview.onDidReceiveMessage((message: any) => {
-      switch (message.action) {
-        case 'SHOW_WARNING_LOG':
+      switch (message.command) {
+        case "log-info":
+          logger().info("info", message.obj);
+          break;
+
+        case "SHOW_WARNING_LOG":
           window.showWarningMessage(message.data.message);
           break;
         default:
@@ -41,23 +60,19 @@ export class LeftPanelWebview implements WebviewViewProvider {
   }
 
   private _getHtmlForWebview(webview: Webview, extensionUri: Uri) {
-        const registerswUri = getUri(webview, extensionUri, ["out", "registersview.js"]);
-        const nonce = getNonce();
-        const tabulatorCSS = getUri(webview, extensionUri, [
-          "out",
-          "tabulator.min.css",
-        ]);
-        const registersViewCSS = getUri(webview, extensionUri, [
-          "out",
-          "registersview.css",
-        ]);
-
-        //  <vscode-text-area
-        //    id="debug-text"
-        //    type="text"
-        //    name="example-vscode-text-area"
-        //    style="width:100%;"
-        //  ></vscode-text-area>;
+    const registerswUri = getUri(webview, extensionUri, [
+      "out",
+      "registersview.js"
+    ]);
+    const nonce = getNonce();
+    const tabulatorCSS = getUri(webview, extensionUri, [
+      "out",
+      "tabulator.min.css"
+    ]);
+    const registersViewCSS = getUri(webview, extensionUri, [
+      "out",
+      "registersview.css"
+    ]);
 
     return `
       <html>

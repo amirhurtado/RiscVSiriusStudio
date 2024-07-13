@@ -6,33 +6,45 @@ import {
   allComponents,
   TextArea,
   Dropdown,
-  Checkbox,
+  Checkbox
 } from "@vscode/webview-ui-toolkit";
 
-import { CellComponent, TabulatorFull as Tabulator } from "tabulator-tables";
-import { Event, InputBox } from "vscode";
+import {
+  CellComponent,
+  GroupComponent,
+  TabulatorFull as Tabulator
+} from "tabulator-tables";
 
 provideVSCodeDesignSystem().register(allComponents);
 
 const vscode = acquireVsCodeApi();
 window.addEventListener("load", main);
 
-function debug(s: string) {
-  // const debugText = document.getElementById("debug-text") as TextArea;
-  // debugText.value = debugText.value.concat("\n", s); // = s + debugText.value;
+/**
+ * Log functionality. The logger that is actually used is in the extension. This
+ * function sends the message to the extension with all the information required
+ * to log it.
+ *
+ * @param kind the logger type. Can be info, error, etc.
+ * @param object the object to be logged/
+ */
+function log(kind: string, object: any = {}) {
+  sendMessageToExtension({ command: "log-" + kind, obj: { object } });
 }
 
-function main() {
-  let table = tableSetup();
+type RegisterValue = {
+  name: string;
+  value: string;
+  rawName: string;
+  rawValue: string;
+  watched: boolean;
+  modified: number;
+};
 
-  const lastModifiedCB = document.getElementById("sort-last-modified") as Checkbox;
-  lastModifiedCB.addEventListener("change", () => {
-    if (lastModifiedCB.checked) {
-      table.setSort("modified","desc");
-    } else {
-      table.setSort("id","desc");
-    }
-  });
+function main() {
+  log("info", "register view initialization");
+  let table = tableSetup();
+  sortCriteria(table);
 }
 function tableSetup(): Tabulator {
   const registers = [
@@ -67,72 +79,87 @@ function tableSetup(): Tabulator {
     "x28 t3",
     "x29 t4",
     "x30 t5",
-    "x31 t6",
+    "x31 t6"
   ];
-  let tableData = [] as Array<any>;
+  let tableData = [] as Array<RegisterValue>;
   let table = new Tabulator("#registers-table", {
-    height: "100%", // set height of table to enable virtual DOM
-    maxHeight: "100%",
-    data: tableData, //load initial data into table
-    layout: "fitDataStretch", //fit columns to width of table (optional)
-    movableRows: true,
+    maxHeight: "80vh",
+    data: tableData,
+    layout: "fitDataTable",
+    layoutColumnsOnNewData: true,
+    index: "rawName",
     reactiveData: true,
     groupBy: "watched",
     groupValues: [[true, false]],
-    groupHeader: (value, count, data, group) => {
-      let watchStr = "Watched";
-      if (!value) {
-        watchStr = "Unwatched";
-      }
-      return watchStr + "  (" + count + " registers)";
-    },
-    // headerVisible: false,
+    groupHeader: hederGrouping,
     columns: [
+      {
+        title: "Name",
+        field: "rawName",
+        visible: false,
+        headerSort: false
+        // headerFilter: "input"
+      },
       {
         title: "Name",
         field: "name",
         visible: true,
         headerSort: false,
-        headerFilter: "input",
-        
+        cssClass: "register-name",
+        frozen: true,
+        width: 70
+        // headerFilter: "input"
       },
       {
         title: "Value",
         field: "value",
         visible: true,
-        headerSort: false,
-        editor: "input",
-        editorParams: {
-          selectContents: true,
-          elementAttributes: {
-            maxLength: "32",
-          },
-        },
-        headerFilter: "input",
+        headerSort: false
+        //     editor: "input",
+        //     editorParams: {
+        //       selectContents: true,
+        //       elementAttributes: {
+        //         maxLength: "32"
+        //       }
+        //     },
+        //     headerFilter: "input"
       },
-      { title: "Value2", field: "base2", visible: false },
-      { title: "Value10", field: "base10", visible: false },
-      { title: "Value16", field: "base16", visible: false },
-      { title: "Watched", field: "watched", visible: false },
-      { title: "Modified", field: "modified", visible: false },
-    ],
+      //   { title: "Value2", field: "base2", visible: false },
+      //   { title: "Value10", field: "base10", visible: false },
+      //   { title: "Value16", field: "base16", visible: false },
+      { title: "Watched", field: "watched", visible: false }
+      //   { title: "Modified", field: "modified", visible: false }
+    ]
   });
+
   registers.forEach((e) => {
     const [xname, abi] = e.split(" ");
     const zeros32 = "00000000000000000000000000000000";
     tableData.push({
-      name: `${xname} (${abi})`,
+      name: `${xname} ${abi}`,
       value: zeros32,
-      base2: zeros32,
-      base10: "0",
-      base16: "0x0",
+      rawName: `${xname}`,
+      rawValue: zeros32,
       watched: false,
       modified: 0
     });
   });
-  
-  table.on("cellEdited", onCellChanged);
+
+  // table.on("cellEdited", onCellChanged);
   return table;
+}
+
+function hederGrouping(
+  value: boolean,
+  count: number,
+  data: any,
+  group: GroupComponent
+) {
+  let watchStr = "Watched";
+  if (!value) {
+    watchStr = "Unwatched";
+  }
+  return watchStr + "  (" + count + " registers)";
 }
 
 function onCellChanged(cell: CellComponent) {
@@ -155,4 +182,21 @@ function toDecimal(rawValue: string) {
 
 function toHex(rawValue: string) {
   return parseInt(rawValue).toString(16);
+}
+
+function sortCriteria(table: Tabulator) {
+  const lastModifiedCB = document.getElementById(
+    "sort-last-modified"
+  ) as Checkbox;
+  lastModifiedCB.addEventListener("change", () => {
+    if (lastModifiedCB.checked) {
+      table.setSort("modified", "desc");
+    } else {
+      table.setSort("id", "desc");
+    }
+  });
+}
+
+function sendMessageToExtension(messageObject: any) {
+  vscode.postMessage(messageObject);
 }

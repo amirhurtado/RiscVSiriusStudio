@@ -4,7 +4,30 @@
   src: url("RobotoMono.ttf");
 }
 
-.register-name, .register-value, .register-abi {
+.tabulator .tabulator-header .tabulator-col {
+  background: var(--vscode-titleBar-inactiveBackground) !important;
+}
+
+.tabulator-row.tabulator-selectable:hover,
+.tabulator-row.tabulator-selected {
+  font-weight: bold;
+  background-color: var(--vscode-errorForeground) !important;
+}
+
+.tabulator-header	{
+  font-family: Roboto Mono;
+  font-weight: bold;
+  font-size: 110%;
+}
+
+.register-name {
+  font-family: Roboto Mono;
+  font-weight: bold;
+}
+
+/* .register-name, .register-value, .register-abi {
+  font-family: Roboto Mono;
+  font-family: Roboto Mono;
   font-family: Roboto Mono;
   font-size: 100%;
 }
@@ -21,4 +44,4 @@
 .register-value:hover {
   font-family: Roboto Mono;
   font-weight: 700;
-}
+} */
