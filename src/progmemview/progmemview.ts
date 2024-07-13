@@ -203,6 +203,7 @@ function tableSetup(tableData: Array<MemInstruction>): Tabulator {
         title: "Addr.",
         field: "address",
         headerHozAlign: "center",
+        cssClass: "address-column",
         visible: true,
         headerSort: false
       },

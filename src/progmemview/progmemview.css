@@ -1,24 +1,25 @@
-
 @font-face {
   font-family: "Roboto Mono";
   src: url("RobotoMono.ttf");
 }
 
-.register-name, .register-value, .register-abi {
+.tabulator .tabulator-header .tabulator-col {
+  background: var(--vscode-titleBar-inactiveBackground) !important;
+}
+
+.tabulator-row.tabulator-selectable:hover,
+.tabulator-row.tabulator-selected {
+  font-weight: bold;
+  background-color: var(--vscode-errorForeground) !important;
+}
+
+.tabulator-header	{
   font-family: Roboto Mono;
-  font-size: 100%;
+  font-weight: bold;
+  font-size: 110%;
 }
 
-.register-abi {
-  font-weight: 700;
-  color: var(--vscode-button-background);
-}
-
-.register-name {
-  font-weight: 700;
-}
-
-.register-value:hover {
+.tabulator-cell	{
   font-family: Roboto Mono;
-  font-weight: 700;
+  font-size: 0.9em;
 }
