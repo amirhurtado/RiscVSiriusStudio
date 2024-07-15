@@ -186,7 +186,7 @@ function formatValueAsType(value: string, type: RegisterView): string {
     case "unsigned":
       return binaryToUnsignedDecimal(value);
     case "signed":
-      return "fix me";
+      return binaryToSignedDecimal(value);
     case 16:
       return "fix me";
     case "ascci":
@@ -203,6 +203,15 @@ function formatValueAsType(value: string, type: RegisterView): string {
  */
 function binaryToUnsignedDecimal(binary: string): string {
   return parseInt(binary, 2).toString();
+}
+
+/**
+ * Converts the binary representation of a number to a signed decimal.
+ * @param binary number representation
+ * @returns signed decimal representation
+ */
+function binaryToSignedDecimal(binary: string): string {
+  return (~~parseInt(binary, 2)).toString();
 }
 
 /**
@@ -288,6 +297,7 @@ function validUInt32(input: string): boolean {
   }
   return false;
 }
+
 /**
  * Checks if a binary is valid
  * @param input binary representation
@@ -304,13 +314,36 @@ function validBinary(input: string): boolean {
   return false;
 }
 
+/**
+ * Checks if a signed integer is valid
+ * @param input possibly signed decimal representation
+ * @returns whther input is a valid signed integer that fits in 32 bits.
+ */
+function validInt32(input: string): boolean {
+  log("info", "validate signed");
+
+  const signed = /^[-+]?\d+$/g;
+  const max32signed = 2147483647;
+  const min32signed = -2147483648;
+
+  const asInt = parseInt(input);
+  if (asInt >= min32signed && asInt <= max32signed && signed.test(input)) {
+    log("info", "validate signed passed");
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Tests whether the binary representation of value is a valid for the cpu.
+ * @param value value representation
+ * @param valType format in which the value is represented
+ * @returns
+ */
 function isValidAs(value: string, valType: RegisterView) {
   log("info", { msg: "isValid function called!", val: value, ty: valType });
 
-  // const max32signed = 2147483647;
-  // const signed = /^[-+]*\d+$/g;
   // const hex = /^[A-Fa-f0-9]{1,8}$/g;
-  // const min32signed = -2147483648;
 
   switch (valType) {
     case 2:
@@ -318,7 +351,7 @@ function isValidAs(value: string, valType: RegisterView) {
     case "unsigned":
       return validUInt32(value);
     case "signed":
-      return false;
+      return validInt32(value);
     case 16:
       return false;
   }
@@ -336,10 +369,12 @@ function valueFormatter(
   switch (viewType) {
     case 2:
       return binaryRepresentation(value);
-    case "signed":
+    case "signed": {
       log("info", "convert to signed ");
-      break;
-    case "unsigned":
+      const rvalue = parseInt(value, 2);
+      return ~~rvalue;
+    }
+    case "unsigned": {
       const rvalue = parseInt(value, 2);
       log("info", {
         message: "convert to unsigned ",
@@ -347,6 +382,7 @@ function valueFormatter(
         unsigned: rvalue
       });
       return rvalue;
+    }
     case 16:
       log("info", "convert to hex ");
       break;
@@ -455,6 +491,8 @@ function toBinary(value: string, vtype: RegisterView) {
     case "unsigned":
       return parseInt(value).toString(2);
     case "signed":
+      const num = parseInt(value);
+      return (num >>> 0).toString(2);
     case 16:
     case "ascci":
       break;
