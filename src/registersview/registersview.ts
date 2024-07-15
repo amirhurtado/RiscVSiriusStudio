@@ -12,6 +12,7 @@ import {
 import {
   CellComponent,
   GroupComponent,
+  RowComponent,
   TabulatorFull as Tabulator
 } from "tabulator-tables";
 
@@ -31,14 +32,16 @@ window.addEventListener("load", main);
 function log(kind: string, object: any = {}) {
   sendMessageToExtension({ command: "log-" + kind, obj: { object } });
 }
+const possibleViews = [2, "signed", "unsigned", 16, "ascci"];
+type RegisterView = typeof possibleViews[number];
 
 type RegisterValue = {
   name: string;
   value: string;
-  rawName: string;
   rawValue: string;
   watched: boolean;
   modified: number;
+  viewType: RegisterView;
 };
 
 function main() {
@@ -46,6 +49,7 @@ function main() {
   let table = tableSetup();
   sortCriteria(table);
 }
+
 function tableSetup(): Tabulator {
   const registers = [
     "x0 zero",
@@ -85,21 +89,20 @@ function tableSetup(): Tabulator {
   let table = new Tabulator("#registers-table", {
     maxHeight: "80vh",
     data: tableData,
-    layout: "fitDataTable",
+    // layout: "fitDataTable",
+    // layout: "fitDataStretch",
+    layout: "fitColumns",
     layoutColumnsOnNewData: true,
     index: "rawName",
     reactiveData: true,
     groupBy: "watched",
     groupValues: [[true, false]],
     groupHeader: hederGrouping,
+    groupUpdateOnCellEdit: true,
+    movableRows: true,
+    validationMode: "blocking",
+    // editTriggerEvent: undefined,
     columns: [
-      {
-        title: "Name",
-        field: "rawName",
-        visible: false,
-        headerSort: false
-        // headerFilter: "input"
-      },
       {
         title: "Name",
         field: "name",
@@ -107,46 +110,316 @@ function tableSetup(): Tabulator {
         headerSort: false,
         cssClass: "register-name",
         frozen: true,
-        width: 70
-        // headerFilter: "input"
+        width: 90,
+        formatter: registerNamesFormatter
       },
       {
         title: "Value",
         field: "value",
         visible: true,
-        headerSort: false
-        //     editor: "input",
-        //     editorParams: {
-        //       selectContents: true,
-        //       elementAttributes: {
-        //         maxLength: "32"
-        //       }
-        //     },
-        //     headerFilter: "input"
+        headerSort: false,
+        formatter: valueFormatter,
+        // validator: [{ type: validateValue }],
+        editor: valueEditor
       },
-      //   { title: "Value2", field: "base2", visible: false },
-      //   { title: "Value10", field: "base10", visible: false },
-      //   { title: "Value16", field: "base16", visible: false },
+      {
+        title: "",
+        field: "viewType",
+        visible: true,
+        width: 25,
+        headerSort: false,
+        editor: "list",
+        cellEdited: viewTypeEdited,
+        editorParams: {
+          values: possibleViews,
+          allowEmpty: false,
+          freetext: false
+        },
+        formatter: viewTypeFormatter
+      },
       { title: "Watched", field: "watched", visible: false }
-      //   { title: "Modified", field: "modified", visible: false }
     ]
   });
 
   registers.forEach((e) => {
     const [xname, abi] = e.split(" ");
-    const zeros32 = "00000000000000000000000000000000";
+    const zeros32 = "0";
     tableData.push({
       name: `${xname} ${abi}`,
       value: zeros32,
-      rawName: `${xname}`,
       rawValue: zeros32,
+      viewType: 2,
       watched: false,
       modified: 0
     });
   });
 
-  // table.on("cellEdited", onCellChanged);
+  table.on("rowDblClick", toggleWatched);
   return table;
+}
+
+/**
+ * Triggers format on the register value when a cell in the view type is
+ * detected. This will call {@function formatValueAsType} to refresh the view of
+ * the register value according to the new view type.
+ * @param cell modified view type cell
+ */
+function viewTypeEdited(cell: CellComponent) {
+  // const { value, viewType } = cell.getRow().getData();
+  // log("info", { msg: "Cell was edited!!!", newView: viewType, val: value });
+  cell.getRow().reformat();
+}
+
+/**
+ * Computes the representation of value according to view.
+ * @param value value in binary format.
+ * @param type the requested type.
+ * @returns the value represented in the requested type.
+ */
+function formatValueAsType(value: string, type: RegisterView): string {
+  switch (type) {
+    case "unsigned":
+      return binaryToUnsignedDecimal(value);
+    case "signed":
+      return "fix me";
+    case 16:
+      return "fix me";
+    case "ascci":
+      return value;
+  }
+  // type must be binary
+  return value;
+}
+
+/**
+ * Converts the binary representation of a number to an unsigned decimal.
+ * @param binary number representation
+ * @returns unsigned decimal representation
+ */
+function binaryToUnsignedDecimal(binary: string): string {
+  return parseInt(binary, 2).toString();
+}
+
+/**
+ * Creates an editor for a value cell. This editor takes into account the
+ * current view type to present the editied value according to its value.
+ *
+ * @param cell cell being edited.
+ * @param onRendered function to call when the cell is rendered.
+ * @param success function to call after a successful edition of the cell.
+ * @param cancel function to call when the edition is cancelled.
+ * @param editorParams additional parameters.
+ * @returns
+ */
+function valueEditor(
+  cell: CellComponent,
+  onRendered: any,
+  success: any,
+  cancel: any,
+  editorParams: any
+) {
+  const { name, value, viewType } = cell.getRow().getData();
+
+  log("info", {
+    msg: "valueEditor called",
+    rawValue: value,
+    currentVType: viewType,
+    reg: name
+  });
+  const viewValue = formatValueAsType(value, viewType);
+
+  let editor = document.createElement("input");
+  editor.value = viewValue;
+  editor.select();
+
+  onRendered(function () {
+    editor.focus();
+    log("info", "Called onRendered function");
+  });
+
+  function successFunc() {
+    // Validate the value here
+    const newValue = editor.value;
+    const valid = isValidAs(newValue, viewType);
+    log("info", { msg: "called success function", check: valid });
+    if (valid) {
+      const bin = toBinary(newValue);
+      success(bin);
+    } else {
+      editor.focus();
+      editor.style.background = "red";
+    }
+  }
+
+  editor.addEventListener("change", successFunc);
+  editor.addEventListener("blur", successFunc);
+  editor.addEventListener("keydown", (evt) => {
+    if (evt.key === "Escape") {
+      log("info", "Escape keypressed");
+      cancel();
+    }
+  });
+  return editor;
+}
+
+/**
+ * Checks if an unsigned integer is valid
+ * @param input decimal representation
+ * @returns whther input is a valid unsigned integer that fits in 32 bits.
+ */
+function validUInt32(input: string): boolean {
+  log("info", "validate unsigned");
+
+  const unsigned = /^\d+$/g;
+  const max32unsigned = 4294967295;
+
+  const asInt = parseInt(input);
+  if (asInt <= max32unsigned && unsigned.test(input)) {
+    log("info", "validate unsigned passed");
+    return true;
+  }
+  return false;
+}
+/**
+ * Checks if a binary is valid
+ * @param input binary representation
+ * @returns whther input is a valid 32 bits binary.
+ */
+function validBinary(input: string): boolean {
+  log("info", "validate binary");
+  const binary = /^[01]+$/g;
+
+  if (input.length <= 32 && binary.test(input)) {
+    log("info", "validate binary-passed");
+    return true;
+  }
+  return false;
+}
+
+function isValidAs(value: string, valType: RegisterView) {
+  log("info", { msg: "isValid function called!", val: value, ty: valType });
+
+  // const max32signed = 2147483647;
+  // const signed = /^[-+]*\d+$/g;
+  // const hex = /^[A-Fa-f0-9]{1,8}$/g;
+  // const min32signed = -2147483648;
+
+  switch (valType) {
+    case 2:
+      return validBinary(value);
+    case "unsigned":
+      return validUInt32(value);
+    case "signed":
+      return false;
+    case 16:
+      return false;
+  }
+  log("info", "none of the test matched");
+  return false;
+}
+
+function valueFormatter(
+  cell: CellComponent,
+  formatterParams: any,
+  onRendered: any
+) {
+  const { value, viewType } = cell.getData();
+  log("info", { msg: "Value formatter called", stored: value, type: viewType });
+  switch (viewType) {
+    case 2:
+      return binaryRepresentation(value);
+    case "signed":
+      log("info", "convert to signed ");
+      break;
+    case "unsigned":
+      const rvalue = parseInt(value, 2);
+      log("info", {
+        message: "convert to unsigned ",
+        binary: value,
+        unsigned: rvalue
+      });
+      return rvalue;
+    case 16:
+      log("info", "convert to hex ");
+      break;
+  }
+  return value;
+}
+
+function binaryRepresentation(value: string) {
+  const out = extractBinGroups(value);
+  let repr = "32'b";
+  if (out) {
+    if (out.y?.length === 0) {
+      repr = repr + "0";
+    } else {
+      repr = repr + out.y;
+    }
+  }
+  return repr;
+}
+/**
+ * Splits a binary number in two parts:
+ *
+ * y: the meaninful part of the number
+ * x: the meaningless part which consists of all zeroes.
+ * @param str a binary number representation
+ * @returns {x: val, y: val}
+ */
+function extractBinGroups(str: string) {
+  const regex = /^(?<x>0*)(?<y>1*[01]*)$/;
+  const match = str.match(regex);
+  if (match) {
+    return {
+      x: match.groups?.x,
+      y: match.groups?.y
+    };
+  }
+  return null;
+}
+
+function registerNamesFormatter(
+  cell: CellComponent,
+  formatterParams: any,
+  onRendered: any
+) {
+  const { name } = cell.getData();
+  const [xname, abiname] = name.split(" ");
+  return xname + " (" + abiname + ")";
+}
+
+function viewTypeFormatter(
+  cell: CellComponent,
+  formatterParams: any,
+  onRendered: any
+) {
+  const { viewType } = cell.getData();
+  let tag: string = "";
+  switch (viewType) {
+    case 2:
+      tag = "bin";
+      break;
+    case "unsigned":
+      tag = "10";
+      break;
+    case "signed":
+      tag = "±10";
+      break;
+    case 16:
+      tag = "hex";
+      break;
+    default:
+      tag = viewType;
+      break;
+  }
+  return `<vscode-tag><b>${tag}</b></vscode-tag>`;
+  // return '<vscode-tag><img src="binary-svgrepo-com.svg"></img></vscode-tag>';
+}
+function toggleWatched(event: UIEvent, row: RowComponent) {
+  const { rawName: rn, watched: w } = row.getData();
+  row.update({ rawName: rn, watched: !w }).catch((error) => {
+    log("info", { message: "update error", rawName: rn, watched: w });
+  });
 }
 
 function hederGrouping(
@@ -162,26 +435,18 @@ function hederGrouping(
   return watchStr + "  (" + count + " registers)";
 }
 
-function onCellChanged(cell: CellComponent) {
-  const newVal = cell.getValue() as string;
-  const data = cell.getRow().getData();
-  data.base2 = toBinary(newVal);
-  data.base10 = toDecimal(newVal);
-  data.base16 = toHex(newVal);
-  data.value = newVal;
-  data.modified = Number(new Date());
-}
-
 function toBinary(rawValue: string) {
   return parseInt(rawValue).toString(2);
 }
 
-function toDecimal(rawValue: string) {
-  return rawValue;
-}
-
-function toHex(rawValue: string) {
-  return parseInt(rawValue).toString(16);
+/**
+ * Converts the binary representation of a number to decimal.
+ * @param binary number representation
+ * @returns decimal representation
+ */
+function binaryToDecimal(binary: string) {
+  // Wrong! must take into account two's complement
+  return parseInt(binary, 2);
 }
 
 function sortCriteria(table: Tabulator) {
@@ -197,6 +462,10 @@ function sortCriteria(table: Tabulator) {
   });
 }
 
+/**
+ * View extension communication.
+ * @param messageObject message to send to the extension
+ */
 function sendMessageToExtension(messageObject: any) {
   vscode.postMessage(messageObject);
 }

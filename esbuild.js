@@ -28,23 +28,20 @@ const extensionConfig = {
       // verbose:true,
       assets: [
         {
-          from: [
-            "./src/webview/styles.css",
-            "./src/webview/cpu0Events.js",
-          ],
+          from: ["./src/webview/styles.css", "./src/webview/cpu0Events.js"],
           to: ["./out"],
         },
         {
-          from: './media/RobotoMono.ttf',
-          to: './out'
+          from: "./media/RobotoMono.ttf",
+          to: "./out",
         },
         {
-          from: './media/tabulator.min.css',
-          to: './out'
-        }
-      // watch: true
-    ]
-}),
+          from: "./media/tabulator.min.css",
+          to: "./out",
+        },
+        // watch: true
+      ],
+    }),
   ],
   external: ["vscode"],
 };
@@ -68,10 +65,16 @@ const registersviewConfig = {
   plugins: [
     copy({
       resolveFrom: "cwd",
-      assets: {
-        from: './src/registersview/registersview.css',
-        to: './out',
-      },
+      assets: [
+        {
+          from: "./src/registersview/registersview.css",
+          to: "./out",
+        },
+        {
+          from: "./media/binary-svgrepo-com.svg",
+          to: "./out",
+        },
+      ],
       // watch: true
     }),
   ],
@@ -87,8 +90,8 @@ const progmemviewConfig = {
     copy({
       resolveFrom: "cwd",
       assets: {
-        from: './src/progmemview/progmemview.css',
-        to: './out',
+        from: "./src/progmemview/progmemview.css",
+        to: "./out",
       },
       // watch: true
     }),
