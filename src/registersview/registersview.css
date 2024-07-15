@@ -20,46 +20,48 @@
   font-size: 110%;
 }
 
+/**
+ * Class used by the register name column in the table.
+ */
 .register-name {
   font-family: Roboto Mono;
   font-weight: bold;
 }
 
+/**
+ * Class used by the register value column in the table.
+ */
+.register-value {
+  font-family: Roboto Mono;
+}
+/**
+ * Class used by the tags that represent the types in which the value is currently visualized.
+ */
 .view-type {
   font-family: Roboto Mono;
-  font-weight: bold;
+  border: none;
+  display: inline-block;
+  text-align: left;
+  background-color: var(--vscode-titleBar-inactiveBackground);
+  appearance: secondary;
+  width: 100%;
+  pad: 0 !important;
+  margin : 0 !important;
 }
-
+/**
+ * Class used by the value editor.
+ */
 .register-editor {
   font-family: Roboto Mono;
   font-size: medium;
   width: 100%;
   height: 100%;
 }
-
+/**
+ * Class used by the value editor when the value is not accepted.
+ */
 .register-editor-error {
   font-weight: 700;
   color: red;
   font-size: large;
 }
-
-/* .register-name, .register-value, .register-abi {
-  font-family: Roboto Mono;
-  font-family: Roboto Mono;
-  font-family: Roboto Mono;
-  font-size: 100%;
-}
-
-.register-abi {
-  font-weight: 700;
-  color: var(--vscode-button-background);
-}
-
-.register-name {
-  font-weight: 700;
-}
-
-.register-value:hover {
-  font-family: Roboto Mono;
-  font-weight: 700;
-} */

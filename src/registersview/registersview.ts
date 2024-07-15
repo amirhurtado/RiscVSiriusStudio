@@ -116,6 +116,7 @@ function tableSetup(): Tabulator {
         field: "value",
         visible: true,
         headerSort: false,
+        cssClass: "register-value",
         formatter: valueFormatter,
         editor: valueEditor
       },
@@ -123,7 +124,7 @@ function tableSetup(): Tabulator {
         title: "",
         field: "viewType",
         visible: true,
-        width: 25,
+        width: 60,
         headerSort: false,
         editor: "list",
         cellEdited: viewTypeEdited,
@@ -410,7 +411,8 @@ function viewTypeFormatter(
       tag = viewType;
       break;
   }
-  return `<vscode-tag class="view-type">${tag}</vscode-tag>`;
+  return `<button class="view-type">${tag}</button>`;
+  // return `<vscode-tag class="view-type">${tag}</vscode-tag>`;
   // return '<vscode-tag><img src="binary-svgrepo-com.svg"></img></vscode-tag>';
 }
 function toggleWatched(event: UIEvent, row: RowComponent) {
