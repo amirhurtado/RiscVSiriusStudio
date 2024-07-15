@@ -118,7 +118,8 @@ function tableSetup(): Tabulator {
         headerSort: false,
         cssClass: "register-value",
         formatter: valueFormatter,
-        editor: valueEditor
+        editor: valueEditor,
+        editable: editableValue
       },
       {
         title: "",
@@ -156,6 +157,14 @@ function tableSetup(): Tabulator {
   return table;
 }
 
+/**
+ *
+ * @param cell Function called by tabulator to decide whether a cell can be edited.
+ */
+function editableValue(cell: CellComponent) {
+  const { name } = cell.getRow().getData();
+  return name !== "x0 zero";
+}
 /**
  * Triggers format on the register value when a cell in the view type is
  * detected. This will call {@function formatValueAsType} to refresh the view of
