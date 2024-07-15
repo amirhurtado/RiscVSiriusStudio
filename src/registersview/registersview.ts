@@ -188,7 +188,7 @@ function formatValueAsType(value: string, type: RegisterView): string {
     case "signed":
       return binaryToSignedDecimal(value);
     case 16:
-      return "fix me";
+      return binaryToHex(value);
     case "ascci":
       return value;
   }
@@ -212,6 +212,16 @@ function binaryToUnsignedDecimal(binary: string): string {
  */
 function binaryToSignedDecimal(binary: string): string {
   return (~~parseInt(binary, 2)).toString();
+}
+
+/**
+ * Converts the binary representation of a number to an hexadecimal
+ * representation.
+ * @param binary number representation
+ * @returns hexdecimal representation
+ */
+function binaryToHex(binary: string): string {
+  return parseInt(binary, 2).toString(16);
 }
 
 /**
@@ -335,6 +345,23 @@ function validInt32(input: string): boolean {
 }
 
 /**
+ * Checks if a hezadecimal value is valid
+ * @param input hexadecimal representation
+ * @returns whther input is a valid hexadecimal that fits in 32 bits.
+ */
+function validHex(input: string): boolean {
+  log("info", "validate hex");
+  const hex = /^[A-Fa-f0-9]{1,8}$/g;
+
+  const asInt = parseInt(input);
+  if (hex.test(input)) {
+    log("info", "validate hex passed");
+    return true;
+  }
+  return false;
+}
+
+/**
  * Tests whether the binary representation of value is a valid for the cpu.
  * @param value value representation
  * @param valType format in which the value is represented
@@ -342,8 +369,6 @@ function validInt32(input: string): boolean {
  */
 function isValidAs(value: string, valType: RegisterView) {
   log("info", { msg: "isValid function called!", val: value, ty: valType });
-
-  // const hex = /^[A-Fa-f0-9]{1,8}$/g;
 
   switch (valType) {
     case 2:
@@ -353,7 +378,7 @@ function isValidAs(value: string, valType: RegisterView) {
     case "signed":
       return validInt32(value);
     case 16:
-      return false;
+      return validHex(value);
   }
   log("info", "none of the test matched");
   return false;
@@ -383,9 +408,15 @@ function valueFormatter(
       });
       return rvalue;
     }
-    case 16:
-      log("info", "convert to hex ");
-      break;
+    case 16: {
+      const rvalue = parseInt(value, 2).toString(16);
+      log("info", {
+        message: "convert to unsigned ",
+        binary: value,
+        unsigned: rvalue
+      });
+      return rvalue;
+    }
   }
   return value;
 }
@@ -490,25 +521,20 @@ function toBinary(value: string, vtype: RegisterView) {
       return value;
     case "unsigned":
       return parseInt(value).toString(2);
-    case "signed":
+    case "signed": {
       const num = parseInt(value);
       return (num >>> 0).toString(2);
-    case 16:
+    }
+    case 16: {
+      const num = parseInt(value, 16);
+      return num.toString(2);
+    }
     case "ascci":
       break;
   }
   return "";
 }
 
-/**
- * Converts the binary representation of a number to decimal.
- * @param binary number representation
- * @returns decimal representation
- */
-function binaryToDecimal(binary: string) {
-  // Wrong! must take into account two's complement
-  return parseInt(binary, 2);
-}
 function sortTable(table: Tabulator) {
   const lastModifiedCB = document.getElementById(
     "sort-last-modified"
