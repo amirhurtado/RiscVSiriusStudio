@@ -1,11 +1,6 @@
 import {
   provideVSCodeDesignSystem,
-  vsCodeButton,
-  Button,
-  TextField,
   allComponents,
-  TextArea,
-  Dropdown,
   Checkbox
 } from "@vscode/webview-ui-toolkit";
 
@@ -15,7 +10,6 @@ import {
   RowComponent,
   TabulatorFull as Tabulator
 } from "tabulator-tables";
-import { Container } from "winston";
 
 provideVSCodeDesignSystem().register(allComponents);
 
@@ -42,6 +36,7 @@ type RegisterValue = {
   rawValue: string;
   watched: boolean;
   modified: number;
+  id: number;
   viewType: RegisterView;
 };
 
@@ -136,11 +131,13 @@ function tableSetup(): Tabulator {
         },
         formatter: viewTypeFormatter
       },
-      { title: "Watched", field: "watched", visible: false }
+      { title: "Watched", field: "watched", visible: false },
+      { title: "Modified", field: "modified", visible: false },
+      { title: "id", field: "id", visible: false }
     ]
   });
 
-  registers.forEach((e) => {
+  registers.forEach((e, idx) => {
     const [xname, abi] = e.split(" ");
     const zeros32 = "0";
     tableData.push({
@@ -149,11 +146,13 @@ function tableSetup(): Tabulator {
       rawValue: zeros32,
       viewType: 2,
       watched: false,
-      modified: 0
+      modified: 0,
+      id: idx
     });
   });
 
   table.on("rowDblClick", toggleWatched);
+  table.on("cellEdited", modifiedCell);
   return table;
 }
 
@@ -165,6 +164,7 @@ function editableValue(cell: CellComponent) {
   const { name } = cell.getRow().getData();
   return name !== "x0 zero";
 }
+
 /**
  * Triggers format on the register value when a cell in the view type is
  * detected. This will call {@function formatValueAsType} to refresh the view of
@@ -424,6 +424,10 @@ function viewTypeFormatter(
   // return `<vscode-tag class="view-type">${tag}</vscode-tag>`;
   // return '<vscode-tag><img src="binary-svgrepo-com.svg"></img></vscode-tag>';
 }
+
+function modifiedCell(cell: CellComponent) {
+  cell.getRow().update({ modified: Date.now() });
+}
 function toggleWatched(event: UIEvent, row: RowComponent) {
   const { rawName: rn, watched: w } = row.getData();
   row.update({ rawName: rn, watched: !w }).catch((error) => {
@@ -467,17 +471,27 @@ function binaryToDecimal(binary: string) {
   // Wrong! must take into account two's complement
   return parseInt(binary, 2);
 }
+function sortTable(table: Tabulator) {
+  const lastModifiedCB = document.getElementById(
+    "sort-last-modified"
+  ) as Checkbox;
+  if (lastModifiedCB.checked) {
+    table.setSort("modified", "desc");
+  } else {
+    table.setSort("id", "asc");
+  }
+}
 
 function sortCriteria(table: Tabulator) {
+  table.on("cellEdited", () => {
+    sortTable(table);
+  });
+
   const lastModifiedCB = document.getElementById(
     "sort-last-modified"
   ) as Checkbox;
   lastModifiedCB.addEventListener("change", () => {
-    if (lastModifiedCB.checked) {
-      table.setSort("modified", "desc");
-    } else {
-      table.setSort("id", "desc");
-    }
+    sortTable(table);
   });
 }
 
