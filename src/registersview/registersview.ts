@@ -15,6 +15,7 @@ import {
   RowComponent,
   TabulatorFull as Tabulator
 } from "tabulator-tables";
+import { Container } from "winston";
 
 provideVSCodeDesignSystem().register(allComponents);
 
@@ -89,8 +90,6 @@ function tableSetup(): Tabulator {
   let table = new Tabulator("#registers-table", {
     maxHeight: "80vh",
     data: tableData,
-    // layout: "fitDataTable",
-    // layout: "fitDataStretch",
     layout: "fitColumns",
     layoutColumnsOnNewData: true,
     index: "rawName",
@@ -101,7 +100,6 @@ function tableSetup(): Tabulator {
     groupUpdateOnCellEdit: true,
     movableRows: true,
     validationMode: "blocking",
-    // editTriggerEvent: undefined,
     columns: [
       {
         title: "Name",
@@ -119,7 +117,6 @@ function tableSetup(): Tabulator {
         visible: true,
         headerSort: false,
         formatter: valueFormatter,
-        // validator: [{ type: validateValue }],
         editor: valueEditor
       },
       {
@@ -165,8 +162,6 @@ function tableSetup(): Tabulator {
  * @param cell modified view type cell
  */
 function viewTypeEdited(cell: CellComponent) {
-  // const { value, viewType } = cell.getRow().getData();
-  // log("info", { msg: "Cell was edited!!!", newView: viewType, val: value });
   cell.getRow().reformat();
 }
 
@@ -229,25 +224,28 @@ function valueEditor(
   const viewValue = formatValueAsType(value, viewType);
 
   let editor = document.createElement("input");
+  editor.className = "register-editor";
   editor.value = viewValue;
   editor.select();
 
   onRendered(function () {
     editor.focus();
-    log("info", "Called onRendered function");
   });
 
   function successFunc() {
-    // Validate the value here
     const newValue = editor.value;
     const valid = isValidAs(newValue, viewType);
-    log("info", { msg: "called success function", check: valid });
+    log("info", {
+      msg: "called success function",
+      check: valid,
+      newValue: newValue
+    });
     if (valid) {
-      const bin = toBinary(newValue);
+      const bin = toBinary(newValue, viewType);
       success(bin);
     } else {
       editor.focus();
-      editor.style.background = "red";
+      editor.className = "register-editor-error";
     }
   }
 
@@ -412,7 +410,7 @@ function viewTypeFormatter(
       tag = viewType;
       break;
   }
-  return `<vscode-tag><b>${tag}</b></vscode-tag>`;
+  return `<vscode-tag class="view-type">${tag}</vscode-tag>`;
   // return '<vscode-tag><img src="binary-svgrepo-com.svg"></img></vscode-tag>';
 }
 function toggleWatched(event: UIEvent, row: RowComponent) {
@@ -435,8 +433,18 @@ function hederGrouping(
   return watchStr + "  (" + count + " registers)";
 }
 
-function toBinary(rawValue: string) {
-  return parseInt(rawValue).toString(2);
+function toBinary(value: string, vtype: RegisterView) {
+  switch (vtype) {
+    case 2:
+      return value;
+    case "unsigned":
+      return parseInt(value).toString(2);
+    case "signed":
+    case 16:
+    case "ascci":
+      break;
+  }
+  return "";
 }
 
 /**

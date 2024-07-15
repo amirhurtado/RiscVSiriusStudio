@@ -25,6 +25,24 @@
   font-weight: bold;
 }
 
+.view-type {
+  font-family: Roboto Mono;
+  font-weight: bold;
+}
+
+.register-editor {
+  font-family: Roboto Mono;
+  font-size: medium;
+  width: 100%;
+  height: 100%;
+}
+
+.register-editor-error {
+  font-weight: 700;
+  color: red;
+  font-size: large;
+}
+
 /* .register-name, .register-value, .register-abi {
   font-family: Roboto Mono;
   font-family: Roboto Mono;
