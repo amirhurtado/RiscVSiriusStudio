@@ -425,6 +425,14 @@ function isValidAs(value: string, valType: RegisterView) {
   return false;
 }
 
+/**
+ * Computes the textual representation of each value in the table based on its
+ * type.
+ * @param cell to be formatted
+ * @param formatterParams not used
+ * @param onRendered not used
+ * @returns the text to display in the view
+ */
 function valueFormatter(
   cell: CellComponent,
   formatterParams: any,
@@ -464,6 +472,13 @@ function valueFormatter(
   return value;
 }
 
+/**
+ * Computes the representation of a binary value in the view.This is used to
+ * short the way binary numbers are presented to the user. I (Gustavo) chose a
+ * verilog style representation but it has to be discussed.
+ * @param value to represent
+ * @returns
+ */
 function binaryRepresentation(value: string) {
   const out = extractBinGroups(value);
   let repr = "32'b";
@@ -496,6 +511,15 @@ function extractBinGroups(str: string) {
   return null;
 }
 
+/**
+ * Formatter for the column containing the register's name.
+ *
+ * This is just for the text. The style is modified using css.
+ * @param cell to format
+ * @param formatterParams not used
+ * @param onRendered not used
+ * @returns the name for the register in the view
+ */
 function registerNamesFormatter(
   cell: CellComponent,
   formatterParams: any,
@@ -506,6 +530,13 @@ function registerNamesFormatter(
   return xname + " (" + abiname + ")";
 }
 
+/**
+ * Formats the elements in the type column.
+ * @param cell to be rendered
+ * @param formatterParams not used
+ * @param onRendered not used
+ * @returns html code for the rendered view
+ */
 function viewTypeFormatter(
   cell: CellComponent,
   formatterParams: any,
@@ -535,9 +566,20 @@ function viewTypeFormatter(
   // return '<vscode-tag><img src="binary-svgrepo-com.svg"></img></vscode-tag>';
 }
 
+/**
+ * Assigns an increasing number (time based) when a cell is editted. This allows
+ * for sorting the table according to modification of values.
+ * @param cell that was editted
+ */
 function modifiedCell(cell: CellComponent) {
   cell.getRow().update({ modified: Date.now() });
 }
+
+/**
+ * Toggles the value of the watched field in a row
+ * @param event
+ * @param row to toggle watched value for.
+ */
 function toggleWatched(event: UIEvent, row: RowComponent) {
   const { rawName: rn, watched: w } = row.getData();
   row.update({ rawName: rn, watched: !w }).catch((error) => {
@@ -545,6 +587,11 @@ function toggleWatched(event: UIEvent, row: RowComponent) {
   });
 }
 
+/**
+ * Name generation for the froups in the table.
+ * @returns The name of the group according to the number of watched and
+ * unwatched registers.
+ */
 function hederGrouping(
   value: boolean,
   count: number,
@@ -558,6 +605,12 @@ function hederGrouping(
   return watchStr + "  (" + count + " registers)";
 }
 
+/**
+ * Translates user input depending on the specific type into a string of bits.
+ * @param value as the user typed in the input box
+ * @param vtype type selected when the user edited the cell
+ * @returns value as a binary string
+ */
 function toBinary(value: string, vtype: RegisterView) {
   log("info", { msg: "toBinary called", val: value, type: vtype });
 
@@ -574,21 +627,24 @@ function toBinary(value: string, vtype: RegisterView) {
       const num = parseInt(value, 16);
       return num.toString(2);
     }
-    case "ascii":
+    case "ascii": {
       const array = Array.from(value);
       const result = array.reduce((acc, char) => {
         const charAscii = char.charCodeAt(0);
         const charBin = charAscii.toString(2).padStart(8, "0");
         return acc + charBin;
       }, "");
-
-      log("info", { msg: "toBinary ascii case", array: array });
-      log("info", { msg: "toBinary return", res: result });
       return result;
+    }
   }
   return "";
 }
 
+/**
+ * Sest the sorting of the table view to either last modification or "register
+ * name" criteria.
+ * @param table view to sort
+ */
 function sortTable(table: Tabulator) {
   const lastModifiedCB = document.getElementById(
     "sort-last-modified"
@@ -600,6 +656,10 @@ function sortTable(table: Tabulator) {
   }
 }
 
+/**
+ * Installs the trigger for sorting the table view.
+ * @param table table to sort
+ */
 function sortCriteria(table: Tabulator) {
   table.on("cellEdited", () => {
     sortTable(table);
