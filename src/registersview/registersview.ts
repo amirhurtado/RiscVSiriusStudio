@@ -27,7 +27,17 @@ window.addEventListener("load", main);
 function log(kind: string, object: any = {}) {
   sendMessageToExtension({ command: "log-" + kind, obj: { object } });
 }
-const possibleViews = [2, "signed", "unsigned", 16, "ascci"];
+
+/**
+ * Type definition for the possible views on a binary string.
+ *
+ * - 2: binary view
+ * - "signed": as a signed decimal number
+ * - "unsigned": as an unsigned decimal number
+ * - 16: as an hexadecimal number
+ * - ascii: as a sequence of 8 bits ascii characters (left to right)
+ */
+const possibleViews = [2, "signed", "unsigned", 16, "ascii"];
 type RegisterView = typeof possibleViews[number];
 
 type RegisterValue = {
@@ -189,8 +199,8 @@ function formatValueAsType(value: string, type: RegisterView): string {
       return binaryToSignedDecimal(value);
     case 16:
       return binaryToHex(value);
-    case "ascci":
-      return value;
+    case "ascii":
+      return binaryToAscii(value);
   }
   // type must be binary
   return value;
@@ -222,6 +232,24 @@ function binaryToSignedDecimal(binary: string): string {
  */
 function binaryToHex(binary: string): string {
   return parseInt(binary, 2).toString(16);
+}
+
+/**
+ * Converts the binary representation to an ascii sequence.
+ * @param binary representation
+ * @returns ascii representation
+ */
+function binaryToAscii(binary: string): string {
+  const wordCodes = binary.match(/.{1,8}/g);
+  if (!wordCodes) {
+    return "fix me!!";
+  }
+  const word = wordCodes.map((code) => {
+    const asc = parseInt(code, 2);
+    return String.fromCharCode(asc);
+  });
+
+  return word.join("");
 }
 
 /**
@@ -267,7 +295,8 @@ function valueEditor(
     log("info", {
       msg: "called success function",
       check: valid,
-      newValue: newValue
+      newValue: newValue,
+      type: viewType
     });
     if (valid) {
       const bin = toBinary(newValue, viewType);
@@ -345,7 +374,7 @@ function validInt32(input: string): boolean {
 }
 
 /**
- * Checks if a hezadecimal value is valid
+ * Checks if a hexadecimal value is valid
  * @param input hexadecimal representation
  * @returns whther input is a valid hexadecimal that fits in 32 bits.
  */
@@ -353,12 +382,22 @@ function validHex(input: string): boolean {
   log("info", "validate hex");
   const hex = /^[A-Fa-f0-9]{1,8}$/g;
 
-  const asInt = parseInt(input);
   if (hex.test(input)) {
     log("info", "validate hex passed");
     return true;
   }
   return false;
+}
+
+/**
+ * Checks if a string value is valid
+ * @param input string representation
+ * @returns whther input is a valid string that fits in 32 bits.
+ */
+function validAscii(input: string): boolean {
+  log("info", "validate ascii");
+
+  return input.length <= 4;
 }
 
 /**
@@ -379,8 +418,10 @@ function isValidAs(value: string, valType: RegisterView) {
       return validInt32(value);
     case 16:
       return validHex(value);
+    case "ascii":
+      return validAscii(value);
   }
-  log("info", "none of the test matched");
+  log("info", { msg: "none of the test matched", type: valType });
   return false;
 }
 
@@ -396,11 +437,10 @@ function valueFormatter(
       return binaryRepresentation(value);
     case "signed": {
       log("info", "convert to signed ");
-      const rvalue = parseInt(value, 2);
-      return ~~rvalue;
+      return binaryToSignedDecimal(value);
     }
     case "unsigned": {
-      const rvalue = parseInt(value, 2);
+      const rvalue = binaryToUnsignedDecimal(value);
       log("info", {
         message: "convert to unsigned ",
         binary: value,
@@ -409,13 +449,16 @@ function valueFormatter(
       return rvalue;
     }
     case 16: {
-      const rvalue = parseInt(value, 2).toString(16);
+      const rvalue = binaryToHex(value);
       log("info", {
         message: "convert to unsigned ",
         binary: value,
         unsigned: rvalue
       });
       return rvalue;
+    }
+    case "ascii": {
+      return binaryToAscii(value);
     }
   }
   return value;
@@ -516,6 +559,8 @@ function hederGrouping(
 }
 
 function toBinary(value: string, vtype: RegisterView) {
+  log("info", { msg: "toBinary called", val: value, type: vtype });
+
   switch (vtype) {
     case 2:
       return value;
@@ -529,8 +574,17 @@ function toBinary(value: string, vtype: RegisterView) {
       const num = parseInt(value, 16);
       return num.toString(2);
     }
-    case "ascci":
-      break;
+    case "ascii":
+      const array = Array.from(value);
+      const result = array.reduce((acc, char) => {
+        const charAscii = char.charCodeAt(0);
+        const charBin = charAscii.toString(2).padStart(8, "0");
+        return acc + charBin;
+      }, "");
+
+      log("info", { msg: "toBinary ascii case", array: array });
+      log("info", { msg: "toBinary return", res: result });
+      return result;
   }
   return "";
 }
