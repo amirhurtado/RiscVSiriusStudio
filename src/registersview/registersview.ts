@@ -11,6 +11,20 @@ import {
   TabulatorFull as Tabulator
 } from "tabulator-tables";
 
+import {
+  binaryToUInt,
+  binaryToInt,
+  binaryToHex,
+  binaryToAscii,
+  binaryRepresentation,
+  validUInt32,
+  validInt32,
+  validHex,
+  validBinary,
+  validAscii,
+  toBinary
+} from "../utilities/conversions";
+
 provideVSCodeDesignSystem().register(allComponents);
 
 const vscode = acquireVsCodeApi();
@@ -194,9 +208,9 @@ function viewTypeEdited(cell: CellComponent) {
 function formatValueAsType(value: string, type: RegisterView): string {
   switch (type) {
     case "unsigned":
-      return binaryToUnsignedDecimal(value);
+      return binaryToUInt(value);
     case "signed":
-      return binaryToSignedDecimal(value);
+      return binaryToInt(value);
     case 16:
       return binaryToHex(value);
     case "ascii":
@@ -204,52 +218,6 @@ function formatValueAsType(value: string, type: RegisterView): string {
   }
   // type must be binary
   return value;
-}
-
-/**
- * Converts the binary representation of a number to an unsigned decimal.
- * @param binary number representation
- * @returns unsigned decimal representation
- */
-function binaryToUnsignedDecimal(binary: string): string {
-  return parseInt(binary, 2).toString();
-}
-
-/**
- * Converts the binary representation of a number to a signed decimal.
- * @param binary number representation
- * @returns signed decimal representation
- */
-function binaryToSignedDecimal(binary: string): string {
-  return (~~parseInt(binary, 2)).toString();
-}
-
-/**
- * Converts the binary representation of a number to an hexadecimal
- * representation.
- * @param binary number representation
- * @returns hexdecimal representation
- */
-function binaryToHex(binary: string): string {
-  return parseInt(binary, 2).toString(16);
-}
-
-/**
- * Converts the binary representation to an ascii sequence.
- * @param binary representation
- * @returns ascii representation
- */
-function binaryToAscii(binary: string): string {
-  const wordCodes = binary.match(/.{1,8}/g);
-  if (!wordCodes) {
-    return "fix me!!";
-  }
-  const word = wordCodes.map((code) => {
-    const asc = parseInt(code, 2);
-    return String.fromCharCode(asc);
-  });
-
-  return word.join("");
 }
 
 /**
@@ -319,88 +287,6 @@ function valueEditor(
 }
 
 /**
- * Checks if an unsigned integer is valid
- * @param input decimal representation
- * @returns whther input is a valid unsigned integer that fits in 32 bits.
- */
-function validUInt32(input: string): boolean {
-  log("info", "validate unsigned");
-
-  const unsigned = /^\d+$/g;
-  const max32unsigned = 4294967295;
-
-  const asInt = parseInt(input);
-  if (asInt <= max32unsigned && unsigned.test(input)) {
-    log("info", "validate unsigned passed");
-    return true;
-  }
-  return false;
-}
-
-/**
- * Checks if a binary is valid
- * @param input binary representation
- * @returns whther input is a valid 32 bits binary.
- */
-function validBinary(input: string): boolean {
-  log("info", "validate binary");
-  const binary = /^[01]+$/g;
-
-  if (input.length <= 32 && binary.test(input)) {
-    log("info", "validate binary-passed");
-    return true;
-  }
-  return false;
-}
-
-/**
- * Checks if a signed integer is valid
- * @param input possibly signed decimal representation
- * @returns whther input is a valid signed integer that fits in 32 bits.
- */
-function validInt32(input: string): boolean {
-  log("info", "validate signed");
-
-  const signed = /^[-+]?\d+$/g;
-  const max32signed = 2147483647;
-  const min32signed = -2147483648;
-
-  const asInt = parseInt(input);
-  if (asInt >= min32signed && asInt <= max32signed && signed.test(input)) {
-    log("info", "validate signed passed");
-    return true;
-  }
-  return false;
-}
-
-/**
- * Checks if a hexadecimal value is valid
- * @param input hexadecimal representation
- * @returns whther input is a valid hexadecimal that fits in 32 bits.
- */
-function validHex(input: string): boolean {
-  log("info", "validate hex");
-  const hex = /^[A-Fa-f0-9]{1,8}$/g;
-
-  if (hex.test(input)) {
-    log("info", "validate hex passed");
-    return true;
-  }
-  return false;
-}
-
-/**
- * Checks if a string value is valid
- * @param input string representation
- * @returns whther input is a valid string that fits in 32 bits.
- */
-function validAscii(input: string): boolean {
-  log("info", "validate ascii");
-
-  return input.length <= 4;
-}
-
-/**
  * Tests whether the binary representation of value is a valid for the cpu.
  * @param value value representation
  * @param valType format in which the value is represented
@@ -445,10 +331,10 @@ function valueFormatter(
       return binaryRepresentation(value);
     case "signed": {
       log("info", "convert to signed ");
-      return binaryToSignedDecimal(value);
+      return binaryToInt(value);
     }
     case "unsigned": {
-      const rvalue = binaryToUnsignedDecimal(value);
+      const rvalue = binaryToUInt(value);
       log("info", {
         message: "convert to unsigned ",
         binary: value,
@@ -470,45 +356,6 @@ function valueFormatter(
     }
   }
   return value;
-}
-
-/**
- * Computes the representation of a binary value in the view.This is used to
- * short the way binary numbers are presented to the user. I (Gustavo) chose a
- * verilog style representation but it has to be discussed.
- * @param value to represent
- * @returns
- */
-function binaryRepresentation(value: string) {
-  const out = extractBinGroups(value);
-  let repr = "32'b";
-  if (out) {
-    if (out.y?.length === 0) {
-      repr = repr + "0";
-    } else {
-      repr = repr + out.y;
-    }
-  }
-  return repr;
-}
-/**
- * Splits a binary number in two parts:
- *
- * y: the meaninful part of the number
- * x: the meaningless part which consists of all zeroes.
- * @param str a binary number representation
- * @returns {x: val, y: val}
- */
-function extractBinGroups(str: string) {
-  const regex = /^(?<x>0*)(?<y>1*[01]*)$/;
-  const match = str.match(regex);
-  if (match) {
-    return {
-      x: match.groups?.x,
-      y: match.groups?.y
-    };
-  }
-  return null;
 }
 
 /**
@@ -603,41 +450,6 @@ function hederGrouping(
     watchStr = "Unwatched";
   }
   return watchStr + "  (" + count + " registers)";
-}
-
-/**
- * Translates user input depending on the specific type into a string of bits.
- * @param value as the user typed in the input box
- * @param vtype type selected when the user edited the cell
- * @returns value as a binary string
- */
-function toBinary(value: string, vtype: RegisterView) {
-  log("info", { msg: "toBinary called", val: value, type: vtype });
-
-  switch (vtype) {
-    case 2:
-      return value;
-    case "unsigned":
-      return parseInt(value).toString(2);
-    case "signed": {
-      const num = parseInt(value);
-      return (num >>> 0).toString(2);
-    }
-    case 16: {
-      const num = parseInt(value, 16);
-      return num.toString(2);
-    }
-    case "ascii": {
-      const array = Array.from(value);
-      const result = array.reduce((acc, char) => {
-        const charAscii = char.charCodeAt(0);
-        const charBin = charAscii.toString(2).padStart(8, "0");
-        return acc + charBin;
-      }, "");
-      return result;
-    }
-  }
-  return "";
 }
 
 /**
