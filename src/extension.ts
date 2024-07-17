@@ -67,30 +67,47 @@ export async function activate(context: ExtensionContext) {
         (event: TextEditorSelectionChangeEvent) => {
           const editor = event.textEditor;
           const fileName = editor.document.fileName;
-          const currentLine = editor.selection.active.line;
-          if (
-            rvContext.getCurrentFile() === fileName &&
-            rvContext.lineChanged(currentLine)
-          ) {
-            console.log("enable progmem sync");
-            highlightInstructionInMemory(event.textEditor);
+          if (RVExtensionContext.isValidfile(editor.document)) {
+            if (rvContext.getCurrentFile() !== fileName) {
+              rvContext.setCurrentFile(fileName);
+              buildAndUploadProgram(editor);
+            }
+            const currentLine = editor.selection.active.line;
+            if (rvContext.lineChanged(currentLine)) {
+              highlightInstructionInMemory(editor);
+            }
           }
         }
       );
     })
   );
+  /**
+   * Reflect changes of vscode files to the extension context.
+   *
+   */
 
+  /**
+   * When a document is opened change the context current file.
+   */
   workspace.onDidOpenTextDocument((document) => {
-    const name = document.fileName;
-    if (!name.startsWith("undefined")) {
-      console.log("set current file will be called", document.fileName);
-      rvContext.setCurrentFile(document.fileName);
+    if (RVExtensionContext.isValidfile(document)) {
+      const name = document.fileName;
+      rvContext.setCurrentFile(name);
+    }
+  });
+
+  workspace.onDidCloseTextDocument((document) => {
+    if (RVExtensionContext.isValidfile(document)) {
+      rvContext.setCurrentFile(undefined);
     }
   });
 
   workspace.onDidSaveTextDocument((document) => {
-    const editor = window.activeTextEditor;
-    buildAndUploadProgram(editor);
+    console.log("Save editor event");
+    if (RVExtensionContext.isValidfile(document)) {
+      const editor = window.activeTextEditor;
+      buildAndUploadProgram(editor);
+    }
   });
 
   // enable synchronization
@@ -138,21 +155,28 @@ function buildAndUploadProgram(editor: TextEditor | undefined) {
 }
 
 function highlightInstructionInMemory(editor: TextEditor | undefined) {
-  // logger().info("highlight instruction called");
   console.log("highlight instruction called");
   if (editor) {
     if (editor.document.isDirty) {
       window.showInformationMessage(
         "Source is out of sync. Save to synchronize with memory view"
       );
+      sendMessageToProgMemView({ operation: "clearProgMemSelections" });
     } else {
       const position = editor.selection.active;
       const line = position.line;
-      const progmem = ProgMemPanelView.currentview?.getWebView();
-      progmem?.postMessage({
-        operation: "selectInstruction2",
+      sendMessageToProgMemView({
+        operation: "selectInstruction",
         sourceLine: line
       });
     }
+  }
+}
+
+function sendMessageToProgMemView(msg: any) {
+  console.log("sending message", msg);
+  const progmem = ProgMemPanelView.currentview?.getWebView();
+  if (progmem) {
+    progmem.postMessage(msg);
   }
 }

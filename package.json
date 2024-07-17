@@ -51,6 +51,13 @@
         "key": "ctrl+f12",
         "command": "rv-simulator.simulate"
       }
+    ],
+    "languages": [
+      {
+        "id": "rvasm",
+        "aliases": ["RISC-V", "risc-v"],
+        "extensions": [".asm"]
+      }
     ]
   },
   "scripts": {

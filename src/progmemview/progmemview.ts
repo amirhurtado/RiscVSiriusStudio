@@ -53,6 +53,14 @@ function main() {
 
   table.on("rowMouseOver", showInstructionInfo);
 
+  // Code synchronization checkbox
+  const codeSync = document.getElementById("code-sync") as Checkbox;
+  codeSync.addEventListener("click", () => {
+    if (!codeSync.checked) {
+      table.deselectRow();
+    }
+  });
+
   log("info", { message: "Initializing progmem view [FINISHED]" });
 }
 /**
@@ -74,10 +82,13 @@ function dispatch(event: MessageEvent, table: Tabulator) {
         tblData: table.getData()
       });
       break;
-    case "selectInstruction2":
+    case "selectInstruction":
       log("info", "select instruction " + data.sourceLine);
       selectInstructionInTable(data.sourceLine, table);
       break;
+    // case "clearProgMemSelections":
+    //   table.deselectRow();
+    //   break;
     default:
       log("info", "unknown option");
       break;
