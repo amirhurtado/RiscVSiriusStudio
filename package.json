@@ -15,12 +15,12 @@
         "title": "RISCV simulator: assemble file"
       },
       {
-        "command": "rv-simulator.selectInstructionInMemory",
-        "title": "RISCV simulator: select current instruction in memory"
-      },
-      {
         "command": "rv-simulator.simulate",
         "title": "RISCV simulator: simulate program execution"
+      },
+      {
+        "command": "rv-simulator.enableProgMemSync",
+        "title": "RISCV simuator: synchronize code with program memory"
       }
     ],
     "viewsContainers": {

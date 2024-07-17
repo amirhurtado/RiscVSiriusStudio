@@ -36,19 +36,23 @@ function main() {
   log("info", { message: "Initializing progmem view [STARTED]" });
 
   // Table setup
-  let tableData = [] as Array<MemInstruction>;
-  let table = tableSetup(tableData);
+  let table = tableSetup();
+  let instructionTable = instructionTableSetup();
 
   // Message dispatcher
   window.addEventListener("message", (event) => {
-    dispatch(event, table, tableData);
+    dispatch(event, table);
   });
+
   // Table events
   table.on("rowDblClick", function (e, row) {
     const line = getSourceLineForInstruction(row);
     sendMessageToExtension({ command: "highlightCodeLine", lineNumber: line });
     log("info", { message: "double click on row" });
   });
+
+  table.on("rowMouseOver", showInstructionInfo);
+
   log("info", { message: "Initializing progmem view [FINISHED]" });
 }
 /**
@@ -58,25 +62,21 @@ function main() {
  * @param table Table to possible reflect the message
  * @param tableData Table data
  */
-function dispatch(
-  event: MessageEvent,
-  table: Tabulator,
-  tableData: Array<MemInstruction>
-) {
+function dispatch(event: MessageEvent, table: Tabulator) {
   const data = event.data;
   //const {data:{operation:op}} = event;
   switch (data.operation) {
     case "updateProgram":
-      updateProgram(data.program, table, tableData);
+      updateProgram(data.program, table);
       sendMessageToExtension({
         operation: "log",
         m: "program updated new",
         tblData: table.getData()
       });
       break;
-    case "selectInstruction":
+    case "selectInstruction2":
       log("info", "select instruction " + data.sourceLine);
-      selectInstructionInTable(data.sourceLine, table, tableData);
+      selectInstructionInTable(data.sourceLine, table);
       break;
     default:
       log("info", "unknown option");
@@ -89,11 +89,7 @@ function getSourceLineForInstruction(row: RowComponent): number {
   return line - 1;
 }
 
-function selectInstructionInTable(
-  line: number,
-  table: Tabulator,
-  tableData: Array<MemInstruction>
-) {
+function selectInstructionInTable(line: number, table: Tabulator) {
   const codeSync = document.getElementById("code-sync") as Checkbox;
   if (!codeSync.checked) {
     log("info", "instruction selection disabled by user");
@@ -114,11 +110,8 @@ function selectInstructionInTable(
   }
 }
 
-function updateProgram(
-  program: Array<any>,
-  table: Tabulator,
-  tableData: Array<MemInstruction>
-) {
+function updateProgram(program: Array<any>, table: Tabulator) {
+  const tableData = table.getData();
   let i = 0;
   while (i < program.length && i < tableData.length) {
     const {
@@ -183,7 +176,11 @@ function sectionWidth() {
   return charWidth() * 8;
 }
 
-function tableSetup(tableData: Array<MemInstruction>): Tabulator {
+/**
+ * Creates the table to show the program memory.
+ */
+function tableSetup(): Tabulator {
+  const tableData = [] as Array<MemInstruction>;
   const minWidth = sectionWidth();
   const maxWidth = sectionWidth();
   let table = new Tabulator("#progmem-table", {
@@ -242,4 +239,70 @@ function tableSetup(tableData: Array<MemInstruction>): Tabulator {
     ]
   });
   return table;
+}
+
+// const possibleViews = [2, "signed", "unsigned", 16, "ascii"];
+// type RegisterView = typeof possibleViews[number];
+
+type TypeInstructionValue = {
+  type: string;
+  opcode: string;
+  rd: string;
+  f3: string;
+  rs1: string;
+  rs2: string;
+  f7: string;
+};
+
+function instructionTableSetup(): Tabulator {
+  const tableData = [] as Array<TypeInstructionValue>;
+  let table = new Tabulator("#progmem-instruction", {
+    layout: "fitDataTable",
+    layoutColumnsOnNewData: true,
+    data: tableData,
+    reactiveData: true,
+    index: "type",
+    columns: [
+      { title: "F7", field: "f7", headerSort: false },
+      { title: "RS2", field: "rs2", headerSort: false },
+      { title: "RS1", field: "rs1", headerSort: false },
+      { title: "F3", field: "f3", headerSort: false },
+      { title: "RD", field: "rd", headerSort: false },
+      { title: "Opcode", field: "opcode", headerSort: false },
+      { title: "Type", field: "type", headerSort: false }
+    ]
+  });
+
+  ["R", "I", "S", "B", "J", "U"].forEach((i) => {
+    const f7 = "0000000";
+    const rs2 = "00000";
+    const rs1 = "00000";
+    const f3 = "000";
+    const rd = "00000";
+    const opcode = "0000000";
+
+    tableData.push({
+      f7: f7,
+      rs2: rs2,
+      rs1: rs1,
+      f3: f3,
+      rd: rd,
+      opcode: opcode,
+      type: i
+    });
+  });
+  // tableData.push({
+  //   f7: "0000000",
+  //   rs2: "00000",
+  //   rs1: "00000",
+  //   f3: "000",
+  //   rd: "00000",
+  //   opcode: "0000000",
+  //   type: "R"
+  // });
+  return table;
+}
+
+function showInstructionInfo(e: UIEvent, row: RowComponent) {
+  log("info", "over row");
 }

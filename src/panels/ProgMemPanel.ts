@@ -108,6 +108,7 @@ export class ProgMemPanelView implements WebviewViewProvider {
             </vscode-checkbox>
           </div>
           <div id="progmem-table" style="margin-top:1rem;"></div>
+          <div id="progmem-instruction" style="margin-top:1rem;"></div>
           <script type="module" nonce="${nonce}" src="${progmemUri}"></script>
         </body>
       </html>`;

@@ -3,6 +3,7 @@ import {
   ExtensionContext,
   TextDocument,
   TextEditor,
+  TextEditorSelectionChangeEvent,
   Uri,
   window,
   workspace
@@ -13,9 +14,11 @@ import { LeftPanelWebview } from "./panels/RegisterPanel";
 import { ProgMemPanelView } from "./panels/ProgMemPanel";
 import { compile, ParserResult } from "./utilities/riscvc";
 import { logger } from "./utilities/logger";
+import { RVExtensionContext } from "./support/context";
 
 export async function activate(context: ExtensionContext) {
   logger().info("Activating extension");
+  const rvContext = new RVExtensionContext();
 
   context.subscriptions.push(
     window.registerWebviewViewProvider(
@@ -41,13 +44,6 @@ export async function activate(context: ExtensionContext) {
   );
 
   context.subscriptions.push(
-    commands.registerCommand("rv-simulator.selectInstructionInMemory", () => {
-      const editor = window.activeTextEditor;
-      highlightInstructionInMemory(editor);
-    })
-  );
-
-  context.subscriptions.push(
     commands.registerCommand("rv-simulator.simulate", () => {
       HelloWorldPanel.render(context.extensionUri);
       commands.executeCommand("rv-simulator.selectInstructionInMemory");
@@ -56,20 +52,49 @@ export async function activate(context: ExtensionContext) {
     })
   );
 
+  context.subscriptions.push(
+    commands.registerCommand("rv-simulator.enableProgMemSync", () => {
+      /**
+       * To handle synchronization we need to track changes of the cursor in the
+       * text editor to reflect changes on the program code. Due to this bug or
+       * functionality: https://github.com/microsoft/vscode/issues/181233 The
+       * event is triggered when the cursor changes but not necessarily on the
+       * file we need. For that reason we use the rvContext to stroe filename
+       * and caret line position and decide whnever we are interested in the
+       * change.
+       */
+      window.onDidChangeTextEditorSelection(
+        (event: TextEditorSelectionChangeEvent) => {
+          const editor = event.textEditor;
+          const fileName = editor.document.fileName;
+          const currentLine = editor.selection.active.line;
+          if (
+            rvContext.getCurrentFile() === fileName &&
+            rvContext.lineChanged(currentLine)
+          ) {
+            console.log("enable progmem sync");
+            highlightInstructionInMemory(event.textEditor);
+          }
+        }
+      );
+    })
+  );
+
+  workspace.onDidOpenTextDocument((document) => {
+    const name = document.fileName;
+    if (!name.startsWith("undefined")) {
+      console.log("set current file will be called", document.fileName);
+      rvContext.setCurrentFile(document.fileName);
+    }
+  });
+
   workspace.onDidSaveTextDocument((document) => {
     const editor = window.activeTextEditor;
     buildAndUploadProgram(editor);
   });
 
-  workspace.onDidSaveTextDocument((document) => {
-    window.onDidChangeTextEditorSelection((evt) => {
-      highlightInstructionInMemory(evt.textEditor);
-    });
-  });
-
-  window.onDidChangeActiveTextEditor((editor) => {
-    highlightInstructionInMemory(editor);
-  });
+  // enable synchronization
+  commands.executeCommand("rv-simulator.enableProgMemSync");
 }
 
 function simulateProgram(editor: TextEditor | undefined, extensionUri: Uri) {
@@ -113,6 +138,8 @@ function buildAndUploadProgram(editor: TextEditor | undefined) {
 }
 
 function highlightInstructionInMemory(editor: TextEditor | undefined) {
+  // logger().info("highlight instruction called");
+  console.log("highlight instruction called");
   if (editor) {
     if (editor.document.isDirty) {
       window.showInformationMessage(
@@ -123,7 +150,7 @@ function highlightInstructionInMemory(editor: TextEditor | undefined) {
       const line = position.line;
       const progmem = ProgMemPanelView.currentview?.getWebView();
       progmem?.postMessage({
-        operation: "selectInstruction",
+        operation: "selectInstruction2",
         sourceLine: line
       });
     }
