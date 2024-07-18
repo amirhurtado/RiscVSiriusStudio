@@ -51,7 +51,9 @@ function main() {
     log("info", { message: "double click on row" });
   });
 
-  table.on("rowMouseOver", showInstructionInfo);
+  table.on("rowSelected", (row) => {
+    reflectInstruction(row, instructionTable);
+  });
 
   // Code synchronization checkbox
   const codeSync = document.getElementById("code-sync") as Checkbox;
@@ -302,18 +304,78 @@ function instructionTableSetup(): Tabulator {
       type: i
     });
   });
-  // tableData.push({
-  //   f7: "0000000",
-  //   rs2: "00000",
-  //   rs1: "00000",
-  //   f3: "000",
-  //   rd: "00000",
-  //   opcode: "0000000",
-  //   type: "R"
-  // });
   return table;
 }
 
-function showInstructionInfo(e: UIEvent, row: RowComponent) {
-  log("info", "over row");
+function reflectInstruction(instruction: RowComponent, instTable: Tabulator) {
+  const {
+    ir: {
+      type,
+      encoding: { binEncoding }
+    }
+  } = instruction.getData();
+  log("info", {
+    msg2: "A row was selected in the progmem",
+    type: type
+  });
+  const pattern = (type as string).toLocaleUpperCase();
+  instTable.setFilter("type", "=", pattern);
+  updateColumnNames(instTable, pattern);
+  updateColumnValues(instTable, binEncoding, pattern);
+  // const colRd = instTable.getColumn("rd");
+  // colRd.updateDefinition({ title: "FUCK" });
+  // const instRows = instTable.searchRows("type", "=", pattern);
+  // if (instRows.length === 1) {
+  //   const match = instRows[0];
+  //   instTable.deselectRow();
+  //   instTable.selectRow(match);
+  // } else {
+  //   log("info", { msg: "problem with search", length: instRows.length });
+  // }
+}
+
+function updateColumnNames(instTable: Tabulator, instType: string) {
+  const input = {
+    R: {
+      f7: "F7",
+      rs2: "RS2",
+      rs1: "RS1",
+      f3: "F3",
+      rd: "RD",
+      opcode: "Opcode"
+    },
+    I: { f7: "IMM[11:5]", rs2: "IMM[4:0]" },
+    S: { f7: "IMM[11:5]", rd: "IMM[4:0]" },
+    B: { f7: "IMM[12|10:5]", rd: "IMM[4:1|11]" },
+    U: { f7: "IMM[31:12]", rs2: "", rs1: "", f3: "" },
+    J: { f7: "IMM[20|10:1|11|19:12]", rs2: "", rs1: "", f3: "" }
+  };
+
+  const names = _.assign(input.R, input[instType]);
+  _.forOwn(names, (value, key) => {
+    instTable.getColumn(key).updateDefinition({ title: value });
+  });
+  log("info", "finished title updates");
+}
+
+function updateColumnValues(
+  instTable: Tabulator,
+  instruction: string,
+  type: string
+) {
+  const regex =
+    /^(?<f7>[01]{7})(?<rs2>[01]{5})(?<rs1>[01]{5})(?<f3>[01]{3})(?<rd>[01]{5})(?<opcode>[01]{7})$/;
+  const result = instruction.match(regex);
+
+  if (result && "groups" in result) {
+    const data = _.assign(result.groups, {
+      type: type
+    }) as TypeInstructionValue;
+    instTable.updateData([data]);
+    log("info", {
+      msg: "update column values",
+      inst: instruction,
+      result: data
+    });
+  }
 }
