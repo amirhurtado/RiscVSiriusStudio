@@ -1469,7 +1469,7 @@ function setHexInstruction(cpuData, html) {
 export function LOGTEXTASSEMBLER(element, cpuData) {
   const {
     cpuElements: { LOGTEXTHEX: text },
-    instruction: instruction,
+    instruction: { asm },
     stepButton: step,
   } = cpuData;
 
@@ -1477,7 +1477,7 @@ export function LOGTEXTASSEMBLER(element, cpuData) {
 
   applyClass(element, "instructionDisabled");
   step.addEventListener("click", () => {
-    setAsmInstruction(cpuData, "FIXME");
+    setAsmInstruction(cpuData, asm);
     applyClass(element, "instruction");
   });
 }
