@@ -51,10 +51,28 @@ function main() {
   });
 
   // Table events
+
+  /**
+   * On double click a row of the program memory view table, select the corresponding
+   * line of code in the editor.
+   */
   table.on("rowDblClick", function (e, row) {
     const line = getSourceLineForInstruction(row);
     sendMessageToExtension({ command: "highlightCodeLine", lineNumber: line });
-    log("info", { message: "double click on row" });
+  });
+
+  /**
+   * On double click a row of the program memory view table, select it to
+   * trigger any selection event that depends on it.
+   */
+  table.on("rowDblClick", function (e, row) {
+    table.deselectRow();
+    table.selectRow(row);
+  });
+
+  table.on("rowDblClick", function (e, row) {
+    const line = getSourceLineForInstruction(row);
+    sendMessageToExtension({ command: "highlightCodeLine", lineNumber: line });
   });
 
   table.on("rowSelected", (row) => {
