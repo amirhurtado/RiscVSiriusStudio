@@ -369,6 +369,7 @@
   }
   / inst:Instruction EOS 
   {
+
     let ret = inst;
     ret["Type"] = "SrcInstruction";
     const binEncoding = inst["encoding"]["binEncoding"];
@@ -396,37 +397,53 @@
   {
     return {"name":id, "value":{val}};
   }
-  /*
-  Statement "Program statement" 
-    =
-    _ label:Label 
+
+  Instruction "Instruction"
+    = inst:RInstruction 
     {
-      return label;
-    }
-    / _ inst:Instruction EOS 
-    {
-      const binEncoding = inst["encoding"]["binEncoding"].replace(/-/g,"");
-      inst["encoding"]["hexEncoding"] = encodingAsHex(binEncoding);
-      inst["text"] = text();
+      inst["asm"] = text();
       return inst;
     }
-    
-  Label "Label" = [a-z]+":" EOS 
-  { 
-    const val = text().split(":")[0]; 
-    return {"type": "label", "name":val, "address":(instcounter)}
-  }
-  */
-  Instruction "Instruction"
-    = inst:RInstruction
     / inst:IInstruction
+    {
+      inst["asm"] = text();
+      return inst;
+    }
     / inst:LInstruction
+    {
+      inst["asm"] = text();
+      return inst;
+    }
     / inst:SInstruction
+    {
+      inst["asm"] = text();
+      return inst;
+    }
     / inst:BInstruction
+    {
+      inst["asm"] = text();
+      return inst;
+    }
     / inst:JInstruction
+    {
+      inst["asm"] = text();
+      return inst;
+    }
     / inst:UInstruction
+    {
+      inst["asm"] = text();
+      return inst;
+    }
     / inst:EInstruction
+    {
+      inst["asm"] = text();
+      return inst;
+    }
     / inst:PseudoInstruction 
+    {
+      inst["asm"] = text();
+      return inst;
+    }
     / a:. .* {
       return error('Expecting a valid instruction, Got:"' + text() +'"');
     }
@@ -1026,7 +1043,9 @@
   / __ EOF
   
   Comment "comment"
-  = ("#" / ";") (!LineTerminator SourceCharacter)*
+  = ("#" / ";") (!LineTerminator SourceCharacter)* {
+    return "";
+  }
 
   SourceCharacter = .
 
