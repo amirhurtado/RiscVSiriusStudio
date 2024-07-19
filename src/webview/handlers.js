@@ -1522,6 +1522,8 @@ export function LOGTEXTHEX(element, cpuData) {
   setHexInstruction(cpuData, "--no hex --");
   applyClass(element, "instructionDisabled");
   step.addEventListener("click", () => {
+    const hex = instruction.encoding.hexEncoding;
+    setHexInstruction(cpuData, hex);
     applyClass(element, "instruction");
   });
 }
