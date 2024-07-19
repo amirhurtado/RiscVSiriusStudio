@@ -47,7 +47,10 @@ export class ProgMemPanelView implements WebviewViewProvider {
   resolveWebviewView(webviewView: WebviewView): void | Thenable<void> {
     webviewView.webview.options = {
       enableScripts: true,
-      localResourceRoots: [this.extensionUri]
+      localResourceRoots: [
+        this.extensionUri,
+        Uri.joinPath(this.extensionUri, "node_modules") // Required for codicon]
+      ]
     };
     webviewView.webview.html = this._getHtmlForWebview(
       webviewView.webview,
@@ -93,22 +96,39 @@ export class ProgMemPanelView implements WebviewViewProvider {
       "progmemview.css"
     ]);
 
+    const codiconsUri = webview.asWebviewUri(
+      Uri.joinPath(
+        extensionUri,
+        "node_modules",
+        "@vscode/codicons",
+        "dist",
+        "codicon.css"
+      )
+    );
     return `
       <html>
         <head>
+          <link rel="stylesheet", href="${codiconsUri}">
           <link rel="stylesheet", href="${tabulatorCSS}">
           <link rel="stylesheet", href="${progmemviewCSS}">
           <meta charSet="utf-8"/>
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
         <body>
-          <div>
-            <legend>Options</legend>
-            <vscode-checkbox id="code-sync" checked>Code synchronization
-            </vscode-checkbox>
-          </div>
-          <div id="progmem-table" style="margin-top:1rem;"></div>
-          <div id="progmem-instruction" style="margin-top:1rem;"></div>
+          <section>
+              <h4>Options</h4>
+              <vscode-checkbox id="code-sync" checked>Code synchronization
+              </vscode-checkbox>
+              <vscode-checkbox id="instruction-as-binary" checked>Show instructions in binary</vscode-checkbox>
+          </section>
+          <section>
+            <h4>Program memory</h4>
+            <div id="progmem-table" style="margin-top:1rem;"></div>
+          </section>
+          <section>
+              <h4>Instruction detail</h4>
+            <div id="progmem-instruction" style="margin-top:1rem;"></div>
+          </section>
           <script type="module" nonce="${nonce}" src="${progmemUri}"></script>
         </body>
       </html>`;
