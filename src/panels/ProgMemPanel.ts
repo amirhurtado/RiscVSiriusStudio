@@ -91,10 +91,7 @@ export class ProgMemPanelView implements WebviewViewProvider {
       "out",
       "tabulator.min.css"
     ]);
-    const progmemviewCSS = getUri(webview, extensionUri, [
-      "out",
-      "progmemview.css"
-    ]);
+    const panelsCSS = getUri(webview, extensionUri, ["out", "panels.css"]);
 
     const codiconsUri = webview.asWebviewUri(
       Uri.joinPath(
@@ -110,7 +107,7 @@ export class ProgMemPanelView implements WebviewViewProvider {
         <head>
           <link rel="stylesheet", href="${codiconsUri}">
           <link rel="stylesheet", href="${tabulatorCSS}">
-          <link rel="stylesheet", href="${progmemviewCSS}">
+          <link rel="stylesheet", href="${panelsCSS}">
           <meta charSet="utf-8"/>
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>

@@ -69,16 +69,13 @@ export class LeftPanelWebview implements WebviewViewProvider {
       "out",
       "tabulator.min.css"
     ]);
-    const registersViewCSS = getUri(webview, extensionUri, [
-      "out",
-      "registersview.css"
-    ]);
+    const panelsCSS = getUri(webview, extensionUri, ["out", "panels.css"]);
 
     return `
       <html>
         <head>
           <link rel="stylesheet", href="${tabulatorCSS}">
-          <link rel="stylesheet", href="${registersViewCSS}">
+          <link rel="stylesheet", href="${panelsCSS}">
           <meta charSet="utf-8"/>
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>

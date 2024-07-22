@@ -39,6 +39,10 @@ const extensionConfig = {
           from: "./media/tabulator.min.css",
           to: "./out",
         },
+        {
+          from: "./src/panels/panels.css",
+          to: "./out",
+        },
         // watch: true
       ],
     }),
@@ -67,10 +71,6 @@ const registersviewConfig = {
       resolveFrom: "cwd",
       assets: [
         {
-          from: "./src/registersview/registersview.css",
-          to: "./out",
-        },
-        {
           from: "./media/binary-svgrepo-com.svg",
           to: "./out",
         },
@@ -86,16 +86,6 @@ const progmemviewConfig = {
   format: "esm",
   entryPoints: ["./src/progmemview/progmemview.ts"],
   outfile: "./out/progmemview.js",
-  plugins: [
-    copy({
-      resolveFrom: "cwd",
-      assets: {
-        from: "./src/progmemview/progmemview.css",
-        to: "./out",
-      },
-      // watch: true
-    }),
-  ],
 };
 
 // This watch config adheres to the conventions of the esbuild-problem-matchers
