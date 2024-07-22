@@ -482,6 +482,7 @@ function reflectInstruction(instruction: RowComponent, instTable: InstTable) {
   const pattern = (type as string).toLocaleUpperCase();
   instTable.handler(pattern);
   updateColumnValues(instTable, binEncoding);
+  updateInstructionInfo(instruction);
 }
 
 function updateColumnValues(instTable: InstTable, binEncoding: string) {
@@ -500,4 +501,12 @@ function updateColumnValues(instTable: InstTable, binEncoding: string) {
       result: data
     });
   }
+}
+
+function updateInstructionInfo(instruction: RowComponent) {
+  const info = document.getElementById("instruction-detail") as HTMLElement;
+  const {
+    ir: { type }
+  } = instruction.getData();
+  info.innerHTML = `${type}`;
 }

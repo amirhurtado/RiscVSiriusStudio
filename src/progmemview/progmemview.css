@@ -10,6 +10,7 @@ body {
       margin-top: 0.5rem;
       margin-bottom: 0.5rem;
     }
+  }
 }
 
 .tabulator .tabulator-header .tabulator-col {
@@ -32,4 +33,18 @@ body {
 .tabulator-cell	{
   font-family: Roboto Mono;
   font-size: 0.9em;
+}
+
+
+#instruction-detail {
+  font-family: Roboto Mono;
+  font-weight: bold;
+}
+
+#instruction-detail::before {
+  content: "Type: ";
+}
+
+#instruction-detail::after {
+  content: ".";
 }

@@ -127,7 +127,8 @@ export class ProgMemPanelView implements WebviewViewProvider {
           </section>
           <section>
               <h4>Instruction detail</h4>
-            <div id="progmem-instruction" style="margin-top:1rem;"></div>
+              <span id="instruction-detail"></span><br>
+              <div id="progmem-instruction" style="margin-top:1rem;"></div>
           </section>
           <script type="module" nonce="${nonce}" src="${progmemUri}"></script>
         </body>
