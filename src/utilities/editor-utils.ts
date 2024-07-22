@@ -16,21 +16,19 @@ const memoryHighlightDecorationType = window.createTextEditorDecorationType({
   borderWidth: "2px",
   borderRadius: "10px",
   borderStyle: "solid",
-  overviewRulerColor: new ThemeColor("errorForeground"),
+  overviewRulerColor: new ThemeColor("statusBar.background"),
   overviewRulerLane: OverviewRulerLane.Full,
   light: {
-    borderColor: new ThemeColor("errorForeground")
+    borderColor: new ThemeColor("statusBar.background")
   },
   dark: {
-    borderColor: new ThemeColor("errorForeground")
+    borderColor: new ThemeColor("statusBar.background")
   }
 });
 
 export function applyDecoration(line: number, editor: TextEditor) {
-  logger().error({ msg: "aqui?", l: line });
   const start = new Position(line, 0);
   const end = new Position(line, editor.document.lineAt(line).text.length);
   const decorationRange = new Range(start, end);
   editor.setDecorations(memoryHighlightDecorationType, [decorationRange]);
-  logger().error("aqui?---");
 }

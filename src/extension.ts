@@ -17,6 +17,7 @@ import { logger } from "./utilities/logger";
 import { RVExtensionContext } from "./support/context";
 
 export async function activate(context: ExtensionContext) {
+  console.log("Activating extension");
   logger().info("Activating extension");
   const rvContext = new RVExtensionContext();
 
@@ -54,6 +55,7 @@ export async function activate(context: ExtensionContext) {
 
   context.subscriptions.push(
     commands.registerCommand("rv-simulator.enableProgMemSync", () => {
+      console.log("executing progmemsync command");
       /**
        * To handle synchronization we need to track changes of the cursor in the
        * text editor to reflect changes on the program code. Due to this bug or

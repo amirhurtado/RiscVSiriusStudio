@@ -39,7 +39,7 @@ export class RVExtensionContext {
    */
   public static isValidfile(document?: TextDocument | undefined): boolean {
     return document
-      ? document.languageId === "rvasm" && document.uri.scheme === "file"
+      ? document.languageId === "riscvasm" && document.uri.scheme === "file"
       : false;
   }
 }
