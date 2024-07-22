@@ -20,13 +20,13 @@ import { logger } from "../utilities/logger";
  * - Setting the HTML (and by proxy CSS/JavaScript) content of the webview panel
  * - Setting message listeners so data can be passed between the webview and extension
  */
-export class HelloWorldPanel {
-  public static currentPanel: HelloWorldPanel | undefined;
+export class SimulatorPanel {
+  public static currentPanel: SimulatorPanel | undefined;
   private readonly _panel: WebviewPanel;
   private _disposables: Disposable[] = [];
 
   /**
-   * The HelloWorldPanel class private constructor (called only from the render method).
+   * The SimulatorPanel class private constructor (called only from the render method).
    *
    * @param panel A reference to the webview panel
    * @param extensionUri The URI of the directory containing the extension
@@ -48,8 +48,8 @@ export class HelloWorldPanel {
     this._setWebviewMessageListener(this._panel.webview);
   }
   public static getPanel(extensionUri: Uri) {
-    HelloWorldPanel.render(extensionUri);
-    return HelloWorldPanel.currentPanel;
+    SimulatorPanel.render(extensionUri);
+    return SimulatorPanel.currentPanel;
   }
   /**
    * Renders the current webview panel if it exists otherwise a new webview panel
@@ -58,9 +58,9 @@ export class HelloWorldPanel {
    * @param extensionUri The URI of the directory containing the extension.
    */
   public static render(extensionUri: Uri) {
-    if (HelloWorldPanel.currentPanel) {
+    if (SimulatorPanel.currentPanel) {
       // If the webview panel already exists reveal it
-      HelloWorldPanel.currentPanel._panel.reveal(ViewColumn.One);
+      SimulatorPanel.currentPanel._panel.reveal(ViewColumn.One);
     } else {
       // If a webview panel does not already exist create and show a new one
       const panel = window.createWebviewPanel(
@@ -80,7 +80,7 @@ export class HelloWorldPanel {
         }
       );
 
-      HelloWorldPanel.currentPanel = new HelloWorldPanel(panel, extensionUri);
+      SimulatorPanel.currentPanel = new SimulatorPanel(panel, extensionUri);
     }
   }
 
@@ -88,7 +88,7 @@ export class HelloWorldPanel {
    * Cleans up and disposes of webview resources when the webview panel is closed.
    */
   public dispose() {
-    HelloWorldPanel.currentPanel = undefined;
+    SimulatorPanel.currentPanel = undefined;
 
     // Dispose of the current webview panel
     this._panel.dispose();
@@ -114,7 +114,10 @@ export class HelloWorldPanel {
    * rendered within the webview panel
    */
   private _getWebviewContent(webview: Webview, extensionUri: Uri) {
-    const webviewUri = getUri(webview, extensionUri, ["out", "webview.js"]);
+    const webviewUri = getUri(webview, extensionUri, [
+      "out",
+      "simulatorview.js"
+    ]);
     const nonce = getNonce();
     const cssFile = getUri(webview, extensionUri, ["out", "styles.css"]);
 
@@ -209,6 +212,6 @@ export class HelloWorldPanel {
     );
   }
   public postMessage(message: Object) {
-    HelloWorldPanel.currentPanel?._panel.webview.postMessage(message);
+    SimulatorPanel.currentPanel?._panel.webview.postMessage(message);
   }
 }

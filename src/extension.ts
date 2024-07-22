@@ -9,7 +9,7 @@ import {
   workspace
 } from "vscode";
 
-import { HelloWorldPanel } from "./panels/HelloWorldPanel";
+import { SimulatorPanel } from "./panels/SimulatorPanel";
 import { LeftPanelWebview } from "./panels/RegisterPanel";
 import { ProgMemPanelView } from "./panels/ProgMemPanel";
 import { compile, ParserResult } from "./utilities/riscvc";
@@ -46,7 +46,7 @@ export async function activate(context: ExtensionContext) {
 
   context.subscriptions.push(
     commands.registerCommand("rv-simulator.simulate", () => {
-      HelloWorldPanel.render(context.extensionUri);
+      SimulatorPanel.render(context.extensionUri);
       commands.executeCommand("rv-simulator.selectInstructionInMemory");
       const editor = window.activeTextEditor;
       simulateProgram(editor, context.extensionUri);
@@ -128,11 +128,11 @@ function simulateProgram(editor: TextEditor | undefined, extensionUri: Uri) {
       return;
     }
     window.showInformationMessage("Starting simulation");
-    HelloWorldPanel.getPanel(extensionUri)?.postMessage({
+    SimulatorPanel.getPanel(extensionUri)?.postMessage({
       operation: "executeProgram",
       program: buildResult
     });
-    HelloWorldPanel.render(extensionUri);
+    SimulatorPanel.render(extensionUri);
   }
 }
 

@@ -28,7 +28,7 @@ const extensionConfig = {
       // verbose:true,
       assets: [
         {
-          from: ["./src/webview/styles.css", "./src/webview/cpu0Events.js"],
+          from: ["./src/simulatorview/styles.css", "./src/simulatorview/cpu0Events.js"],
           to: ["./out"],
         },
         {
@@ -52,12 +52,12 @@ const extensionConfig = {
 
 // Config for webview source code (to be run in a web-based context)
 /** @type BuildOptions */
-const webviewConfig = {
+const simulatorviewConfig = {
   ...baseConfig,
   target: "es2020",
   format: "esm",
-  entryPoints: ["./src/webview/main.ts"],
-  outfile: "./out/webview.js",
+  entryPoints: ["./src/simulatorview/main.ts"],
+  outfile: "./out/simulatorview.js",
 };
 
 const registersviewConfig = {
@@ -120,7 +120,7 @@ const watchConfig = {
         ...watchConfig,
       });
       await build({
-        ...webviewConfig,
+        ...simulatorviewConfig,
         ...watchConfig,
       });
       await build({
@@ -135,7 +135,7 @@ const watchConfig = {
     } else {
       // Build extension and webview code
       await build(extensionConfig);
-      await build(webviewConfig);
+      await build(simulatorviewConfig);
       await build(registersviewConfig);
       await build(progmemviewConfig);
       console.log("build complete");
