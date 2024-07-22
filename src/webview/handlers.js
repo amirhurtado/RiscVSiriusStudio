@@ -32,7 +32,7 @@ function binFormattedDisplay(cpuData, selection) {
     rs1: [4],
     rs2: [3],
   };
-  const type = instruction.type.toUpperCase();
+  const type = instruction.type;
   let s = [];
   if (selection === "funct7" && type === "R") {
     s.push(1);
@@ -438,7 +438,7 @@ export function IMM(element, cpuData) {
   step.addEventListener("click", () => {
     // Immediate unit available for all but R instructions
     // console.log("[IMM] new instruction: ");
-    if (instruction.type.toUpperCase() !== "R") {
+    if (instruction.type !== "R") {
       applyClass(element, "component");
       signals.forEach((e) => {
         applyClass(e, "signal");
@@ -476,7 +476,7 @@ export function ALUA(element, cpuData) {
     return inst === "R" || inst === "I" || inst === "S";
   };
   step.addEventListener("click", () => {
-    const instType = instruction.type.toUpperCase();
+    const instType = instruction.type;
     state.enabled = instType !== "U";
     if (state.enabled) {
       applyClass(element, "component");
@@ -523,7 +523,7 @@ export function ALUB(element, cpuData) {
     state.enabled = true;
     applyClass(element, "component");
     applyClass(signal, "signal");
-    const instType = instruction.type.toUpperCase();
+    const instType = instruction.type;
     if (path0Visible(instType)) {
       applyClass(path0, "connection muxPath");
       applyClass(path1, "connectionDisabled muxPathDisabled");
@@ -671,7 +671,7 @@ export function DM(element, cpuData) {
     applyClass(e, "connectionDisabled");
   });
   step.addEventListener("click", () => {
-    const instType = instruction.type.toUpperCase();
+    const instType = instruction.type;
     if (instType === "S" || instruction.opcode === "0000011") {
       // Data memory only available for S and load instructions
       state.enabled = true;
@@ -723,7 +723,7 @@ export function BUMUX(element, cpuData) {
   step.addEventListener("click", () => {
     state.enabled = true;
     applyClass(element, "component");
-    const instType = instruction.type.toUpperCase();
+    const instType = instruction.type;
     const instOC = instruction.opcode;
     if (path1Visible(instType, instOC)) {
       applyClass(path1, "connection muxPath");
@@ -764,7 +764,7 @@ export function WBMUX(element, cpuData) {
   };
   step.addEventListener("click", () => {
     // Disabled for B and S
-    const instType = instruction.type.toUpperCase();
+    const instType = instruction.type;
     state.enabled = instType !== "B" && instType !== "S";
     if (state.enabled) {
       const instOC = instruction.opcode;
@@ -900,7 +900,7 @@ export function PCALUA(element, cpuData) {
   applyClass(element, "connectionDisabled");
   focus(element);
   step.addEventListener("click", () => {
-    const instType = instruction.type.toUpperCase();
+    const instType = instruction.type;
     if (instType === "J" || instType === "B") {
       applyClass(element, "connection");
       state.enabled = true;
@@ -1104,7 +1104,7 @@ export function IMIMM(element, cpuData) {
   applyClass(element, "connectionDisabled");
   focus(element);
   step.addEventListener("click", () => {
-    const instType = instruction.type.toUpperCase();
+    const instType = instruction.type;
     if (instType !== "R") {
       applyClass(element, "connection");
       state.enabled = true;
@@ -1125,7 +1125,7 @@ export function WBMUXRU(element, cpuData) {
   applyClass(element, "connectionDisabled");
   focus(element);
   step.addEventListener("click", () => {
-    const instType = instruction.type.toUpperCase();
+    const instType = instruction.type;
     if (instType === "J" || instType === "I" || instType === "R") {
       applyClass(element, "connection");
       state.enabled = true;
@@ -1144,7 +1144,7 @@ export function IMMALUB(element, cpuData) {
   applyClass(element, "connectionDisabled");
   focus(element);
   step.addEventListener("click", () => {
-    const instType = instruction.type.toUpperCase();
+    const instType = instruction.type;
     if (instType !== "R" && instType !== "U") {
       applyClass(element, "connection");
       state.enabled = true;
@@ -1164,7 +1164,7 @@ export function RUALUA(element, cpuData) {
   applyClass(element, "connectionDisabled");
   focus(element);
   step.addEventListener("click", () => {
-    const instType = instruction.type.toUpperCase();
+    const instType = instruction.type;
     if (instType !== "J" && instType !== "B") {
       state.enabled = true;
       pathOnTop(element);
@@ -1186,7 +1186,7 @@ export function RUALUB(element, cpuData) {
   applyClass(element, "connectionDisabled");
   focus(element);
   step.addEventListener("click", () => {
-    const instType = instruction.type.toUpperCase();
+    const instType = instruction.type;
     if (instType === "R") {
       state.enabled = true;
       pathOnTop(element);
@@ -1208,7 +1208,7 @@ export function RUDM(element, cpuData) {
   applyClass(element, "connectionDisabled");
   focus(element);
   step.addEventListener("click", () => {
-    const instType = instruction.type.toUpperCase();
+    const instType = instruction.type;
     if (instType === "S") {
       applyClass(element, "connection");
       state.enabled = true;
@@ -1230,7 +1230,7 @@ export function RURS1BU(element, cpuData) {
   applyClass(element, "connectionDisabled");
   focus(element);
   step.addEventListener("click", () => {
-    const instType = instruction.type.toUpperCase();
+    const instType = instruction.type;
     if (instType === "B") {
       state.enabled = true;
       applyClass(element, "connection");
@@ -1250,7 +1250,7 @@ export function RURS2BU(element, cpuData) {
   applyClass(element, "connectionDisabled");
   focus(element);
   step.addEventListener("click", () => {
-    const instType = instruction.type.toUpperCase();
+    const instType = instruction.type;
     if (instType === "B") {
       state.enabled = true;
       applyClass(element, "connection");
@@ -1298,7 +1298,7 @@ export function ALUDM(element, cpuData) {
   applyClass(element, "connectionDisabled");
   focus(element);
   step.addEventListener("click", () => {
-    const instType = instruction.type.toUpperCase();
+    const instType = instruction.type;
     if (instType === "S" || instruction.opcode === "0000011") {
       state.enabled = true;
       applyClass(element, "connection");
@@ -1377,7 +1377,7 @@ export function ALUBUMUX(element, cpuData) {
   focus(element);
   step.addEventListener("click", () => {
     // ALUBUMUX enabled on S and ILoad instructions
-    const instType = instruction.type.toUpperCase();
+    const instType = instruction.type;
     const instOC = instruction.opcode;
     if (instType === "S" || instOC === "0000011") {
       applyClass(element, "connection");
@@ -1529,7 +1529,7 @@ export function LOGTEXTHEX(element, cpuData) {
 }
 
 function displayType(instruction, element, expected, e) {
-  const actual = instruction.type.toUpperCase();
+  const actual = instruction.type;
   if (expected === actual) {
     applyClass(element, "instTypeHigh");
   } else {
