@@ -31,4 +31,5 @@ export function applyDecoration(line: number, editor: TextEditor) {
   const end = new Position(line, editor.document.lineAt(line).text.length);
   const decorationRange = new Range(start, end);
   editor.setDecorations(memoryHighlightDecorationType, [decorationRange]);
+  editor.revealRange(decorationRange);
 }
