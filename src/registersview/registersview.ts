@@ -65,7 +65,6 @@ type RegisterValue = {
 };
 
 function main() {
-  log("info", "register view initialization");
   let table = tableSetup();
   sortCriteria(table);
 }
@@ -279,7 +278,6 @@ function valueEditor(
   editor.addEventListener("blur", successFunc);
   editor.addEventListener("keydown", (evt) => {
     if (evt.key === "Escape") {
-      log("info", "Escape keypressed");
       cancel();
     }
   });
@@ -293,8 +291,6 @@ function valueEditor(
  * @returns
  */
 function isValidAs(value: string, valType: RegisterView) {
-  log("info", { msg: "isValid function called!", val: value, ty: valType });
-
   switch (valType) {
     case 2:
       return validBinary(value);
@@ -325,30 +321,18 @@ function valueFormatter(
   onRendered: any
 ) {
   const { value, viewType } = cell.getData();
-  log("info", { msg: "Value formatter called", stored: value, type: viewType });
   switch (viewType) {
     case 2:
       return binaryRepresentation(value);
     case "signed": {
-      log("info", "convert to signed ");
       return binaryToInt(value);
     }
     case "unsigned": {
       const rvalue = binaryToUInt(value);
-      log("info", {
-        message: "convert to unsigned ",
-        binary: value,
-        unsigned: rvalue
-      });
       return rvalue;
     }
     case 16: {
       const rvalue = binaryToHex(value);
-      log("info", {
-        message: "convert to unsigned ",
-        binary: value,
-        unsigned: rvalue
-      });
       return rvalue;
     }
     case "ascii": {

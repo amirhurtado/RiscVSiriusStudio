@@ -136,14 +136,12 @@ function dispatch(event: MessageEvent, table: Tabulator) {
 }
 function getSourceLineForInstruction(row: RowComponent): number {
   const line = row.getData().ir.location.start.line;
-  log("info", { message: "getSource for row", lineNumber: line });
   return line - 1;
 }
 
 function selectInstructionInTable(line: number, table: Tabulator) {
   const codeSync = document.getElementById("code-sync") as Checkbox;
   if (!codeSync.checked) {
-    log("info", "instruction selection disabled by user");
     return;
   }
 
@@ -475,10 +473,6 @@ function reflectInstruction(instruction: RowComponent, instTable: InstTable) {
       encoding: { binEncoding }
     }
   } = instruction.getData();
-  log("info", {
-    msg2: "A row was selected in the progmem",
-    type: type
-  });
   const pattern = (type as string).toLocaleUpperCase();
   instTable.handler(pattern);
   updateColumnValues(instTable, binEncoding);
@@ -492,14 +486,8 @@ function updateColumnValues(instTable: InstTable, binEncoding: string) {
 
   if (result && "groups" in result) {
     const data = result.groups as TypeInstructionValue;
-
     instTable.table.clearData();
     instTable.table.addRow(data);
-    log("info", {
-      msg: "update column values",
-      inst: binEncoding,
-      result: data
-    });
   }
 }
 
