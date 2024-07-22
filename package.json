@@ -7,6 +7,7 @@
   "engines": {
     "vscode": "^1.75.0"
   },
+  "categories": ["Programming Languages"],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
@@ -54,14 +55,24 @@
     ],
     "languages": [
       {
-        "id": "rvasm",
-        "aliases": [
-          "RISC-V",
-          "risc-v"
-        ],
-        "extensions": [
-          ".asm"
-        ]
+        "id": "riscvasm",
+        "extensions": [".asm"],
+        "aliases": ["RiscVAsm", "riscvasm"],
+        "configuration": "./riscv-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "riscvasm",
+        "scopeName": "source.riscv",
+        "path": "./syntaxes/riscv.tmLanguage"
+      }
+    ],
+    "themes": [
+      {
+        "label": "Sample Light",
+        "uiTheme": "vs",
+        "path": "./themes/Sample_Light.tmTheme"
       }
     ]
   },

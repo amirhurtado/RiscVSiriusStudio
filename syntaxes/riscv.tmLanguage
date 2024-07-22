@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>fileTypes</key>
+    <array>
+      <string>S</string>
+      <string>s</string>
+      <string>riscv</string>
+      <string>asm</string>
+    </array>
+    <key>keyEquivalent</key>
+    <string>^~M</string>
+    <key>name</key>
+    <string>RISCV Assembler</string>
+    <key>patterns</key>
+    <array>
+      <dict>
+        <key>Comment</key>
+        <string>Matches riscv comments</string>
+        <key>match</key>
+        <string>#.*\n</string>
+        <key>name</key>
+        <string>comment</string>
+      </dict>
+      <dict>
+        <key>Comment</key>
+        <string>Matches all riscv register names</string>
+        <key>match</key>
+        <string>\b(x[0-9]|x[1|2][0-9]|x3[0-1])\b</string>
+        <key>name</key>
+        <string>keyword.regname.basic</string>
+      </dict>
+      <dict>
+        <key>Comment</key>
+        <string>Matches riscv register abi names</string>
+        <key>match</key>
+        <string>\b(zero|ra|sp|gp|tp|t[0-6]|s[0-9]|s1[0-1]|fp|a[0-7])\b</string>
+        <key>name</key>
+        <string>keyword.regname.abi</string>
+      </dict>
+      <dict>
+        <key>Comment</key>
+        <string>Matches riscv primitive operations</string>
+        <key>match</key>
+        <string>\b(add|sub|xor|or|and|sll|srl|sra|slt|sltu|addi|xori|ori|andi|slli|srli|srai|slti|sltiu|lb|lh|lw|lbu|lhu|sb|sh|sw|beq|bne"|blt|bge|bltu|bgeu|jalr|jal|lui|auipc|ecall|ebreak)\b</string>
+        <key>name</key>
+        <string>keyword.32i.primitive</string>
+      </dict>
+    </array>
+    <key>scopeName</key>
+    <string>source.riscv</string>
+    <key>uuid</key>
+    <string>0a5635ce-7e13-45cc-9068-8e3f331415a3</string>
+  </dict>
+</plist>
