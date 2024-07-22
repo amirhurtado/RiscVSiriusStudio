@@ -12,7 +12,6 @@
   function getInstMemPosition() {
     const memIndex = instcounter * 4;
     instcounter = instcounter + 1;
-    //console.log("mem ", memIndex);
     return memIndex;
   }
 
@@ -21,15 +20,21 @@
   }
 
   function buildList(head, tail, index) {
-
     return [head].concat(extractList(tail, index));
   }
+
   function getInt(val) { return parseInt(val,10); }
+  
   function isImm12(val) { return val >= -2048 && val <= 2047; }
+  
   function isImm13(val) { return val >= -4096 && val <= 4095; }
+  
   function isImm21(val) { return val >= -1048576 && val <= 1048575; }
+  
   function isImm32(val) { return val >= 0 && val <= 4294967295; }
+  
   function isValidShift(val) { return val >= 0 && val < 32; }
+  
   function isILogical(name) {
     return (name == 'slli'|| name == 'srli' || name == 'srai');
   }
@@ -54,11 +59,10 @@
     
     let enc = groups4.map(
             (b8) => {
-                  let hex = parseInt(b8,2).toString(16).toUpperCase();
-                              let padHex = hex.padStart(2,"0");
-                    //return l.reduce((acc, c) => { return acc.concat(c);},"");
-                            return padHex;
-                          }
+                      let hex = parseInt(b8,2).toString(16).toUpperCase();
+                      let padHex = hex.padStart(2,"0");
+                      return padHex;
+                    }
             );
       return enc.toString().replace(/,/g,"-");
   }
@@ -172,7 +176,7 @@
     };
 
     return {
-      "inst":getInstMemPosition(), "type":"i", "instruction": name, "rd":rd,
+      "inst":getInstMemPosition(), "type":"I", "instruction": name, "rd":rd,
       "rs1":rs1, "imm12": imm, "funct3": funct3,  "opcode": opcode,
       "encoding":encoding, "location":location, "pseudo":pseudo
     };
@@ -207,7 +211,7 @@
     };
 
     return {
-      "inst":getInstMemPosition(), "type":"s", "instruction": name, "rs1":rs1, 
+      "inst":getInstMemPosition(), "type":"S", "instruction": name, "rs1":rs1, 
       "rs2":rs2, "imm12": offset, "funct3": funct3,  "opcode": "0100011", 
       "encoding":encoding, "location":location
     };
@@ -233,8 +237,6 @@
 
     const funct3Bin = toBinaryString(funct3,3);
     
-    console.log("handleBInstruction", target);
-
     const tgtVal = getInt(target);
     const immVal = tgtVal - instMem;
     const immValBin = toBinaryString(immVal,13);
@@ -254,7 +256,7 @@
     };
 
     return {
-      "inst":instMem, "type":"b", "instruction": name, "rs1":rs1,
+      "inst":instMem, "type":"B", "instruction": name, "rs1":rs1,
       "rs2":rs2, "imm13": target, "funct3": funct3, "opcode": "1100011", 
       "encoding":encoding, "location":location, "pseudoInst": pseudo
     };
@@ -265,7 +267,6 @@
     const rdBin = toBinaryString(rdVal,5);
     const instMem = getInstMemPosition();
 
-    console.log("handleJInstruction", target);
     const tgtVal = getInt(target);
     const immVal = tgtVal - instMem;
     const immValBin = toBinaryString(immVal,21);
@@ -284,7 +285,7 @@
     };
 
     return {
-      "inst":instMem, "type":"j", "instruction": name,
+      "inst":instMem, "type":"J", "instruction": name,
       "imm21": target, "opcode": "1101111", "encoding":encoding,
       "location":location, "pseudo":pseudo
     };
@@ -307,7 +308,7 @@
     };
 
     return {
-      "inst":getInstMemPosition(), "type":"u", "instruction": name, "rd":rd,
+      "inst":getInstMemPosition(), "type":"U", "instruction": name, "rd":rd,
       "imm21": offset, "opcode": opcode, "encoding":encoding, 
       "location":location, "pseudo":pseudo
     };
