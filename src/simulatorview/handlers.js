@@ -1,5 +1,63 @@
 import _ from "../../node_modules/lodash-es/lodash.js";
 
+/**
+ * Tests if an instruction uses rs1
+ * @param {*} instType the instruction type
+ */
+function usesRs1(instType) {
+  switch (instType) {
+    case "U":
+    case "J":
+      return false;
+  }
+  return true;
+}
+
+/**
+ * Tests if an instruction uses rs2
+ * @param {*} instType the instruction type
+ */
+function usesRs2(instType) {
+  switch (instType) {
+    case "R":
+    case "S":
+    case "B":
+      return true;
+  }
+  return false;
+}
+
+/**
+ * Tests if an instruction uses rd
+ * @param {*} instType the instruction type
+ */
+function usesRd(instType) {
+  switch (instType) {
+    case "S":
+    case "B":
+      return false;
+  }
+  return true;
+}
+
+/**
+ * Tests if an instruction uses fuct3
+ * @param {*} instType the instruction type
+ *
+ * Every instruction that uses rs1 also uses funct3 and vic.
+ */
+function usesFunct3(instType) {
+  return usesRs1(instType);
+}
+
+/**
+ * Tests if an instruction uses funct7
+ * @param {*} instType the instruction type
+ */
+function usesFunct7(instType) {
+  return instType === "R";
+}
+
 function undefinedFunc0() {}
 
 const showTooltip = (evt, text, etext) => {
@@ -84,7 +142,9 @@ function tooltipEvt(name, cpuData, element, htmlGen, htmlDet) {
   element.addEventListener("mousemove", (e) => {
     const state = cpuData.cpuElemStates[name];
     if (state.enabled) {
-      showTooltip(e, htmlGen(), htmlDet !== undefinedFunc0 ? htmlDet() : null);
+      const tooltipText = htmlGen();
+      const tooltipTextDetail = htmlDet !== undefinedFunc0 ? htmlDet() : null;
+      showTooltip(e, tooltipText, tooltipTextDetail);
     }
   });
   element.addEventListener("mouseout", () => {
@@ -151,7 +211,6 @@ export function PC(element, cpuData) {
   const {
     cpuElements: { PCCLOCK: clock },
     cpuElemStates: { PC: state },
-    instruction: instruction,
     stepButton: step,
   } = cpuData;
 
@@ -164,7 +223,7 @@ export function PC(element, cpuData) {
     cpuData,
     element,
     () => {
-      const inst = instruction.inst;
+      const inst = cpuData.instruction.inst;
       return `<span class="tooltipinfo">
             <h1>Current address</h1>
             <p>${inst}</p>
@@ -201,7 +260,6 @@ export function IM(element, cpuData) {
   const {
     cpuElements: { IMADDRESSTEXT: addressText, IMINSTRUCTIONTEXT: instText },
     cpuElemStates: { IM: state },
-    instruction: instruction,
     stepButton: step,
   } = cpuData;
 
@@ -215,36 +273,36 @@ export function IM(element, cpuData) {
     cpuData,
     addressText,
     () => {
-      const inst = instruction.inst;
+      const inst = cpuData.instruction.inst;
       return `<span class="tooltipinfo">
-            <h1>Current address</h1>
-            <p>${inst}</p>
-            </span>`;
+              <h1>Current address</h1>
+              <p>${inst}</p>
+              </span>`;
     },
-    () => {
-      return "TODO: probably show next instruction or the contents of the memory";
-    }
+    // TODO: probably show next instruction or the contents of the memory
+    undefinedFunc0
   );
   tooltipEvt(
     "IM",
     cpuData,
     instText,
     () => {
-      const text = "fix me!";
+      const inst = cpuData.instruction.asm;
       return `<span class="tooltipinfo">
-            <h1>Current instruction</h1>
-            <p>${text}</p>`;
+              <h1>Current instruction</h1>
+              <p>${inst}</p>
+              </span>`;
     },
     () => {
-      const text = "fix me";
-      const inst = instruction;
+      const { asm, type, pseudo } = cpuData.instruction;
       return `<span class="tooltipinfo">
-            <h1>Current instruction</h1>
-            <ul>
-              <li>Assembler: <b>${text}</b></li>
-              <li>Type: ${inst.type}</li>
-              <li>Pseudo: ${inst.pseudo}</li>
-            </ul>`;
+              <h1>Current instruction</h1>
+              <dl>
+                <dt>Assembler</dt><dd> ${asm}</dd>
+                <dt>Type</dt><dd> ${type}</dd>
+                <dt>Pseudo</dt><dd> ${pseudo}</dd>
+              </dl>
+              </span>`;
     }
   );
   step.addEventListener("click", () => {
@@ -272,10 +330,18 @@ export function CU(element, cpuData) {
     cpuData,
     arrow,
     () => {
-      const inst = "fix me"; //cpuData.instruction;
+      const { asm } = cpuData.instruction;
       return `<span class="tooltipinfo">
-            <h1>Flags for instruction</h1>
-            <p>${inst}</p>`;
+              <h1>Flags for: <b>${asm}</b></h1>
+              <dl>
+                <dt>ALUASrc</dt> <dd>COMPUTEME</dd>
+                <dt>ALUBSrc</dt> <dd>COMPUTEME</dd>
+                <dt>IMSrc</dt>   <dd>COMPUTEME</dd>
+                <dt>ALUOp</dt>   <dd>COMPUTEME</dd>
+                <dt>BROp</dt>   <dd>COMPUTEME</dd>
+                <dt>RUDataWrSrc</dt>   <dd>COMPUTEME</dd>
+              </dl>
+              </span>`;
     },
     undefinedFunc0
   );
@@ -325,21 +391,36 @@ export function RU(element, cpuData) {
     cpuData,
     rs1Text,
     () => {
-      const regname = instruction.rs1.regname;
-      return `<span class="tooltipinfo">
-            <h1>Register</h1>
-            <p>ABI: ${regname}</p>`;
+      if (usesRs1(cpuData.instruction.type)) {
+        const {
+          rs1: { regname, regeq },
+        } = cpuData.instruction;
+        return `<span class="tooltipinfo">
+              <dl>
+                <dt>Register</dt><dd>${regname} (${regeq})</dd>
+                <dt>Value</dt><dd>{COMPUTE VALUE}</dd>
+              </dl>
+              </span>`;
+      } else {
+        return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
+      }
     },
     () => {
-      const { regeq, regname, regenc } = instruction.rs1;
-      const binEncoding = instruction.encoding.rs1;
-      return `<span class="tooltipinfo">
-            <ul>
-              <li>Register: ${regeq}</li>
-              <li>ABI: ${regname}</li>
-              <li>Encoding: ${regenc}</li>
-              <li>Encoding(2): ${binEncoding}</li>
-            </ul>`;
+      if (usesRs1(cpuData.instruction.type)) {
+        const {
+          rs1: { regname, regeq },
+          encoding: { rs1: rs1Bin },
+        } = cpuData.instruction;
+        return `<span class="tooltipinfo">
+              <dl>
+                <dt>Register</dt><dd>${regname} (${regeq})</dd>
+                <dt>Value</dt><dd>{COMPUTE VALUE}</dd>
+                <dt>Encoding</dt><dd>${rs1Bin}</dd>
+              </dl>
+              </span>`;
+      } else {
+        return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
+      }
     }
   );
   tooltipEvt(
@@ -347,21 +428,37 @@ export function RU(element, cpuData) {
     cpuData,
     rs2Text,
     () => {
-      const regname = instruction.rs2.regname;
-      return `<span class="tooltipinfo">
-            <h1>Register</h1>
-            <p>ABI: ${regname}</p>`;
+      if (usesRs2(cpuData.instruction.type)) {
+        const {
+          rs2: { regname, regeq },
+        } = cpuData.instruction;
+        return `<span class="tooltipinfo">
+                <dl>
+                  <dt>Register</dt><dd>${regname} (${regeq})</dd>
+                  <dt>Value</dt><dd>{COMPUTE VALUE}</dd>
+                </dl>
+                </span>`;
+      } else {
+        return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
+      }
     },
     () => {
-      const { regeq, regname, regenc } = instruction.rs2;
-      const binEncoding = instruction.encoding.rs2;
-      return `<span class="tooltipinfo">
-            <ul>
-              <li>Register: ${regeq}</li>
-              <li>ABI: ${regname}</li>
-              <li>Encoding: ${regenc}</li>
-              <li>Encoding(2): ${binEncoding}</li>
-            </ul>`;
+      if (usesRs2(cpuData.instruction.type)) {
+        const {
+          rs2: { regname, regeq },
+          encoding: { rs2: rs2Bin },
+        } = cpuData.instruction;
+        return `<span class="tooltipinfo">
+                <dl>
+                  <dt>Register</dt><dd>${regname} (${regeq})</dd>
+                  <dt>Value</dt><dd>{COMPUTE VALUE}</dd>
+                  <dt>Encoding</dt><dd>${rs2Bin}</dd>
+
+                </dl>
+                </span>`;
+      } else {
+        return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
+      }
     }
   );
   tooltipEvt(
@@ -369,21 +466,37 @@ export function RU(element, cpuData) {
     cpuData,
     rdText,
     () => {
-      const regname = instruction.rd.regname;
-      return `<span class="tooltipinfo">
-            <h1>Register</h1>
-            <p>ABI: ${regname}</p>`;
+      if (usesRd(cpuData.instruction.type)) {
+        const {
+          rd: { regname, regeq },
+        } = cpuData.instruction;
+        return `<span class="tooltipinfo">
+                <dl>
+                  <dt>Register</dt><dd>${regname} (${regeq})</dd>
+                  <dt>Value</dt><dd>{COMPUTE VALUE}</dd>
+                </dl>
+                </span>`;
+      } else {
+        return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
+      }
     },
     () => {
-      const { regeq, regname, regenc } = instruction.rd;
-      const binEncoding = instruction.encoding.rd;
-      return `<span class="tooltipinfo">
-            <ul>
-              <li>Register: ${regeq}</li>
-              <li>ABI: ${regname}</li>
-              <li>Encoding: ${regenc}</li>
-              <li>Encoding(2): ${binEncoding}</li>
-            </ul>`;
+      if (usesRd(cpuData.instruction.type)) {
+        const {
+          rd: { regname, regeq },
+          encoding: { rd: rdBin },
+        } = cpuData.instruction;
+        return `<span class="tooltipinfo">
+                <dl>
+                  <dt>Register</dt><dd>${regname} (${regeq})</dd>
+                  <dt>Value</dt><dd>{COMPUTE VALUE}</dd>
+                  <dt>Encoding</dt><dd>${rdBin}</dd>
+
+                </dl>
+                </span>`;
+      } else {
+        return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
+      }
     }
   );
   step.addEventListener("click", () => {
@@ -393,6 +506,15 @@ export function RU(element, cpuData) {
     inputs.forEach((e) => {
       applyClass(e, "inputText");
     });
+    if (!usesRs1(cpuData.instruction.type)) {
+      applyClass(rs1Text, "inputTextDisabled");
+    }
+    if (!usesRs2(cpuData.instruction.type)) {
+      applyClass(rs2Text, "inputTextDisabled");
+    }
+    if (!usesRd(cpuData.instruction.type)) {
+      applyClass(rdText, "inputTextDisabled");
+    }
     signals.forEach((e) => {
       applyClass(e, "signal");
     });
@@ -1027,9 +1149,14 @@ export function IMRURS1(element, cpuData) {
     }
   );
   step.addEventListener("click", () => {
-    applyClass(element, "connection");
-    pathOnTop(element);
-    state.enabled = true;
+    if (usesRs1(cpuData.instruction.type)) {
+      applyClass(element, "connection");
+      pathOnTop(element);
+      state.enabled = true;
+    } else {
+      applyClass(element, "connectionDisabled");
+      state.enabled = false;
+    }
   });
 }
 
@@ -1058,9 +1185,14 @@ export function IMRURS2(element, cpuData) {
     }
   );
   step.addEventListener("click", () => {
-    applyClass(element, "connection");
-    pathOnTop(element);
-    state.enabled = true;
+    if (usesRs2(cpuData.instruction.type)) {
+      applyClass(element, "connection");
+      pathOnTop(element);
+      state.enabled = true;
+    } else {
+      applyClass(element, "connectionDisabled");
+      state.enabled = false;
+    }
   });
 }
 
@@ -1482,17 +1614,16 @@ export function LOGTEXTASSEMBLER(element, cpuData) {
   });
 }
 
-export function LOGTEXTBIN(element, cpuData) {
+function LOGTEXTBIN(element, cpuData) {
   const {
     cpuElements: { LOGTEXTBIN: text },
-    instruction: instruction,
     stepButton: step,
   } = cpuData;
 
   setBinInstruction(cpuData, "--no instruction loaded--");
   applyClass(element, "instructionDisabled");
   step.addEventListener("click", () => {
-    const bin = instruction.encoding.binEncoding;
+    const bin = cpuData.instruction.encoding.binEncoding;
     setBinInstruction(cpuData, bin);
     applyClass(element, "instruction");
   });
@@ -1512,7 +1643,7 @@ export function LOGTEXTIMM(element, cpuData) {
   });
 }
 
-export function LOGTEXTHEX(element, cpuData) {
+function LOGTEXTHEX(element, cpuData) {
   const {
     cpuElements: { LOGTEXTBIN: text },
     instruction: instruction,

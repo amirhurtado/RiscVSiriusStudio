@@ -10,21 +10,22 @@ import {
 } from "vscode";
 
 import { SimulatorPanel } from "./panels/SimulatorPanel";
-import { LeftPanelWebview } from "./panels/RegisterPanel";
+import { RegisterPanelView } from "./panels/RegisterPanel";
 import { ProgMemPanelView } from "./panels/ProgMemPanel";
 import { compile, ParserResult } from "./utilities/riscvc";
 import { logger } from "./utilities/logger";
-import { RVExtensionContext } from "./support/context";
+import { RVExtensionContext, RVSimulationContext } from "./support/context";
 
-export async function activate(context: ExtensionContext) {
+export function activate(context: ExtensionContext) {
   console.log("Activating extension");
   logger().info("Activating extension");
   const rvContext = new RVExtensionContext();
+  const smContext = new RVSimulationContext();
 
   context.subscriptions.push(
     window.registerWebviewViewProvider(
       "rv-simulator.registers",
-      new LeftPanelWebview(context.extensionUri, {}),
+      RegisterPanelView.render(context.extensionUri, {}),
       { webviewOptions: { retainContextWhenHidden: true } }
     )
   );
@@ -38,18 +39,9 @@ export async function activate(context: ExtensionContext) {
   );
 
   context.subscriptions.push(
-    commands.registerCommand("rv-simulator.assembleFile", () => {
-      const editor = window.activeTextEditor;
-      buildAndUploadProgram(editor);
-    })
-  );
-
-  context.subscriptions.push(
     commands.registerCommand("rv-simulator.simulate", () => {
-      SimulatorPanel.render(context.extensionUri);
-      commands.executeCommand("rv-simulator.selectInstructionInMemory");
       const editor = window.activeTextEditor;
-      simulateProgram(editor, context.extensionUri);
+      simulateProgram(editor, context.extensionUri, smContext);
     })
   );
 
@@ -116,7 +108,11 @@ export async function activate(context: ExtensionContext) {
   commands.executeCommand("rv-simulator.enableProgMemSync");
 }
 
-function simulateProgram(editor: TextEditor | undefined, extensionUri: Uri) {
+function simulateProgram(
+  editor: TextEditor | undefined,
+  extensionUri: Uri,
+  smContext: RVSimulationContext
+) {
   if (editor) {
     const buildResult = buildProgram(
       editor.document.getText(),
@@ -127,12 +123,16 @@ function simulateProgram(editor: TextEditor | undefined, extensionUri: Uri) {
       window.showErrorMessage("Build process failed. Cannot simulate program");
       return;
     }
-    window.showInformationMessage("Starting simulation");
-    SimulatorPanel.getPanel(extensionUri)?.postMessage({
-      operation: "executeProgram",
-      program: buildResult
-    });
-    SimulatorPanel.render(extensionUri);
+    if (buildResult.ir) {
+      SimulatorPanel.render(extensionUri);
+      window.showInformationMessage("Starting simulation");
+      smContext.init(
+        buildResult.ir,
+        SimulatorPanel.getPanel(extensionUri),
+        ProgMemPanelView.render(extensionUri, {}),
+        RegisterPanelView.render(extensionUri, {})
+      );
+    }
   }
 }
 

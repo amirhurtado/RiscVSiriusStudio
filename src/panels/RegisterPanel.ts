@@ -10,14 +10,27 @@ import { getUri } from "../utilities/getUri";
 import { getNonce } from "../utilities/getNonce";
 import { logger } from "../utilities/logger";
 
-export class LeftPanelWebview implements WebviewViewProvider {
-  constructor(
+export class RegisterPanelView implements WebviewViewProvider {
+  public static currentview: RegisterPanelView | undefined;
+
+  private constructor(
     private readonly extensionUri: Uri,
     private data: any,
     private _view: any = null
   ) {
     this.extensionUri = extensionUri;
   }
+  public static render(extensionUri: Uri, data: any): RegisterPanelView {
+    if (!RegisterPanelView.currentview) {
+      RegisterPanelView.currentview = new RegisterPanelView(extensionUri, data);
+    }
+    return RegisterPanelView.currentview;
+  }
+
+  public getWebView(): Webview {
+    return (this._view as WebviewView).webview;
+  }
+
   private onDidChangeTreeData: EventEmitter<any | undefined | null | void> =
     new EventEmitter<any | undefined | null | void>();
 

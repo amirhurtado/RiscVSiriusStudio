@@ -1,18 +1,19 @@
 import {
   provideVSCodeDesignSystem,
   Button,
-  TextField,
-  allComponents,
-  TextArea
-} from "@vscode/webview-ui-toolkit";
+  allComponents
+} from '@vscode/webview-ui-toolkit';
 
-import * as Handlers from "./handlers.js";
-import { compile, ParserResult } from "../utilities/riscvc";
+import * as Handlers from './handlers.js';
 
 provideVSCodeDesignSystem().register(allComponents);
 
 const vscode = acquireVsCodeApi();
-window.addEventListener("load", main);
+window.addEventListener('load', main);
+
+function sendMessageToExtension(messageObject: any) {
+  vscode.postMessage(messageObject);
+}
 
 /**
  * Log functionality. The logger that is actually used is in the extension. This
@@ -23,14 +24,12 @@ window.addEventListener("load", main);
  * @param object the object to be logged/
  */
 function log(kind: string, object: any = {}) {
-  vscode.postMessage({ command: "log-" + kind, obj: { object } });
+  vscode.postMessage({ command: 'log-' + kind, obj: { object } });
 }
 
 // Global data for the simulator
 let cpuData = {
-  parser: {}, // Intermediate representation of the program
   stepButton: {}, // Button to signal new instruction
-  instIndex: 0, // Current instruction index
   instruction: {}, // Current instruction
   cpuElements: {}, // All the cpu elements with the attribute "data-cpuname" set to something.
   cpuElemStates: {}, // All the cpu elements with the attribute "data-cpuname" set to something.
@@ -38,25 +37,56 @@ let cpuData = {
 };
 
 function main() {
-  log("info", { message: "Initializing simulator events" });
-  window.addEventListener("message", messageDispatch);
-  log("info", { message: "Initialization finished" });
+  log('info', { message: 'Initializing simulator events' });
+  const step = document.getElementById('step-execution') as Button;
+  cpuData.stepButton = step;
+  step.addEventListener('click', (e) => {
+    sendMessageToExtension({
+      command: 'event',
+      from: 'simulator',
+      message: 'stepClicked'
+    });
+  });
+  fetchSVGElements();
+  window.addEventListener('message', messageDispatch);
+  log('info', { message: 'Initialization finished' });
 }
 
 function messageDispatch(event: MessageEvent) {
   const message = event.data;
+  // log('info', { msg: message });
   switch (message.operation) {
-    case "executeProgram":
-      log("executeProgram event ");
-      const program = message.program as ParserResult;
-      executeProgram(program);
+    case 'disableStart':
+      disableStart();
+      break;
+    case 'enableStep':
+      enableStep();
+      break;
+    case 'setInstruction':
+      setInstruction(message.instruction);
       break;
     default:
-      log("info", { message: "Message not recognized by webview" });
+      log('info', { message: 'Message not recognized by webview' });
       break;
   }
 }
 
+function disableStart() {
+  const start = document.getElementById('start-execution') as Button;
+  start.disabled = true;
+  (cpuData.stepButton as Button).click();
+}
+
+function enableStep() {
+  const step = document.getElementById('step-execution') as Button;
+  step.disabled = false;
+}
+
+function setInstruction(instruction: any) {
+  const { asm } = instruction;
+  cpuData.instruction = instruction;
+  log('info', { msg: 'new instructiondddd', inst: cpuData.instruction });
+}
 /**
  * Simulator initialization.
  *
@@ -83,45 +113,19 @@ function messageDispatch(event: MessageEvent) {
  *
  * The complete output from the parser is stored at: cpuData.parser
  */
-function executeProgram(program: ParserResult) {
-  if (!program.sucess) {
-    log("error", { message: "Nothing to execute, parsing failure." });
-    return;
-  }
-  setupSimulatorData(program);
-  fetchSVGElements();
-  const start = document.getElementById("start-execution") as Button;
-  start.addEventListener("click", (e) => {
-    start.disabled = true;
-    const step = document.getElementById("step-execution") as Button;
-    step.disabled = false;
-  });
-}
 
-function setupSimulatorData(program: ParserResult) {
-  log("info", { message: "simulator data setup" });
-  (cpuData.parser as any) = program;
-  cpuData.stepButton = document.getElementById("step-execution") as Button;
-  cpuData.instIndex = 0;
-  if (program.ir) {
-    cpuData.instruction = program.ir[0];
-  } else {
-    log("error", { message: "No intermediate representation for program." });
-  }
-  log("info", { message: "simulator data setup finished " });
-}
 /**
  * Fetches all the elements present in the SVG image with the tag "data-cpuName"
  * defined. Every element is stored in the cpuElements object inside the cpuData
  * object under the value of the attribute.
  */
 function fetchSVGElements() {
-  log("info", { message: "simulator SVG elements fetch" });
+  // log('info', { message: 'simulator SVG elements fetch' });
   const elements = document.querySelectorAll(
-    "#svg-simulator g g [data-cpuname]"
+    '#svg-simulator g g [data-cpuname]'
   );
   elements.forEach((e) => {
-    const name = e.getAttributeNS(null, "data-cpuname") as string;
+    const name = e.getAttributeNS(null, 'data-cpuname') as string;
     (cpuData.cpuElements as any)[name] = e;
     (cpuData.cpuElemStates as any)[name] = { enabled: false };
   });
@@ -135,11 +139,11 @@ function fetchSVGElements() {
     }
   });
 
-  log("info", {
-    message: "simulator SVG elements fetch finished xxxx "
-    // elements: Object.keys(cpuData.cpuElements).length,
-    // program: { message: cpuData.parser },
-    //instruction: { message: cpuData.instruction },
-    //   index: cpuData.instIndex
-  });
+  // log('info', {
+  // message: 'simulator SVG elements fetch finished '
+  // elements: Object.keys(cpuData.cpuElements).length,
+  // program: { message: cpuData.parser },
+  //instruction: { message: cpuData.instruction },
+  //   index: cpuData.instIndex
+  // });
 }

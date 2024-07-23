@@ -5,10 +5,10 @@ import {
   window,
   Uri,
   ViewColumn
-} from "vscode";
-import { getUri } from "../utilities/getUri";
-import { getNonce } from "../utilities/getNonce";
-import { logger } from "../utilities/logger";
+} from 'vscode';
+import { getUri } from '../utilities/getUri';
+import { getNonce } from '../utilities/getNonce';
+import { logger } from '../utilities/logger';
 
 /**
  * This class manages the state and behavior of HelloWorld webview panels.
@@ -47,10 +47,16 @@ export class SimulatorPanel {
     // Set an event listener to listen for messages passed from the webview context
     this._setWebviewMessageListener(this._panel.webview);
   }
+
+  public getWebView(): Webview {
+    return this._panel.webview;
+  }
+
   public static getPanel(extensionUri: Uri) {
     SimulatorPanel.render(extensionUri);
     return SimulatorPanel.currentPanel;
   }
+
   /**
    * Renders the current webview panel if it exists otherwise a new webview panel
    * will be created and displayed.
@@ -58,23 +64,25 @@ export class SimulatorPanel {
    * @param extensionUri The URI of the directory containing the extension.
    */
   public static render(extensionUri: Uri) {
-    if (SimulatorPanel.currentPanel) {
-      // If the webview panel already exists reveal it
-      SimulatorPanel.currentPanel._panel.reveal(ViewColumn.One);
-    } else {
+    SimulatorPanel.create(extensionUri);
+    SimulatorPanel.currentPanel?._panel.reveal(ViewColumn.One);
+  }
+
+  public static create(extensionUri: Uri) {
+    if (!SimulatorPanel.currentPanel) {
       // If a webview panel does not already exist create and show a new one
       const panel = window.createWebviewPanel(
         // Panel view type
-        "showHelloWorld",
+        'showHelloWorld',
         // Panel title
-        "RISCV simulator",
+        'RISCV simulator',
         // The editor column the panel should be displayed in
-        ViewColumn.One,
+        { viewColumn: ViewColumn.One, preserveFocus: true },
         {
           enableScripts: true,
           localResourceRoots: [
-            Uri.joinPath(extensionUri, "out"),
-            Uri.joinPath(extensionUri, "node_modules") // Required for codicon
+            Uri.joinPath(extensionUri, 'out'),
+            Uri.joinPath(extensionUri, 'node_modules') // Required for codicon
           ],
           retainContextWhenHidden: true
         }
@@ -115,19 +123,19 @@ export class SimulatorPanel {
    */
   private _getWebviewContent(webview: Webview, extensionUri: Uri) {
     const webviewUri = getUri(webview, extensionUri, [
-      "out",
-      "simulatorview.js"
+      'out',
+      'simulatorview.js'
     ]);
     const nonce = getNonce();
-    const cssFile = getUri(webview, extensionUri, ["out", "styles.css"]);
+    const cssFile = getUri(webview, extensionUri, ['out', 'styles.css']);
 
     const codiconsUri = webview.asWebviewUri(
       Uri.joinPath(
         extensionUri,
-        "node_modules",
-        "@vscode/codicons",
-        "dist",
-        "codicon.css"
+        'node_modules',
+        '@vscode/codicons',
+        'dist',
+        'codicon.css'
       )
     );
 
@@ -147,11 +155,7 @@ export class SimulatorPanel {
   <div id="tooltip" display="none"></div>
     <div class="simulator-toolbar">
 
-      <vscode-button id="start-execution" appearence="icon">
-      <span class="codicon codicon-debug-start"></span>
-      </vscode-button>
-
-      <vscode-button id="step-execution" appearence="icon" disabled=true>
+      <vscode-button id="step-execution" appearence="icon">
       <span class="codicon codicon-debug-step-over"></span>
       </vscode-button>
 
@@ -189,17 +193,17 @@ export class SimulatorPanel {
         const text = message.text;
 
         switch (command) {
-          case "log-info":
-            logger().info("info", message.obj);
+          case 'log-info':
+            logger().info('info', message.obj);
             // console.log("log-info ", message.obj);
             //log("trace", "simulator view " + text, message.meta);
             break;
-          case "log-error":
-            logger().error("error", message.obj);
+          case 'log-error':
+            logger().error('error', message.obj);
             // console.log("log-info ", message.obj);
             //log("trace", "simulator view " + text, message.meta);
             break;
-          case "hello":
+          case 'hello':
             // Code that should run in response to the hello message command
             window.showInformationMessage(text);
             break;

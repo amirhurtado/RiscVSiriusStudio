@@ -340,10 +340,8 @@ svg {
 }
 
 .tooltipinfo {
-  font-size: 1.1rem;
-  font-family: monospace;
   h1 {
-    font-size: inherit;
+    font-size: 1em;
     font-style: italic;
     font-weight: 700;
     color: var(--tooltip-text-color-h1);
@@ -351,7 +349,7 @@ svg {
     margin: 0;
   }
   p {
-    font-size: 0.8em;
+    font-size: 1em;
     font-weight: 400;
     color: var(--tooltip-text-color-p);
     padding: 0.5em;
@@ -359,11 +357,22 @@ svg {
     margin-left: 1ch;
   }
   ul {
-    font-size: inherit;
+    font-size: 1em;
     color: var(--tooltip-text-color);
     padding: 1ch;
     margin: 0;
     margin-left: 1ch;
+  }
+  dl {
+    display: grid;
+    grid-gap: 4px 16px;
+  }
+  dt {
+    font-weight: bold;
+  }
+  dd {
+    margin: 0;
+    grid-column-start: 2;
   }
 }
 

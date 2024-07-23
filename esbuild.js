@@ -1,5 +1,6 @@
 const { build } = require("esbuild");
 const { copy } = require("esbuild-plugin-copy");
+const { clean } = require("esbuild-plugin-clean");
 
 //@ts-check
 /** @typedef {import('esbuild').BuildOptions} BuildOptions **/
@@ -46,6 +47,7 @@ const extensionConfig = {
         // watch: true
       ],
     }),
+    clean({ patterns: ["./out/*"], verbose: true }),
   ],
   external: ["vscode"],
 };
