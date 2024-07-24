@@ -26,6 +26,10 @@ class RegistersFile {
       logger().info({ msg: 'PrintRegister', idx: 'x' + idx, val: val });
     });
   }
+
+  public getRegisterData() {
+    return this.registers;
+  }
 }
 
 export class SCCPU {
@@ -47,6 +51,9 @@ export class SCCPU {
   }
   public nextInstruction() {
     this.pc++;
+  }
+  public getRegisterFile(): RegistersFile {
+    return this.registers;
   }
   public printInfo() {
     logger().info('CPU state');

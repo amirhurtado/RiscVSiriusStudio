@@ -3,6 +3,7 @@ import { SCCPU } from '../vcpu/singlecycle';
 import { SimulatorPanel } from '../panels/SimulatorPanel';
 import { ProgMemPanelView } from '../panels/ProgMemPanel';
 import { RegisterPanelView } from '../panels/RegisterPanel';
+import { usesRegister } from '../utilities/instructions';
 
 export class RVExtensionContext {
   private previousLine: number;
@@ -81,7 +82,15 @@ export class RVSimulationContext {
     this.regPanel.getWebView().onDidReceiveMessage((message: any) => {
       this.dispatch(message);
     });
-    console.log('Simulation contex', 'program initialized', program);
+
+    // Ensure nothing is selected in the program memory and the registers views
+    this.sendToMemory({ operation: 'clearSelection' });
+    this.sendToRegisters({ operation: 'clearSelection' });
+    this.sendToSimulator({
+      operation: 'setRegisterData',
+      registers: this.cpu.getRegisterFile().getRegisterData()
+    });
+    console.log('Simulation context', 'program initialized', program);
   }
 
   private sendToSimulator(message: any) {
@@ -94,6 +103,30 @@ export class RVSimulationContext {
 
   private sendToMemory(message: any) {
     this.memPanel?.getWebView().postMessage(message);
+  }
+
+  private selectRegister(registerName: string) {
+    const instruction = this.cpu?.currentInstruction();
+    if (usesRegister(registerName, instruction.type)) {
+      this.sendToRegisters({
+        operation: 'selectRegister',
+        register: instruction[registerName].regeq
+      });
+    }
+  }
+
+  private clearRegisterSelection() {
+    this.sendToRegisters({
+      operation: 'clearSelection'
+    });
+  }
+
+  private updateRegister(regName: string, value: string) {
+    this.sendToSimulator({
+      operation: 'updateRegister',
+      name: regName,
+      value: value
+    });
   }
 
   private dispatch(message: any) {
@@ -112,11 +145,49 @@ export class RVSimulationContext {
                 });
               }
               break;
+            case 'imMouseenter':
+              {
+                const instruction = this.cpu?.currentInstruction();
+                this.sendToMemory({
+                  operation: 'selectInstructionFromAddress',
+                  address: instruction.inst
+                });
+              }
+              break;
+            case 'imMouseleave':
+              {
+                this.sendToMemory({ operation: 'clearSelection' });
+              }
+              break;
+            case 'rs1Mouseenter':
+              this.selectRegister('rs1');
+              break;
+            case 'rs2Mouseenter':
+              this.selectRegister('rs2');
+              break;
+            case 'rdMouseenter':
+              this.selectRegister('rd');
+              break;
+            case 'val1Mouseenter':
+              this.selectRegister('rs1');
+              break;
+            case 'rs1Mouseleave':
+            case 'rs2Mouseleave':
+            case 'rdMouseleave':
+            case 'val1Mouseleave':
+              this.clearRegisterSelection();
+              break;
+            case 'registerUpdate':
+              this.updateRegister(message.name, message.value);
+              break;
+            default:
+              console.log('not understood', message);
+              break;
           }
         }
         break;
       default:
-        console.log('Ignoring message in simulation', message);
+        // console.log('Ignoring message in simulation', message);
         break;
     }
   }
