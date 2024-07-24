@@ -5,6 +5,7 @@ import {
 } from '@vscode/webview-ui-toolkit';
 
 import * as Handlers from './handlers.js';
+import { logger } from '../utilities/logger.js';
 
 provideVSCodeDesignSystem().register(allComponents);
 
@@ -33,6 +34,7 @@ let cpuData = {
   instruction: {}, // Current instruction
   cpuElements: {}, // All the cpu elements with the attribute "data-cpuname" set to something.
   cpuElemStates: {}, // All the cpu elements with the attribute "data-cpuname" set to something.
+  registers: [] as string[],
   logger: log
 };
 
@@ -49,6 +51,106 @@ function main() {
   });
   fetchSVGElements();
   window.addEventListener('message', messageDispatch);
+
+  // Install some listeners
+  /**
+   * When the mouse is over the instruction memory then the instruction is
+   * selected in the proram memory view.
+   */
+  (cpuData.cpuElements as any).IM.addEventListener('mouseenter', () => {
+    sendMessageToExtension({
+      command: 'event',
+      from: 'simulator',
+      message: 'imMouseenter'
+    });
+  });
+  (cpuData.cpuElements as any).IM.addEventListener('mouseleave', () => {
+    sendMessageToExtension({
+      command: 'event',
+      from: 'simulator',
+      message: 'imMouseleave'
+    });
+  });
+  /**
+   * When the mouse is over the rs1 label in the registers unit then the
+   * register is selected in the register view.
+   */
+  (cpuData.cpuElements as any).RUTEXTINRS1.addEventListener(
+    'mouseenter',
+    () => {
+      sendMessageToExtension({
+        command: 'event',
+        from: 'simulator',
+        message: 'rs1Mouseenter'
+      });
+    }
+  );
+  (cpuData.cpuElements as any).RUTEXTINRS1.addEventListener(
+    'mouseleave',
+    () => {
+      sendMessageToExtension({
+        command: 'event',
+        from: 'simulator',
+        message: 'rs1Mouseleave'
+      });
+    }
+  );
+  (cpuData.cpuElements as any).RUTEXTINRS2.addEventListener(
+    'mouseenter',
+    () => {
+      sendMessageToExtension({
+        command: 'event',
+        from: 'simulator',
+        message: 'rs2Mouseenter'
+      });
+    }
+  );
+  (cpuData.cpuElements as any).RUTEXTINRS2.addEventListener(
+    'mouseleave',
+    () => {
+      sendMessageToExtension({
+        command: 'event',
+        from: 'simulator',
+        message: 'rs2Mouseleave'
+      });
+    }
+  );
+  (cpuData.cpuElements as any).RUTEXTINRD.addEventListener('mouseenter', () => {
+    sendMessageToExtension({
+      command: 'event',
+      from: 'simulator',
+      message: 'rdMouseenter'
+    });
+  });
+  (cpuData.cpuElements as any).RUTEXTINRD.addEventListener('mouseleave', () => {
+    sendMessageToExtension({
+      command: 'event',
+      from: 'simulator',
+      message: 'rdMouseleave'
+    });
+  });
+
+  (cpuData.cpuElements as any).RUTEXTOUTRD1.addEventListener(
+    'mouseenter',
+    () => {
+      sendMessageToExtension({
+        command: 'event',
+        from: 'simulator',
+        message: 'val1Mouseenter'
+      });
+    }
+  );
+  (cpuData.cpuElements as any).RUTEXTOUTRD1.addEventListener(
+    'mouseleave',
+    () => {
+      sendMessageToExtension({
+        command: 'event',
+        from: 'simulator',
+        message: 'val1Mouseleave'
+      });
+    }
+  );
+
   log('info', { message: 'Initialization finished' });
 }
 
@@ -64,6 +166,14 @@ function messageDispatch(event: MessageEvent) {
       break;
     case 'setInstruction':
       setInstruction(message.instruction);
+      break;
+    case 'setRegisterData':
+      log('info', 'set register data');
+      setRegistersData(message.registers);
+      break;
+    case 'updateRegister':
+      log('info', 'set register data');
+      updateRegister(message.name, message.value);
       break;
     default:
       log('info', { message: 'Message not recognized by webview' });
@@ -83,9 +193,7 @@ function enableStep() {
 }
 
 function setInstruction(instruction: any) {
-  const { asm } = instruction;
   cpuData.instruction = instruction;
-  log('info', { msg: 'new instructiondddd', inst: cpuData.instruction });
 }
 /**
  * Simulator initialization.
@@ -146,4 +254,15 @@ function fetchSVGElements() {
   //instruction: { message: cpuData.instruction },
   //   index: cpuData.instIndex
   // });
+}
+
+function setRegistersData(data: string[]) {
+  cpuData.registers = data;
+  log('info', { m: 'new values for regs', regs: cpuData.registers });
+}
+
+function updateRegister(name: string, value: string) {
+  const index = parseInt(name.substring(1));
+  log('info', { m: 'Updating value', name: name, idx: index, val: value });
+  cpuData.registers[index] = value;
 }
