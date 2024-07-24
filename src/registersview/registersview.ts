@@ -80,6 +80,9 @@ function dispatch(event: MessageEvent, table: Tabulator) {
     case 'selectRegister':
       selectRegister(data.register, table);
       break;
+    case 'setRegister':
+      setRegister(data.register, data.value, table);
+      break;
     case 'clearSelection':
       table.deselectRow();
       break;
@@ -88,6 +91,10 @@ function dispatch(event: MessageEvent, table: Tabulator) {
 
 function selectRegister(register: string, table: Tabulator) {
   table.selectRow(register);
+}
+
+function setRegister(register: string, value: string, table: Tabulator) {
+  table.updateRow(register, { value: value });
 }
 
 function tableSetup(): Tabulator {

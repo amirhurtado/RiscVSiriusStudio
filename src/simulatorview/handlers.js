@@ -1,10 +1,5 @@
 import _ from "../../node_modules/lodash-es/lodash.js";
-import {
-  usesRegister,
-  usesRs1,
-  usesRs2,
-  usesRd,
-} from "../utilities/instructions.js";
+import { usesRegister, usesALU, writesRU } from "../utilities/instructions.js";
 
 function undefinedFunc0() {}
 
@@ -145,7 +140,6 @@ function mouseHover(element, mmove, mout) {
 export function CLK(element, cpuData) {
   const {
     cpuElemStates: { CLK: state },
-    stepButton: step,
   } = cpuData;
 
   applyClass(element, "component");
@@ -159,7 +153,6 @@ export function PC(element, cpuData) {
   const {
     cpuElements: { PCCLOCK: clock },
     cpuElemStates: { PC: state },
-    stepButton: step,
   } = cpuData;
 
   const components = [element, clock];
@@ -173,9 +166,9 @@ export function PC(element, cpuData) {
     () => {
       const inst = cpuData.instruction.inst;
       return `<span class="tooltipinfo">
-            <h1>Current address</h1>
-            <p>${inst}</p>
-            </span>`;
+              <h1>Current address</h1>
+              <p>${inst}</p>
+              </span>`;
     },
     undefinedFunc0
   );
@@ -191,7 +184,6 @@ export function ADD4(element, cpuData) {
   const {
     cpuElements: { ADD4WBMUX: add4WBMux },
     cpuElemStates: { ADD4: state },
-    stepButton: step,
   } = cpuData;
 
   applyClass(element, "componentDisabled");
@@ -208,7 +200,6 @@ export function IM(element, cpuData) {
   const {
     cpuElements: { IMADDRESSTEXT: addressText, IMINSTRUCTIONTEXT: instText },
     cpuElemStates: { IM: state },
-    stepButton: step,
   } = cpuData;
 
   const inputs = [addressText, instText];
@@ -266,8 +257,6 @@ export function CU(element, cpuData) {
   const {
     cpuElements: { CUArrow: arrow },
     cpuElemStates: { CU: state },
-    instruction: instruction,
-    stepButton: step,
   } = cpuData;
 
   [element, arrow].forEach((e) => {
@@ -305,8 +294,10 @@ function registerTooltipText(name, type, cpuData) {
   const { regname, regeq, regenc } = cpuData.instruction[name];
   const binEnc = cpuData.instruction.encoding[name];
   const { registers } = cpuData;
-
   const value = registers[parseInt(regenc)];
+  /* TODO: Sometimes value gets undefined. Seems to be a problem with message
+   passing. cpuData.logger("info", { m: "registerTooltip", v: value });
+  */
   const data = {
     general: `<span class="tooltipinfo">
               <dl>
@@ -329,6 +320,14 @@ function registerTooltipText(name, type, cpuData) {
   return data[type];
 }
 
+function setRUWr(cpuData) {
+  const {
+    cpuElements: { SgnRUWRVAL: ruwrSignalValue },
+    result: { RUWr },
+  } = cpuData;
+  ruwrSignalValue.getElementsByTagName("div")[2].innerHTML = RUWr;
+}
+
 export function RU(element, cpuData) {
   const {
     cpuElements: {
@@ -344,8 +343,6 @@ export function RU(element, cpuData) {
       RUTEXTOUTRD2: val2Text,
     },
     cpuElemStates: { RU: state },
-    instruction: instruction,
-    stepButton: step,
   } = cpuData;
 
   const components = [element, clock];
@@ -442,7 +439,6 @@ export function RU(element, cpuData) {
       }
     }
   );
-
   tooltipEvt(
     "RU",
     cpuData,
@@ -462,7 +458,35 @@ export function RU(element, cpuData) {
       }
     }
   );
+  tooltipEvt(
+    "RU",
+    cpuData,
+    datawrText,
+    () => {
+      if (writesRU(cpuData.instruction.type)) {
+        const value = cpuData.result.WBMUXRes;
+        return `<span class="tooltipinfo">
+            <ul>
+            <li>Value: ${value}</li>
+            </ul>
+            </span>`;
+      } else {
+        return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
+      }
+    },
+    undefinedFunc0
+    // () => {
+    //   if (usesRegister("rs2", cpuData.instruction.type)) {
+    //     return registerTooltipText("rs2", "valueGeneral", cpuData);
+    //   } else {
+    //     return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
+    //   }
+    // }
+  );
+
   document.addEventListener("SimulatorUpdate", (e) => {
+    const instType = cpuData.instruction.type;
+    setRUWr(cpuData);
     components.forEach((e) => {
       applyClass(e, "component");
     });
@@ -472,15 +496,15 @@ export function RU(element, cpuData) {
     outputs.forEach((e) => {
       applyClass(e, "outputText");
     });
-    if (!usesRegister("rs1", cpuData.instruction.type)) {
+    if (!usesRegister("rs1", instType)) {
       applyClass(rs1Text, "inputTextDisabled");
       applyClass(val1Text, "outputTextDisabled");
     }
-    if (!usesRegister("rs2", cpuData.instruction.type)) {
+    if (!usesRegister("rs2", instType)) {
       applyClass(rs2Text, "inputTextDisabled");
       applyClass(val2Text, "outputTextDisabled");
     }
-    if (!usesRegister("rd", cpuData.instruction.type)) {
+    if (!usesRegister("rd", instType)) {
       applyClass(rdText, "inputTextDisabled");
     }
     signals.forEach((e) => {
@@ -495,7 +519,6 @@ export function IMM(element, cpuData) {
     cpuElements: { SgnIMMSrcPTH: signal, SgnIMMSRCVAL: value },
     cpuElemStates: { IMM: state },
     instruction: instruction,
-    stepButton: step,
   } = cpuData;
 
   applyClass(element, "componentDisabled");
@@ -553,7 +576,6 @@ export function ALUA(element, cpuData) {
     },
     cpuElemStates: { ALUA: state },
     instruction: instruction,
-    stepButton: step,
   } = cpuData;
 
   const paths = [path0, path1];
@@ -566,7 +588,7 @@ export function ALUA(element, cpuData) {
     return inst === "R" || inst === "I" || inst === "S";
   };
   document.addEventListener("SimulatorUpdate", (e) => {
-    const instType = instruction.type;
+    const instType = cpuData.instruction.type;
     state.enabled = instType !== "U";
     if (state.enabled) {
       applyClass(element, "component");
@@ -597,7 +619,6 @@ export function ALUB(element, cpuData) {
     },
     cpuElemStates: { ALUB: state },
     instruction: instruction,
-    stepButton: step,
   } = cpuData;
 
   applyClass(element, "componentDisabled");
@@ -665,7 +686,6 @@ export function ALU(element, cpuData) {
     },
     cpuElemStates: { ALU: state },
     instruction: instruction,
-    stepButton: step,
   } = cpuData;
 
   const inputs = [textA, textB];
@@ -750,7 +770,6 @@ export function BU(element, cpuData) {
     cpuElements: { SgnBUBROPPTH: signal, SgnBUBROPVAL: signalVal },
     cpuElemStates: { BU: state },
     instruction: instruction,
-    stepButton: step,
   } = cpuData;
   const signals = [signal, signalVal];
   applyClass(element, "componentDisabled");
@@ -784,7 +803,6 @@ export function DM(element, cpuData) {
     },
     cpuElemStates: { DM: state },
     instruction: instruction,
-    stepButton: step,
   } = cpuData;
 
   const components = [element, clock];
@@ -843,7 +861,6 @@ export function BUMUX(element, cpuData) {
     cpuElements: { BUMUXIC1: path1, BUMUXIC0: path0 },
     cpuElemStates: { BUMUX: state },
     instruction: instruction,
-    stepButton: step,
   } = cpuData;
 
   const connections = [path1, path0];
@@ -879,7 +896,6 @@ export function WBMUX(element, cpuData) {
     },
     cpuElemStates: { WBMUX: state },
     instruction: instruction,
-    stepButton: step,
   } = cpuData;
 
   applyClass(element, "componentDisabled");
@@ -898,12 +914,12 @@ export function WBMUX(element, cpuData) {
   };
   document.addEventListener("SimulatorUpdate", (e) => {
     // Disabled for B and S
-    const instType = instruction.type;
+    const instType = cpuData.instruction.type;
     state.enabled = instType !== "B" && instType !== "S";
     if (state.enabled) {
-      const instOC = instruction.opcode;
       applyClass(element, "component");
       applyClass(signal, "signal");
+      const instOC = cpuData.instruction.opcode;
       if (path00Visible(instType, instOC)) {
         [path00].forEach((x) => {
           applyClass(x, "connection muxPath");
@@ -939,7 +955,6 @@ export function CLKPC(element, cpuData) {
   const {
     cpuElemStates: { CLKPC: state },
     instruction: instruction,
-    stepButton: step,
   } = cpuData;
 
   applyClass(element, "connectionDisabled");
@@ -954,7 +969,6 @@ export function CLKPC(element, cpuData) {
 export function CLKRU(element, cpuData) {
   const {
     cpuElemStates: { CLKRU: state },
-    stepButton: step,
   } = cpuData;
 
   applyClass(element, "connectionDisabled");
@@ -975,8 +989,6 @@ export function CLKDM(element, cpuData) {
 export function PCIM(element, cpuData) {
   const {
     cpuElemStates: { PCIM: state },
-    instruction: instruction,
-    stepButton: step,
   } = cpuData;
 
   applyClass(element, "connectionDisabled");
@@ -986,10 +998,11 @@ export function PCIM(element, cpuData) {
     cpuData,
     element,
     () => {
-      const inst = instruction.inst;
+      const inst = cpuData.instruction.inst;
       return `<span class="tooltipinfo">
-            <h1>PC ⇔ IM</h1>
-            <p>Instruction: ${inst}</p>`;
+              <h1>PC ⇔ IM</h1>
+              <p>Instruction: ${inst}</p>
+              </span>`;
     },
     undefinedFunc0
   );
@@ -1002,8 +1015,6 @@ export function PCIM(element, cpuData) {
 export function PCADD4(element, cpuData) {
   const {
     cpuElemStates: { PCADD4: state },
-    instruction: instruction,
-    stepButton: step,
   } = cpuData;
   applyClass(element, "connectionDisabled");
   // focus(element);
@@ -1012,10 +1023,11 @@ export function PCADD4(element, cpuData) {
     cpuData,
     element,
     () => {
-      const inst = instruction.inst;
+      const inst = cpuData.instruction.inst;
       return `<span class="tooltipinfo">
-          <h1>PC ⇔ ADD4</h1>
-          <p>Instruction: ${inst}</p>`;
+              <h1>PC ⇔ ADD4</h1>
+              <p>Value: ${inst}</p>
+              </span>`;
     },
     undefinedFunc0
   );
@@ -1029,7 +1041,6 @@ export function PCALUA(element, cpuData) {
   const {
     cpuElemStates: { PCALUA: state },
     instruction: instruction,
-    stepButton: step,
   } = cpuData;
   applyClass(element, "connectionDisabled");
   focus(element);
@@ -1050,7 +1061,6 @@ export function IMCUOPCODE(element, cpuData) {
   const {
     cpuElemStates: { IMCUOPCODE: state },
     instruction: instruction,
-    stepButton: step,
   } = cpuData;
   focus(element);
   mouseHover(
@@ -1079,7 +1089,6 @@ export function IMCUFUNCT3(element, cpuData) {
   const {
     cpuElemStates: { IMCUFUNCT3: state },
     instruction: instruction,
-    stepButton: step,
   } = cpuData;
   applyClass(element, "connectionDisabled");
   focus(element);
@@ -1109,7 +1118,6 @@ export function IMCUFUNCT7(element, cpuData) {
   const {
     cpuElemStates: { IMCUFUNCT7: state },
     instruction: instruction,
-    stepButton: step,
   } = cpuData;
 
   applyClass(element, "connectionDisabled");
@@ -1140,7 +1148,6 @@ export function IMRURS1(element, cpuData) {
   const {
     cpuElemStates: { IMRURS1: state },
     instruction: instruction,
-    stepButton: step,
   } = cpuData;
 
   applyClass(element, "connectionDisabled");
@@ -1161,7 +1168,7 @@ export function IMRURS1(element, cpuData) {
     }
   );
   document.addEventListener("SimulatorUpdate", (e) => {
-    if (usesRs1(cpuData.instruction.type)) {
+    if (usesRegister("rs1", cpuData.instruction.type)) {
       applyClass(element, "connection");
       pathOnTop(element);
       state.enabled = true;
@@ -1176,7 +1183,6 @@ export function IMRURS2(element, cpuData) {
   const {
     cpuElemStates: { IMRURS2: state },
     instruction: instruction,
-    stepButton: step,
   } = cpuData;
 
   applyClass(element, "connectionDisabled");
@@ -1197,7 +1203,7 @@ export function IMRURS2(element, cpuData) {
     }
   );
   document.addEventListener("SimulatorUpdate", (e) => {
-    if (usesRs2(cpuData.instruction.type)) {
+    if (usesRegister("rs2", cpuData.instruction.type)) {
       applyClass(element, "connection");
       pathOnTop(element);
       state.enabled = true;
@@ -1212,7 +1218,6 @@ export function IMRURDEST(element, cpuData) {
   const {
     cpuElemStates: { IMRURDEST: state },
     instruction: instruction,
-    stepButton: step,
   } = cpuData;
 
   applyClass(element, "connectionDisabled");
@@ -1243,7 +1248,6 @@ export function IMIMM(element, cpuData) {
   const {
     cpuElemStates: { IMIMM: state },
     instruction: instruction,
-    stepButton: step,
   } = cpuData;
   applyClass(element, "connectionDisabled");
   focus(element);
@@ -1262,19 +1266,35 @@ export function IMIMM(element, cpuData) {
 export function WBMUXRU(element, cpuData) {
   const {
     cpuElemStates: { WBMUXRU: state },
-    instruction: instruction,
-    stepButton: step,
   } = cpuData;
 
   applyClass(element, "connectionDisabled");
   focus(element);
+  tooltipEvt(
+    "WBMUXRU",
+    cpuData,
+    element,
+    () => {
+      switch (true) {
+        case writesRU(cpuData.instruction.type): {
+          const value = cpuData.result.ALURes;
+          return `<span class="tooltipinfo">
+                  <p>${value}</p>
+                  </span>`;
+        }
+        default:
+          return "hola";
+      }
+    },
+    undefinedFunc0
+  );
   document.addEventListener("SimulatorUpdate", (e) => {
-    const instType = instruction.type;
-    if (instType === "J" || instType === "I" || instType === "R") {
+    if (writesRU(cpuData.instruction.type)) {
       applyClass(element, "connection");
       state.enabled = true;
     } else {
       applyClass(element, "connectionDisabled");
+      state.enabled = false;
     }
   });
 }
@@ -1283,7 +1303,6 @@ export function IMMALUB(element, cpuData) {
   const {
     cpuElemStates: { IMMALUB: state },
     instruction: instruction,
-    stepButton: step,
   } = cpuData;
   applyClass(element, "connectionDisabled");
   focus(element);
@@ -1303,7 +1322,6 @@ export function RUALUA(element, cpuData) {
   const {
     cpuElemStates: { RUALUA: state },
     instruction: instruction,
-    stepButton: step,
   } = cpuData;
   applyClass(element, "connectionDisabled");
   focus(element);
@@ -1324,7 +1342,6 @@ export function RUALUB(element, cpuData) {
   const {
     cpuElemStates: { RUALUB: state },
     instruction: instruction,
-    stepButton: step,
   } = cpuData;
 
   applyClass(element, "connectionDisabled");
@@ -1346,7 +1363,6 @@ export function RUDM(element, cpuData) {
   const {
     cpuElemStates: { RUDM: state },
     instruction: instruction,
-    stepButton: step,
   } = cpuData;
 
   applyClass(element, "connectionDisabled");
@@ -1367,7 +1383,7 @@ export function RURS1BU(element, cpuData) {
   const {
     cpuElemStates: { RURS1BU: state },
     instruction: instruction,
-    stepButton: step,
+
     logger: log,
   } = cpuData;
   log("error", "RURS1BU handler");
@@ -1389,7 +1405,6 @@ export function RURS2BU(element, cpuData) {
   const {
     cpuElemStates: { RURS2BU: state },
     instruction: instruction,
-    stepButton: step,
   } = cpuData;
   applyClass(element, "connectionDisabled");
   focus(element);
@@ -1408,7 +1423,6 @@ export function RURS2BU(element, cpuData) {
 export function ALUAALU(element, cpuData) {
   const {
     cpuElemStates: { ALUAALU: state },
-    stepButton: step,
   } = cpuData;
 
   applyClass(element, "connectionDisabled");
@@ -1422,7 +1436,6 @@ export function ALUAALU(element, cpuData) {
 export function ALUBALU(element, cpuData) {
   const {
     cpuElemStates: { ALUBALU: state },
-    stepButton: step,
   } = cpuData;
   applyClass(element, "connectionDisabled");
   focus(element);
@@ -1436,7 +1449,6 @@ export function ALUDM(element, cpuData) {
   const {
     cpuElemStates: { ALUDM: state },
     instruction: instruction,
-    stepButton: step,
   } = cpuData;
 
   applyClass(element, "connectionDisabled");
@@ -1457,15 +1469,30 @@ export function ALUWBMUX(element, cpuData) {
   const {
     cpuElemStates: { ALUWBMUX: state },
     instruction: instruction,
-    stepButton: step,
   } = cpuData;
 
   applyClass(element, "connectionDisabled");
   focus(element);
+  tooltipEvt(
+    "ALUWBMUX",
+    cpuData,
+    element,
+    () => {
+      const value = cpuData.result.ALURes;
+      return `<span class="tooltipinfo">
+                <p>${value}</p>
+              </span>`;
+    },
+    undefinedFunc0
+  );
   document.addEventListener("SimulatorUpdate", (e) => {
-    //! TODO ALUWBMUX always enabled
-    applyClass(element, "connection");
-    state.enabled = true;
+    if (usesALU(cpuData.instruction.type)) {
+      applyClass(element, "connection");
+      state.enabled = true;
+    } else {
+      applyClass(element, "connectionDisabled");
+      state.enabled = false;
+    }
   });
 }
 
@@ -1473,7 +1500,6 @@ export function DMWBMUX(element, cpuData) {
   const {
     cpuElemStates: { DMWBMUX: state },
     instruction: instruction,
-    stepButton: step,
   } = cpuData;
   applyClass(element, "connectionDisabled");
   focus(element);
@@ -1488,7 +1514,6 @@ export function ADD4WBMUX(element, cpuData) {
   const {
     cpuElemStates: { ADD4WBMUX: state },
     instruction: instruction,
-    stepButton: step,
   } = cpuData;
   applyClass(element, "connectionDisabled");
   focus(element);
@@ -1501,7 +1526,6 @@ export function BUBUMUX(element, cpuData) {
   const {
     cpuElemStates: { BUBUMUX: state },
     instruction: instruction,
-    stepButton: step,
   } = cpuData;
   applyClass(element, "connectionDisabled");
   focus(element);
@@ -1515,7 +1539,6 @@ export function ALUBUMUX(element, cpuData) {
   const {
     cpuElemStates: { ALUBUMUX: state },
     instruction: instruction,
-    stepButton: step,
   } = cpuData;
   applyClass(element, "connectionDisabled");
   focus(element);
@@ -1537,10 +1560,22 @@ export function ADD4BUMUX(element, cpuData) {
   const {
     cpuElemStates: { ADD4BUMUX: state },
     instruction: instruction,
-    stepButton: step,
   } = cpuData;
   applyClass(element, "connectionDisabled");
   focus(element);
+  tooltipEvt(
+    "ADD4BUMUX",
+    cpuData,
+    element,
+    () => {
+      const value = cpuData.result.ADD4Res;
+      return `<span class="tooltipinfo">
+              <h1>ADD4 ⇔ BUMUX</h1>
+              <p>Value: ${value}</p>
+              </span>`;
+    },
+    undefinedFunc0
+  );
   document.addEventListener("SimulatorUpdate", (e) => {
     applyClass(element, "connection");
     pathOnTop(element);
@@ -1552,7 +1587,6 @@ export function BUMUXPC(element, cpuData) {
   const {
     cpuElemStates: { BUMUXPC: state },
     instruction: instruction,
-    stepButton: step,
   } = cpuData;
   applyClass(element, "connectionDisabled");
   focus(element);
@@ -1566,7 +1600,6 @@ export function ADD4CT(element, cpuData) {
   const {
     cpuElemStates: { ADD4CT: state },
     instruction: instruction,
-    stepButton: step,
   } = cpuData;
 
   applyClass(element, "connectionDisabled");
@@ -1614,7 +1647,6 @@ export function LOGTEXTASSEMBLER(element, cpuData) {
   const {
     cpuElements: { LOGTEXTHEX: text },
     instruction: { asm },
-    stepButton: step,
   } = cpuData;
 
   setAsmInstruction(cpuData, "--no instruction loaded--");
@@ -1629,7 +1661,6 @@ export function LOGTEXTASSEMBLER(element, cpuData) {
 function LOGTEXTBIN(element, cpuData) {
   const {
     cpuElements: { LOGTEXTBIN: text },
-    stepButton: step,
   } = cpuData;
 
   setBinInstruction(cpuData, "--no instruction loaded--");
@@ -1645,7 +1676,6 @@ export function LOGTEXTIMM(element, cpuData) {
   const {
     cpuElements: { LOGTEXTBIN: text },
     instruction: instruction,
-    stepButton: step,
   } = cpuData;
 
   setImmInstruction(cpuData, "--no immediate for instruction--");
@@ -1659,7 +1689,6 @@ function LOGTEXTHEX(element, cpuData) {
   const {
     cpuElements: { LOGTEXTBIN: text },
     instruction: instruction,
-    stepButton: step,
   } = cpuData;
 
   setHexInstruction(cpuData, "--no hex --");

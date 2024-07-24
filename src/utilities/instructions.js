@@ -63,3 +63,30 @@ export function usesFunct3(instType) {
 export function usesFunct7(instType) {
   return instType === "R";
 }
+
+/**
+ * Tests if an instruction uses the ALU
+ * @param {*} instType the instruction type
+ */
+export function usesALU(instType) {
+  switch (instType) {
+    case "R":
+    case "I":
+      return true;
+  }
+  return false;
+}
+
+/**
+ * Tests if an instruction writes to the RU
+ * @param {*} instType the instruction type
+ */
+export function writesRU(instType) {
+  switch (instType) {
+    case "R":
+    case "I":
+    case "J":
+      return true;
+  }
+  return false;
+}

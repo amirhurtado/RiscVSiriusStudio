@@ -67,7 +67,15 @@ export class SCCPU {
   public executeInstruction() {
     console.log('execute instruction', this.currentInstruction());
     const aluRes = this.computeALURes('1010', '1110', '0000');
-    return { ALURes: aluRes, A: '1010', B: '1110', ALUOp: '0110' };
+    return {
+      ALURes: aluRes,
+      A: '1010',
+      B: '1110',
+      ALUOp: '0110',
+      ADD4Res: parseInt(this.currentInstruction().inst) + 4,
+      WBMUXRes: aluRes,
+      RUWr: 1
+    };
   }
 
   public nextInstruction() {

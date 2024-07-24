@@ -52,7 +52,8 @@ svg {
   /* Scale the height of the image to fit the text editor without needing an
    * scroll bar
    */
-  height: 98vh;
+  border: 2px darkorange;
+  height: 98vh !important;
 }
 
 /**
@@ -398,3 +399,19 @@ svg {
   }
 }
 
+.grid-container {
+  /* border: 2px dashed red; */
+  display: grid;
+  grid-template-columns: auto;
+  grid-template-rows: auto auto;
+}
+
+.grid-item-1 {
+  /* border: 2px dashed purple; */
+  grid-row: 1;
+}
+
+.grid-item-2 {
+  /* border: 2px dashed peru; */
+  grid-row: 2;
+}

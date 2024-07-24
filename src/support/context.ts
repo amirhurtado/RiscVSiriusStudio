@@ -3,7 +3,7 @@ import { SCCPU } from '../vcpu/singlecycle';
 import { SimulatorPanel } from '../panels/SimulatorPanel';
 import { ProgMemPanelView } from '../panels/ProgMemPanel';
 import { RegisterPanelView } from '../panels/RegisterPanel';
-import { usesRegister } from '../utilities/instructions';
+import { usesRegister, writesRU } from '../utilities/instructions';
 
 export class RVExtensionContext {
   private previousLine: number;
@@ -138,10 +138,20 @@ export class RVSimulationContext {
           switch (msg) {
             case 'stepClicked':
               {
+                const instruction = this.cpu?.currentInstruction();
                 const result = this.cpu?.executeInstruction();
+                // Send messages to update the registers view.
+                if (writesRU(instruction.type)) {
+                  this.sendToRegisters({
+                    operation: 'setRegister',
+                    register: instruction.rd.regeq,
+                    value: result?.WBMUXRes
+                  });
+                }
+                // Send message to update the simulator components.
                 this.sendToSimulator({
                   operation: 'setInstruction',
-                  instruction: this.cpu?.currentInstruction(),
+                  instruction: instruction,
                   result: result
                 });
               }
