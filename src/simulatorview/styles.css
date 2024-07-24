@@ -263,6 +263,28 @@ svg {
   }
 }
 
+.outputText {
+  div div div {
+    color: var(--component-text-color) !important;
+    /* pointer-events: auto; */
+  }
+}
+
+.outputText:hover {
+  div div div {
+    /* pointer-events: auto; */
+    color: var(--component-text-color-hover) !important;
+    font-weight: 800;
+  }
+}
+
+.outputTextDisabled {
+  div div div {
+    color: var(--component-text-color-disabled) !important;
+    /* pointer-events: none !important; */
+  }
+}
+
 .instruction {
   div div div {
     color: var(--inst-val) !important;

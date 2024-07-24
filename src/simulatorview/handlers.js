@@ -1,62 +1,10 @@
 import _ from "../../node_modules/lodash-es/lodash.js";
-
-/**
- * Tests if an instruction uses rs1
- * @param {*} instType the instruction type
- */
-function usesRs1(instType) {
-  switch (instType) {
-    case "U":
-    case "J":
-      return false;
-  }
-  return true;
-}
-
-/**
- * Tests if an instruction uses rs2
- * @param {*} instType the instruction type
- */
-function usesRs2(instType) {
-  switch (instType) {
-    case "R":
-    case "S":
-    case "B":
-      return true;
-  }
-  return false;
-}
-
-/**
- * Tests if an instruction uses rd
- * @param {*} instType the instruction type
- */
-function usesRd(instType) {
-  switch (instType) {
-    case "S":
-    case "B":
-      return false;
-  }
-  return true;
-}
-
-/**
- * Tests if an instruction uses fuct3
- * @param {*} instType the instruction type
- *
- * Every instruction that uses rs1 also uses funct3 and vic.
- */
-function usesFunct3(instType) {
-  return usesRs1(instType);
-}
-
-/**
- * Tests if an instruction uses funct7
- * @param {*} instType the instruction type
- */
-function usesFunct7(instType) {
-  return instType === "R";
-}
+import {
+  usesRegister,
+  usesRs1,
+  usesRs2,
+  usesRd,
+} from "../utilities/instructions.js";
 
 function undefinedFunc0() {}
 
@@ -353,6 +301,34 @@ export function CU(element, cpuData) {
   });
 }
 
+function registerTooltipText(name, type, cpuData) {
+  const { regname, regeq, regenc } = cpuData.instruction[name];
+  const binEnc = cpuData.instruction.encoding[name];
+  const { registers } = cpuData;
+
+  const value = registers[parseInt(regenc)];
+  const data = {
+    general: `<span class="tooltipinfo">
+              <dl>
+                <dt>Register</dt><dd>${regname} (${regeq})</dd>
+              </dl>
+              </span>`,
+    detailed: `<span class="tooltipinfo">
+              <dl>
+                <dt>Register</dt><dd>${regname} (${regeq})</dd>
+                <dt>Encoding</dt><dd>${binEnc} </dd>
+              </dl>
+              </span>`,
+    valueGeneral: `<span class="tooltipinfo">
+              <dl>
+                <dt>Register</dt><dd>${regname} (${regeq})</dd>
+                <dt>Value</dt><dd>${value}</dd>
+              </dl>
+              </span>`,
+  };
+  return data[type];
+}
+
 export function RU(element, cpuData) {
   const {
     cpuElements: {
@@ -364,6 +340,8 @@ export function RU(element, cpuData) {
       RUCLOCK: clock,
       SgnRUWRPTH: ruwrSignal,
       SgnRUWRVAL: ruwrSignalVal,
+      RUTEXTOUTRD1: val1Text,
+      RUTEXTOUTRD2: val2Text,
     },
     cpuElemStates: { RU: state },
     instruction: instruction,
@@ -372,6 +350,7 @@ export function RU(element, cpuData) {
 
   const components = [element, clock];
   const inputs = [rs1Text, rs2Text, rdText, datawrText, ruwrText];
+  const outputs = [val1Text, val2Text];
   const signals = [ruwrSignal, ruwrSignalVal];
 
   components.forEach((e) => {
@@ -380,44 +359,27 @@ export function RU(element, cpuData) {
   inputs.forEach((e) => {
     applyClass(e, "inputTextDisabled");
   });
+  outputs.forEach((e) => {
+    applyClass(e, "outputTextDisabled");
+  });
   signals.forEach((e) => {
     applyClass(e, "signalDisabled");
   });
 
-  // !TODO: It would be nice to compute if the register has sense in the current
-  // instruction and show something accordingly in the tooltip text.
   tooltipEvt(
     "RU",
     cpuData,
     rs1Text,
     () => {
-      if (usesRs1(cpuData.instruction.type)) {
-        const {
-          rs1: { regname, regeq },
-        } = cpuData.instruction;
-        return `<span class="tooltipinfo">
-              <dl>
-                <dt>Register</dt><dd>${regname} (${regeq})</dd>
-                <dt>Value</dt><dd>{COMPUTE VALUE}</dd>
-              </dl>
-              </span>`;
+      if (usesRegister("rs1", cpuData.instruction.type)) {
+        return registerTooltipText("rs1", "general", cpuData);
       } else {
         return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
       }
     },
     () => {
-      if (usesRs1(cpuData.instruction.type)) {
-        const {
-          rs1: { regname, regeq },
-          encoding: { rs1: rs1Bin },
-        } = cpuData.instruction;
-        return `<span class="tooltipinfo">
-              <dl>
-                <dt>Register</dt><dd>${regname} (${regeq})</dd>
-                <dt>Value</dt><dd>{COMPUTE VALUE}</dd>
-                <dt>Encoding</dt><dd>${rs1Bin}</dd>
-              </dl>
-              </span>`;
+      if (usesRegister("rs1", cpuData.instruction.type)) {
+        return registerTooltipText("rs1", "detailed", cpuData);
       } else {
         return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
       }
@@ -428,34 +390,15 @@ export function RU(element, cpuData) {
     cpuData,
     rs2Text,
     () => {
-      if (usesRs2(cpuData.instruction.type)) {
-        const {
-          rs2: { regname, regeq },
-        } = cpuData.instruction;
-        return `<span class="tooltipinfo">
-                <dl>
-                  <dt>Register</dt><dd>${regname} (${regeq})</dd>
-                  <dt>Value</dt><dd>{COMPUTE VALUE}</dd>
-                </dl>
-                </span>`;
+      if (usesRegister("rs2", cpuData.instruction.type)) {
+        return registerTooltipText("rs2", "general", cpuData);
       } else {
         return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
       }
     },
     () => {
-      if (usesRs2(cpuData.instruction.type)) {
-        const {
-          rs2: { regname, regeq },
-          encoding: { rs2: rs2Bin },
-        } = cpuData.instruction;
-        return `<span class="tooltipinfo">
-                <dl>
-                  <dt>Register</dt><dd>${regname} (${regeq})</dd>
-                  <dt>Value</dt><dd>{COMPUTE VALUE}</dd>
-                  <dt>Encoding</dt><dd>${rs2Bin}</dd>
-
-                </dl>
-                </span>`;
+      if (usesRegister("rs2", cpuData.instruction.type)) {
+        return registerTooltipText("rs2", "detailed", cpuData);
       } else {
         return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
       }
@@ -466,34 +409,54 @@ export function RU(element, cpuData) {
     cpuData,
     rdText,
     () => {
-      if (usesRd(cpuData.instruction.type)) {
-        const {
-          rd: { regname, regeq },
-        } = cpuData.instruction;
-        return `<span class="tooltipinfo">
-                <dl>
-                  <dt>Register</dt><dd>${regname} (${regeq})</dd>
-                  <dt>Value</dt><dd>{COMPUTE VALUE}</dd>
-                </dl>
-                </span>`;
+      if (usesRegister("rd", cpuData.instruction.type)) {
+        return registerTooltipText("rd", "general", cpuData);
       } else {
         return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
       }
     },
     () => {
-      if (usesRd(cpuData.instruction.type)) {
-        const {
-          rd: { regname, regeq },
-          encoding: { rd: rdBin },
-        } = cpuData.instruction;
-        return `<span class="tooltipinfo">
-                <dl>
-                  <dt>Register</dt><dd>${regname} (${regeq})</dd>
-                  <dt>Value</dt><dd>{COMPUTE VALUE}</dd>
-                  <dt>Encoding</dt><dd>${rdBin}</dd>
+      if (usesRegister("rd", cpuData.instruction.type)) {
+        return registerTooltipText("rd", "detailed", cpuData);
+      } else {
+        return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
+      }
+    }
+  );
+  tooltipEvt(
+    "RU",
+    cpuData,
+    val1Text,
+    () => {
+      if (usesRegister("rs1", cpuData.instruction.type)) {
+        return registerTooltipText("rs1", "valueGeneral", cpuData);
+      } else {
+        return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
+      }
+    },
+    () => {
+      if (usesRegister("rs1", cpuData.instruction.type)) {
+        return registerTooltipText("rs1", "valueGeneral", cpuData);
+      } else {
+        return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
+      }
+    }
+  );
 
-                </dl>
-                </span>`;
+  tooltipEvt(
+    "RU",
+    cpuData,
+    val2Text,
+    () => {
+      if (usesRegister("rs2", cpuData.instruction.type)) {
+        return registerTooltipText("rs2", "valueGeneral", cpuData);
+      } else {
+        return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
+      }
+    },
+    () => {
+      if (usesRegister("rs2", cpuData.instruction.type)) {
+        return registerTooltipText("rs2", "valueGeneral", cpuData);
       } else {
         return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
       }
@@ -506,11 +469,16 @@ export function RU(element, cpuData) {
     inputs.forEach((e) => {
       applyClass(e, "inputText");
     });
+    outputs.forEach((e) => {
+      applyClass(e, "outputText");
+    });
     if (!usesRs1(cpuData.instruction.type)) {
       applyClass(rs1Text, "inputTextDisabled");
+      applyClass(val1Text, "outputTextDisabled");
     }
     if (!usesRs2(cpuData.instruction.type)) {
       applyClass(rs2Text, "inputTextDisabled");
+      applyClass(val2Text, "outputTextDisabled");
     }
     if (!usesRd(cpuData.instruction.type)) {
       applyClass(rdText, "inputTextDisabled");
