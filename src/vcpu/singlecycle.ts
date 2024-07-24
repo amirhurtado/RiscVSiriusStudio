@@ -43,12 +43,33 @@ export class SCCPU {
     this.pc = 0;
   }
   public currentInstruction() {
-    console.log('called current instruction ', this.program[this.pc]);
+    // console.log('called current instruction ', this.program[this.pc]);
     return this.program[this.pc];
   }
+  private computeALURes(A: string, B: string, ALUOp: string): string {
+    const numA = parseInt(A, 2);
+    const numB = parseInt(B, 2);
+    const selector = {
+      '0000': (a: number, b: number) => {
+        return a + b;
+      }
+    };
+    const ALURes = selector[ALUOp](numA, numB) as number;
+    return ALURes.toString(2);
+  }
+
+  /**
+   * Computes the result of executing the current instruction.
+   *
+   * At this point, the result consists of an object with the following fields:
+   * !TODO: document when ready
+   */
   public executeInstruction() {
     console.log('execute instruction', this.currentInstruction());
+    const aluRes = this.computeALURes('1010', '1110', '0000');
+    return { ALURes: aluRes, A: '1010', B: '1110', ALUOp: '0110' };
   }
+
   public nextInstruction() {
     this.pc++;
   }

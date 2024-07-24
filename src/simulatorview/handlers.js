@@ -149,7 +149,7 @@ export function CLK(element, cpuData) {
   } = cpuData;
 
   applyClass(element, "component");
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     applyClass(element, "component");
     state.enabled = true;
   });
@@ -179,7 +179,7 @@ export function PC(element, cpuData) {
     },
     undefinedFunc0
   );
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     components.forEach((e) => {
       applyClass(e, "component");
     });
@@ -197,7 +197,7 @@ export function ADD4(element, cpuData) {
   applyClass(element, "componentDisabled");
   applyClass(add4WBMux, "connectionDisabled");
 
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     applyClass(element, "component");
     state.enabled = true;
     applyClass(add4WBMux, "connectionDisabled");
@@ -253,7 +253,7 @@ export function IM(element, cpuData) {
               </span>`;
     }
   );
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     applyClass(element, "component");
     inputs.forEach((e) => {
       applyClass(e, "inputText");
@@ -293,7 +293,7 @@ export function CU(element, cpuData) {
     },
     undefinedFunc0
   );
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     [element, arrow].forEach((e) => {
       applyClass(e, "component");
     });
@@ -462,7 +462,7 @@ export function RU(element, cpuData) {
       }
     }
   );
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     components.forEach((e) => {
       applyClass(e, "component");
     });
@@ -472,15 +472,15 @@ export function RU(element, cpuData) {
     outputs.forEach((e) => {
       applyClass(e, "outputText");
     });
-    if (!usesRs1(cpuData.instruction.type)) {
+    if (!usesRegister("rs1", cpuData.instruction.type)) {
       applyClass(rs1Text, "inputTextDisabled");
       applyClass(val1Text, "outputTextDisabled");
     }
-    if (!usesRs2(cpuData.instruction.type)) {
+    if (!usesRegister("rs2", cpuData.instruction.type)) {
       applyClass(rs2Text, "inputTextDisabled");
       applyClass(val2Text, "outputTextDisabled");
     }
-    if (!usesRd(cpuData.instruction.type)) {
+    if (!usesRegister("rd", cpuData.instruction.type)) {
       applyClass(rdText, "inputTextDisabled");
     }
     signals.forEach((e) => {
@@ -525,7 +525,7 @@ export function IMM(element, cpuData) {
             </span>`;
     }
   );
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     // Immediate unit available for all but R instructions
     // console.log("[IMM] new instruction: ");
     if (instruction.type !== "R") {
@@ -565,7 +565,7 @@ export function ALUA(element, cpuData) {
   const path0Visible = (inst) => {
     return inst === "R" || inst === "I" || inst === "S";
   };
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     const instType = instruction.type;
     state.enabled = instType !== "U";
     if (state.enabled) {
@@ -608,7 +608,7 @@ export function ALUB(element, cpuData) {
   const path0Visible = (inst) => {
     return inst === "R" || inst === "B" || inst === "J";
   };
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     // Always enabled for all instructions
     state.enabled = true;
     applyClass(element, "component");
@@ -624,11 +624,42 @@ export function ALUB(element, cpuData) {
   });
 }
 
+function aluTooltipText(name, cpuData) {
+  const { A: valA, B: valB, ALURes: valALURes } = cpuData.result;
+  const data = {
+    A: `<span class="tooltipinfo">
+        <dl>
+          <dt>Value</dt><dd>${valA}</dd>
+        </dl>
+        </span>`,
+    B: `<span class="tooltipinfo">
+        <dl>
+          <dt>Value</dt><dd>${valB}</dd>
+        </dl>
+        </span>`,
+    ALURes: `<span class="tooltipinfo">
+            <dl>
+              <dt>Value</dt><dd>${valALURes}</dd>
+            </dl>
+            </span>`,
+  };
+  return data[name];
+}
+
+function setALUOp(cpuData) {
+  const {
+    cpuElements: { SgnALUOPVAL: aluSignalValue },
+    result: { ALUOp },
+  } = cpuData;
+  aluSignalValue.getElementsByTagName("div")[2].innerHTML = ALUOp;
+}
+
 export function ALU(element, cpuData) {
   const {
     cpuElements: {
       ALUTEXTINA: textA,
       ALUTEXTINB: textB,
+      ALUTEXTRES: valALURes,
       SgnALUOPPTH: aluSignal,
       SgnALUOPVAL: aluSignalValue,
     },
@@ -647,24 +678,21 @@ export function ALU(element, cpuData) {
   signals.forEach((e) => {
     applyClass(e, "signalDisabled");
   });
+  applyClass(valALURes, "outputTextDisabled");
 
   tooltipEvt(
     "ALU",
     cpuData,
     textA,
     () => {
-      const alua = 123456;
-      return `<span class="tooltipinfo">
-            <h1>Input A</h1>
-            <p>Value: ${alua}</p>`;
+      return aluTooltipText("A", cpuData);
     },
     () => {
-      const alua = 123456;
-      return `<span class="tooltipinfo">
+      return `<span class="tooltipinfo">FIXME
             <ul>
-              <li>Value(10): ${alua}</li>
-              <li>Value(2): ${alua}</li>
-              <li>Encoding(2): ${alua}</li>
+              <li>Value(10): {alua}</li>
+              <li>Value(2): {alua}</li>
+              <li>Encoding(2): {alua}</li>
             </ul>`;
     }
   );
@@ -673,28 +701,44 @@ export function ALU(element, cpuData) {
     cpuData,
     textB,
     () => {
-      const alub = 123456;
-      return `<span class="tooltipinfo">
-            <h1>Input B</h1>
-            <p>Value: ${alub}</p>`;
+      return aluTooltipText("B", cpuData);
     },
     () => {
-      const alub = 123456;
-      return `<span class="tooltipinfo">
+      return `<span class="tooltipinfo">FIXME
             <ul>
-              <li>Value(10): ${alub}</li>
-              <li>Value(2): ${alub}</li>
-              <li>Encoding(2): ${alub}</li>
+              <li>Value(10): {alub}</li>
+              <li>Value(2): {alub}</li>
+              <li>Encoding(2): {alub}</li>
             </ul>`;
     }
   );
-  step.addEventListener("click", () => {
+  tooltipEvt(
+    "ALU",
+    cpuData,
+    valALURes,
+    () => {
+      return aluTooltipText("ALURes", cpuData);
+    },
+    () => {
+      return `<span class="tooltipinfo">FIXME
+            <ul>
+              <li>Value(10): {alub}</li>
+              <li>Value(2): {alub}</li>
+              <li>Encoding(2): {alub}</li>
+            </ul>`;
+    }
+  );
+
+  document.addEventListener("SimulatorUpdate", (e) => {
+    cpuData.logger("info", { m: "At ALU", v: cpuData.result });
     // !TODO: Enabled for all components?
     state.enabled = true;
     applyClass(element, "component");
     inputs.forEach((e) => {
       applyClass(e, "inputText");
     });
+    applyClass(valALURes, "outputText");
+    setALUOp(cpuData);
     signals.forEach((e) => {
       applyClass(e, "signal");
     });
@@ -713,7 +757,7 @@ export function BU(element, cpuData) {
   signals.forEach((e) => {
     applyClass(e, "signalDisabled");
   });
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     // Branch unit is always enabled as it controls NextPCSrc. When in a branch
     // instruction its inputs coming from the registers will be enabled.
     state.enabled = true;
@@ -760,7 +804,7 @@ export function DM(element, cpuData) {
   connections.forEach((e) => {
     applyClass(e, "connectionDisabled");
   });
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     const instType = instruction.type;
     if (instType === "S" || instruction.opcode === "0000011") {
       // Data memory only available for S and load instructions
@@ -810,7 +854,7 @@ export function BUMUX(element, cpuData) {
   const path1Visible = (inst, opcode) => {
     return inst === "J" || inst === "B" || opcode === "1100111";
   };
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     state.enabled = true;
     applyClass(element, "component");
     const instType = instruction.type;
@@ -852,7 +896,7 @@ export function WBMUX(element, cpuData) {
   const path10Visible = (inst, opcode) => {
     return inst === "J" || opcode === "1100111";
   };
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     // Disabled for B and S
     const instType = instruction.type;
     state.enabled = instType !== "B" && instType !== "S";
@@ -900,7 +944,7 @@ export function CLKPC(element, cpuData) {
 
   applyClass(element, "connectionDisabled");
   focus(element);
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     state.enabled = true;
     pathOnTop(element);
     applyClass(element, "connection");
@@ -915,7 +959,7 @@ export function CLKRU(element, cpuData) {
 
   applyClass(element, "connectionDisabled");
   focus(element);
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     state.enabled = true;
     pathOnTop(element);
     applyClass(element, "connection");
@@ -949,7 +993,7 @@ export function PCIM(element, cpuData) {
     },
     undefinedFunc0
   );
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     state.enabled = true;
     applyClass(element, "connection");
   });
@@ -975,7 +1019,7 @@ export function PCADD4(element, cpuData) {
     },
     undefinedFunc0
   );
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     applyClass(element, "connection");
     state.enabled = true;
   });
@@ -989,7 +1033,7 @@ export function PCALUA(element, cpuData) {
   } = cpuData;
   applyClass(element, "connectionDisabled");
   focus(element);
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     const instType = instruction.type;
     if (instType === "J" || instType === "B") {
       applyClass(element, "connection");
@@ -1024,7 +1068,7 @@ export function IMCUOPCODE(element, cpuData) {
       }
     }
   );
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     state.enabled = true;
     pathOnTop(element);
     applyClass(element, "connection");
@@ -1054,7 +1098,7 @@ export function IMCUFUNCT3(element, cpuData) {
       }
     }
   );
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     applyClass(element, "connection");
     pathOnTop(element);
     state.enabled = true;
@@ -1085,7 +1129,7 @@ export function IMCUFUNCT7(element, cpuData) {
       }
     }
   );
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     applyClass(element, "connection");
     pathOnTop(element);
     state.enabled = true;
@@ -1116,7 +1160,7 @@ export function IMRURS1(element, cpuData) {
       }
     }
   );
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     if (usesRs1(cpuData.instruction.type)) {
       applyClass(element, "connection");
       pathOnTop(element);
@@ -1152,7 +1196,7 @@ export function IMRURS2(element, cpuData) {
       }
     }
   );
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     if (usesRs2(cpuData.instruction.type)) {
       applyClass(element, "connection");
       pathOnTop(element);
@@ -1188,7 +1232,7 @@ export function IMRURDEST(element, cpuData) {
       }
     }
   );
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     applyClass(element, "connection");
     pathOnTop(element);
     state.enabled = true;
@@ -1203,7 +1247,7 @@ export function IMIMM(element, cpuData) {
   } = cpuData;
   applyClass(element, "connectionDisabled");
   focus(element);
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     const instType = instruction.type;
     if (instType !== "R") {
       applyClass(element, "connection");
@@ -1224,7 +1268,7 @@ export function WBMUXRU(element, cpuData) {
 
   applyClass(element, "connectionDisabled");
   focus(element);
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     const instType = instruction.type;
     if (instType === "J" || instType === "I" || instType === "R") {
       applyClass(element, "connection");
@@ -1243,7 +1287,7 @@ export function IMMALUB(element, cpuData) {
   } = cpuData;
   applyClass(element, "connectionDisabled");
   focus(element);
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     const instType = instruction.type;
     if (instType !== "R" && instType !== "U") {
       applyClass(element, "connection");
@@ -1263,7 +1307,7 @@ export function RUALUA(element, cpuData) {
   } = cpuData;
   applyClass(element, "connectionDisabled");
   focus(element);
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     const instType = instruction.type;
     if (instType !== "J" && instType !== "B") {
       state.enabled = true;
@@ -1285,7 +1329,7 @@ export function RUALUB(element, cpuData) {
 
   applyClass(element, "connectionDisabled");
   focus(element);
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     const instType = instruction.type;
     if (instType === "R") {
       state.enabled = true;
@@ -1307,7 +1351,7 @@ export function RUDM(element, cpuData) {
 
   applyClass(element, "connectionDisabled");
   focus(element);
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     const instType = instruction.type;
     if (instType === "S") {
       applyClass(element, "connection");
@@ -1329,7 +1373,7 @@ export function RURS1BU(element, cpuData) {
   log("error", "RURS1BU handler");
   applyClass(element, "connectionDisabled");
   focus(element);
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     const instType = instruction.type;
     if (instType === "B") {
       state.enabled = true;
@@ -1349,7 +1393,7 @@ export function RURS2BU(element, cpuData) {
   } = cpuData;
   applyClass(element, "connectionDisabled");
   focus(element);
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     const instType = instruction.type;
     if (instType === "B") {
       state.enabled = true;
@@ -1369,7 +1413,7 @@ export function ALUAALU(element, cpuData) {
 
   applyClass(element, "connectionDisabled");
   focus(element);
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     state.enabled = true;
     applyClass(element, "connection");
   });
@@ -1382,7 +1426,7 @@ export function ALUBALU(element, cpuData) {
   } = cpuData;
   applyClass(element, "connectionDisabled");
   focus(element);
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     state.enabled = true;
     applyClass(element, "connection");
   });
@@ -1397,7 +1441,7 @@ export function ALUDM(element, cpuData) {
 
   applyClass(element, "connectionDisabled");
   focus(element);
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     const instType = instruction.type;
     if (instType === "S" || instruction.opcode === "0000011") {
       state.enabled = true;
@@ -1418,7 +1462,7 @@ export function ALUWBMUX(element, cpuData) {
 
   applyClass(element, "connectionDisabled");
   focus(element);
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     //! TODO ALUWBMUX always enabled
     applyClass(element, "connection");
     state.enabled = true;
@@ -1433,7 +1477,7 @@ export function DMWBMUX(element, cpuData) {
   } = cpuData;
   applyClass(element, "connectionDisabled");
   focus(element);
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     // ! TODO DMWBMUX always enabled
     applyClass(element, "connection");
     state.enabled = true;
@@ -1448,7 +1492,7 @@ export function ADD4WBMUX(element, cpuData) {
   } = cpuData;
   applyClass(element, "connectionDisabled");
   focus(element);
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     state.enabled = true;
   });
 }
@@ -1461,7 +1505,7 @@ export function BUBUMUX(element, cpuData) {
   } = cpuData;
   applyClass(element, "connectionDisabled");
   focus(element);
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     applyClass(element, "connection");
     state.enabled = true;
   });
@@ -1475,7 +1519,7 @@ export function ALUBUMUX(element, cpuData) {
   } = cpuData;
   applyClass(element, "connectionDisabled");
   focus(element);
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     // ALUBUMUX enabled on S and ILoad instructions
     const instType = instruction.type;
     const instOC = instruction.opcode;
@@ -1497,7 +1541,7 @@ export function ADD4BUMUX(element, cpuData) {
   } = cpuData;
   applyClass(element, "connectionDisabled");
   focus(element);
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     applyClass(element, "connection");
     pathOnTop(element);
     state.enabled = true;
@@ -1512,7 +1556,7 @@ export function BUMUXPC(element, cpuData) {
   } = cpuData;
   applyClass(element, "connectionDisabled");
   focus(element);
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     state.enabled = true;
     applyClass(element, "connection");
   });
@@ -1527,7 +1571,7 @@ export function ADD4CT(element, cpuData) {
 
   applyClass(element, "connectionDisabled");
   focus(element);
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     state.enabled = true;
     applyClass(element, "connection");
   });
@@ -1576,7 +1620,7 @@ export function LOGTEXTASSEMBLER(element, cpuData) {
   setAsmInstruction(cpuData, "--no instruction loaded--");
 
   applyClass(element, "instructionDisabled");
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     setAsmInstruction(cpuData, asm);
     applyClass(element, "instruction");
   });
@@ -1590,7 +1634,7 @@ function LOGTEXTBIN(element, cpuData) {
 
   setBinInstruction(cpuData, "--no instruction loaded--");
   applyClass(element, "instructionDisabled");
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     const bin = cpuData.instruction.encoding.binEncoding;
     setBinInstruction(cpuData, bin);
     applyClass(element, "instruction");
@@ -1606,7 +1650,7 @@ export function LOGTEXTIMM(element, cpuData) {
 
   setImmInstruction(cpuData, "--no immediate for instruction--");
   applyClass(element, "instructionDisabled");
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     applyClass(element, "instruction");
   });
 }
@@ -1620,7 +1664,7 @@ function LOGTEXTHEX(element, cpuData) {
 
   setHexInstruction(cpuData, "--no hex --");
   applyClass(element, "instructionDisabled");
-  step.addEventListener("click", () => {
+  document.addEventListener("SimulatorUpdate", (e) => {
     const hex = instruction.encoding.hexEncoding;
     setHexInstruction(cpuData, hex);
     applyClass(element, "instruction");

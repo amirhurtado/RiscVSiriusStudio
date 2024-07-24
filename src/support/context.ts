@@ -138,10 +138,11 @@ export class RVSimulationContext {
           switch (msg) {
             case 'stepClicked':
               {
-                this.cpu?.executeInstruction();
+                const result = this.cpu?.executeInstruction();
                 this.sendToSimulator({
                   operation: 'setInstruction',
-                  instruction: this.cpu?.currentInstruction()
+                  instruction: this.cpu?.currentInstruction(),
+                  result: result
                 });
               }
               break;

@@ -30,8 +30,10 @@ function log(kind: string, object: any = {}) {
 
 // Global data for the simulator
 let cpuData = {
+  updateEvent: new Event('SimulatorUpdate'),
   stepButton: {}, // Button to signal new instruction
   instruction: {}, // Current instruction
+  result: {}, // Execution result of the current instruction
   cpuElements: {}, // All the cpu elements with the attribute "data-cpuname" set to something.
   cpuElemStates: {}, // All the cpu elements with the attribute "data-cpuname" set to something.
   registers: [] as string[],
@@ -165,7 +167,7 @@ function messageDispatch(event: MessageEvent) {
       enableStep();
       break;
     case 'setInstruction':
-      setInstruction(message.instruction);
+      setInstruction(message.instruction, message.result);
       break;
     case 'setRegisterData':
       log('info', 'set register data');
@@ -192,8 +194,11 @@ function enableStep() {
   step.disabled = false;
 }
 
-function setInstruction(instruction: any) {
+function setInstruction(instruction: any, result: any) {
   cpuData.instruction = instruction;
+  cpuData.result = result;
+  log('info', { m: 'Execution result', result });
+  document.dispatchEvent(cpuData.updateEvent);
 }
 /**
  * Simulator initialization.
