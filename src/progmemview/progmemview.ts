@@ -2,19 +2,19 @@ import {
   provideVSCodeDesignSystem,
   allComponents,
   Checkbox
-} from "@vscode/webview-ui-toolkit";
-import _ from "lodash";
+} from '@vscode/webview-ui-toolkit';
+import _ from 'lodash';
 import {
   ColumnDefinition,
   Options,
   RowComponent,
   TabulatorFull as Tabulator
-} from "tabulator-tables";
+} from 'tabulator-tables';
 
 provideVSCodeDesignSystem().register(allComponents);
 
 const vscode = acquireVsCodeApi();
-window.addEventListener("load", main);
+window.addEventListener('load', main);
 
 /**
  * Log functionality. The logger that is actually used is in the extension. This
@@ -25,7 +25,7 @@ window.addEventListener("load", main);
  * @param object the object to be logged/
  */
 function log(kind: string, object: any = {}) {
-  vscode.postMessage({ command: "log-" + kind, obj: { object } });
+  vscode.postMessage({ command: 'log-' + kind, obj: { object } });
 }
 
 type MemInstruction = {
@@ -39,14 +39,14 @@ type MemInstruction = {
 };
 
 function main() {
-  log("info", { message: "Initializing progmem view [STARTED]" });
+  log('info', { message: 'Initializing progmem view [STARTED]' });
 
   // Table setup
   let table = tableSetup();
   let instTable = createInstructionTable();
 
   // Message dispatcher
-  window.addEventListener("message", (event) => {
+  window.addEventListener('message', (event) => {
     dispatch(event, table);
   });
 
@@ -56,56 +56,56 @@ function main() {
    * On double click a row of the program memory view table, select the corresponding
    * line of code in the editor.
    */
-  table.on("rowDblClick", function (e, row) {
+  table.on('rowDblClick', function (e, row) {
     const line = getSourceLineForInstruction(row);
-    sendMessageToExtension({ command: "highlightCodeLine", lineNumber: line });
+    sendMessageToExtension({ command: 'highlightCodeLine', lineNumber: line });
   });
 
   /**
    * On double click a row of the program memory view table, select it to
    * trigger any selection event that depends on it.
    */
-  table.on("rowDblClick", function (e, row) {
+  table.on('rowDblClick', function (e, row) {
     table.deselectRow();
     table.selectRow(row);
   });
 
-  table.on("rowDblClick", function (e, row) {
+  table.on('rowDblClick', function (e, row) {
     const line = getSourceLineForInstruction(row);
-    sendMessageToExtension({ command: "highlightCodeLine", lineNumber: line });
+    sendMessageToExtension({ command: 'highlightCodeLine', lineNumber: line });
   });
 
-  table.on("rowSelected", (row) => {
+  table.on('rowSelected', (row) => {
     reflectInstruction(row, instTable);
   });
 
   // Code synchronization checkbox
-  const codeSync = document.getElementById("code-sync") as Checkbox;
-  codeSync.addEventListener("click", () => {
+  const codeSync = document.getElementById('code-sync') as Checkbox;
+  codeSync.addEventListener('click', () => {
     if (!codeSync.checked) {
       table.deselectRow();
     }
   });
   // Instruction format visualization
   const instFormatBinary = document.getElementById(
-    "instruction-as-binary"
+    'instruction-as-binary'
   ) as Checkbox;
-  instFormatBinary.addEventListener("click", () => {
+  instFormatBinary.addEventListener('click', () => {
     if (instFormatBinary.checked) {
-      ["value3", "value2", "value1", "value0"].forEach((name) => {
+      ['value3', 'value2', 'value1', 'value0'].forEach((name) => {
         table.getColumn(name).show();
       });
-      table.getColumn("hex").hide();
+      table.getColumn('hex').hide();
     } else {
-      table.getColumn("hex").show();
-      ["value3", "value2", "value1", "value0"].forEach((name) => {
+      table.getColumn('hex').show();
+      ['value3', 'value2', 'value1', 'value0'].forEach((name) => {
         table.getColumn(name).hide();
       });
     }
     table.redraw();
   });
 
-  log("info", { message: "Initializing progmem view [FINISHED]" });
+  log('info', { message: 'Initializing progmem view [FINISHED]' });
 }
 /**
  * Handles the messages received from the extension.
@@ -117,20 +117,27 @@ function main() {
 function dispatch(event: MessageEvent, table: Tabulator) {
   const data = event.data;
   switch (data.operation) {
-    case "updateProgram":
+    case 'updateProgram':
       updateProgram(data.program, table);
       sendMessageToExtension({
-        command: "log-info",
-        m: "program updated new",
+        command: 'log-info',
+        m: 'program updated new',
         tblData: table.getData()
       });
       break;
-    case "selectInstruction":
-      log("info", "select instruction " + data.sourceLine);
+    case 'selectInstruction':
+      // log('info', 'select instruction ' + data.sourceLine);
       selectInstructionInTable(data.sourceLine, table);
       break;
+    case 'selectInstructionFromAddress':
+      // log('info', 'select instruction from address' + data.address);
+      selectInstructionFromAddress(data.address, table);
+      break;
+    case 'clearSelection':
+      table.deselectRow();
+      break;
     default:
-      log("info", "unknown option");
+      log('info', 'unknown option');
       break;
   }
 }
@@ -140,11 +147,10 @@ function getSourceLineForInstruction(row: RowComponent): number {
 }
 
 function selectInstructionInTable(line: number, table: Tabulator) {
-  const codeSync = document.getElementById("code-sync") as Checkbox;
+  const codeSync = document.getElementById('code-sync') as Checkbox;
   if (!codeSync.checked) {
     return;
   }
-
   const sourceLine = line + 1;
   table.deselectRow();
   const data = table.getData() as Array<MemInstruction>;
@@ -155,8 +161,12 @@ function selectInstructionInTable(line: number, table: Tabulator) {
   if (instruction) {
     table.selectRow(instruction.address);
   } else {
-    log("info", "line not found");
+    log('info', 'line not found');
   }
+}
+
+function selectInstructionFromAddress(address: string, table: Tabulator) {
+  table.selectRow(address);
 }
 
 function updateProgram(program: Array<any>, table: Tabulator) {
@@ -212,66 +222,66 @@ function tableSetup(): Tabulator {
   const tableData = [] as Array<MemInstruction>;
   const minWidth = 60;
   const maxWidth = 60;
-  let table = new Tabulator("#progmem-table", {
-    height: "100%",
-    maxHeight: "100%",
+  let table = new Tabulator('#progmem-table', {
+    height: '100%',
+    maxHeight: '100%',
     data: tableData,
-    layout: "fitDataTable",
+    layout: 'fitDataTable',
     // layout: "fitDataFill",
     // layout: "fitColumns",
     // layout: "fitDataStretch",
     // layout: "fitData",
 
     reactiveData: true,
-    columnHeaderVertAlign: "bottom",
-    index: "address",
+    columnHeaderVertAlign: 'bottom',
+    index: 'address',
     columns: [
       {
-        title: "PC",
-        field: "address",
+        title: 'PC',
+        field: 'address',
         minWidth: 50,
         maxWidth: 80,
-        headerHozAlign: "center",
-        cssClass: "address-column",
+        headerHozAlign: 'center',
+        cssClass: 'address-column',
         visible: true,
         headerSort: false
       },
       {
-        title: "Instruction",
-        headerHozAlign: "center",
+        title: 'Instruction',
+        headerHozAlign: 'center',
 
         columns: [
           {
-            title: "0x3",
-            field: "value3",
-            headerHozAlign: "center",
+            title: '0x3',
+            field: 'value3',
+            headerHozAlign: 'center',
             // minWidth: minWidth,
             // maxWidth: maxWidth,
             visible: true,
             headerSort: false
           },
           {
-            title: "0x2",
-            field: "value2",
-            headerHozAlign: "center",
+            title: '0x2',
+            field: 'value2',
+            headerHozAlign: 'center',
             // minWidth: minWidth,
             // maxWidth: maxWidth,
             visible: true,
             headerSort: false
           },
           {
-            title: "0x1",
-            field: "value1",
-            headerHozAlign: "center",
+            title: '0x1',
+            field: 'value1',
+            headerHozAlign: 'center',
             // minWidth: minWidth,
             // maxWidth: maxWidth,
             visible: true,
             headerSort: false
           },
           {
-            title: "0x0",
-            field: "value0",
-            headerHozAlign: "center",
+            title: '0x0',
+            field: 'value0',
+            headerHozAlign: 'center',
             // minWidth: minWidth,
             // maxWidth: maxWidth,
             visible: true,
@@ -280,13 +290,13 @@ function tableSetup(): Tabulator {
         ]
       },
       {
-        title: "Instruction",
-        headerHozAlign: "center",
+        title: 'Instruction',
+        headerHozAlign: 'center',
         columns: [
           {
-            title: "",
-            field: "hex",
-            headerHozAlign: "center",
+            title: '',
+            field: 'hex',
+            headerHozAlign: 'center',
             minWidth: 130,
             // maxWidth: maxWidth,
             visible: false,
@@ -310,18 +320,18 @@ type TypeInstructionValue = {
 
 function instTableColumnDefinition(instType: string): ColumnDefinition[] {
   const headerRange = (name: string, lb: number, ub: number): string => {
-    const br = name === "" ? name : "<br>";
+    const br = name === '' ? name : '<br>';
     return `${name}${br}<span style="float:left;font-size:0.7em">${ub}</span><span style="float:right;font-size:0.7em">${lb}</span>`;
   };
   const generalColumnSettings = {
     headerSort: false,
-    headerHozAlign: "right",
-    hozAlign: "right"
+    headerHozAlign: 'right',
+    hozAlign: 'right'
   };
   const opcode = _.assign(
     {
-      title: headerRange("Opcode", 0, 6),
-      field: "opcode"
+      title: headerRange('Opcode', 0, 6),
+      field: 'opcode'
     },
     generalColumnSettings
   ) as ColumnDefinition;
@@ -329,12 +339,12 @@ function instTableColumnDefinition(instType: string): ColumnDefinition[] {
   const rd = _.assign(
     {
       title:
-        instType === "S"
-          ? headerRange("IMM[4:0]", 7, 11)
-          : instType === "B"
-          ? headerRange("IMM[4:1|11]", 7, 11)
-          : headerRange("RD", 7, 11),
-      field: "rd"
+        instType === 'S'
+          ? headerRange('IMM[4:0]', 7, 11)
+          : instType === 'B'
+          ? headerRange('IMM[4:1|11]', 7, 11)
+          : headerRange('RD', 7, 11),
+      field: 'rd'
     },
     generalColumnSettings
   ) as ColumnDefinition;
@@ -342,10 +352,10 @@ function instTableColumnDefinition(instType: string): ColumnDefinition[] {
   const f3 = _.assign(
     {
       title:
-        instType === "U" || instType === "J"
-          ? headerRange("", 12, 14)
-          : headerRange("F3", 12, 14),
-      field: "f3"
+        instType === 'U' || instType === 'J'
+          ? headerRange('', 12, 14)
+          : headerRange('F3', 12, 14),
+      field: 'f3'
     },
     generalColumnSettings
   ) as ColumnDefinition;
@@ -353,10 +363,10 @@ function instTableColumnDefinition(instType: string): ColumnDefinition[] {
   const rs1 = _.assign(
     {
       title:
-        instType === "U" || instType === "J"
-          ? headerRange("", 15, 19)
-          : headerRange("RS1", 15, 19),
-      field: "rs1"
+        instType === 'U' || instType === 'J'
+          ? headerRange('', 15, 19)
+          : headerRange('RS1', 15, 19),
+      field: 'rs1'
     },
     generalColumnSettings
   ) as ColumnDefinition;
@@ -364,10 +374,10 @@ function instTableColumnDefinition(instType: string): ColumnDefinition[] {
   const rs2 = _.assign(
     {
       title:
-        instType === "U" || instType === "J" || instType === "I"
-          ? headerRange("", 20, 24)
-          : headerRange("RS2", 20, 24),
-      field: "rs2"
+        instType === 'U' || instType === 'J' || instType === 'I'
+          ? headerRange('', 20, 24)
+          : headerRange('RS2', 20, 24),
+      field: 'rs2'
     },
     generalColumnSettings
   ) as ColumnDefinition;
@@ -375,44 +385,44 @@ function instTableColumnDefinition(instType: string): ColumnDefinition[] {
   const f7 = _.assign(
     {
       title:
-        instType === "R"
-          ? headerRange("F7", 25, 31)
-          : instType === "S"
-          ? headerRange("IMM[11:5]", 25, 31)
-          : instType === "B"
-          ? headerRange("IMM[12|10:5]", 25, 31)
-          : headerRange("", 25, 31),
-      field: "f7"
+        instType === 'R'
+          ? headerRange('F7', 25, 31)
+          : instType === 'S'
+          ? headerRange('IMM[11:5]', 25, 31)
+          : instType === 'B'
+          ? headerRange('IMM[12|10:5]', 25, 31)
+          : headerRange('', 25, 31),
+      field: 'f7'
     },
     generalColumnSettings
   ) as ColumnDefinition;
 
   let columns = [] as ColumnDefinition[];
   switch (instType) {
-    case "R":
-    case "S":
-    case "B":
+    case 'R':
+    case 'S':
+    case 'B':
       columns = [f7, rs2, rs1, f3, rd, opcode];
       break;
-    case "I":
+    case 'I':
       columns = [
-        { title: "IMM[11:0]", columns: [f7, rs2] },
+        { title: 'IMM[11:0]', columns: [f7, rs2] },
         rs1,
         f3,
         rd,
         opcode
       ];
       break;
-    case "U":
+    case 'U':
       columns = [
-        { title: "IMM[31:12]", columns: [f7, rs2, rs1, f3] },
+        { title: 'IMM[31:12]', columns: [f7, rs2, rs1, f3] },
         rd,
         opcode
       ];
       break;
-    case "J":
+    case 'J':
       columns = [
-        { title: "IMM[20|10:1|11|19:12]", columns: [f7, rs2, rs1, f3] },
+        { title: 'IMM[20|10:1|11|19:12]', columns: [f7, rs2, rs1, f3] },
         rd,
         opcode
       ];
@@ -430,33 +440,33 @@ function createInstructionTable(): InstTable {
   // Settings for all the tables
   const tableData = [] as Array<TypeInstructionValue>;
   const definitions = {
-    R: instTableColumnDefinition("R"),
-    I: instTableColumnDefinition("I"),
-    S: instTableColumnDefinition("S"),
-    B: instTableColumnDefinition("B"),
-    U: instTableColumnDefinition("U"),
-    J: instTableColumnDefinition("J")
+    R: instTableColumnDefinition('R'),
+    I: instTableColumnDefinition('I'),
+    S: instTableColumnDefinition('S'),
+    B: instTableColumnDefinition('B'),
+    U: instTableColumnDefinition('U'),
+    J: instTableColumnDefinition('J')
   };
 
   const columns = definitions.R;
   const generalSettings = {
-    layout: "fitDataTable",
+    layout: 'fitDataTable',
     layoutColumnsOnNewData: true,
     data: tableData,
     reactiveData: true,
-    columnHeaderVertAlign: "bottom",
-    index: "opcode",
+    columnHeaderVertAlign: 'bottom',
+    index: 'opcode',
     columns: columns
   } as Options;
 
-  let table = new Tabulator("#progmem-instruction", generalSettings);
+  let table = new Tabulator('#progmem-instruction', generalSettings);
   tableData.push({
-    f7: "0000000",
-    rs2: "00000",
-    rs1: "00000",
-    f3: "000",
-    rd: "00000",
-    opcode: "0000000"
+    f7: '0000000',
+    rs2: '00000',
+    rs1: '00000',
+    f3: '000',
+    rd: '00000',
+    opcode: '0000000'
   });
   tableData.pop();
 
@@ -484,7 +494,7 @@ function updateColumnValues(instTable: InstTable, binEncoding: string) {
     /^(?<f7>[01]{7})(?<rs2>[01]{5})(?<rs1>[01]{5})(?<f3>[01]{3})(?<rd>[01]{5})(?<opcode>[01]{7})$/;
   const result = binEncoding.match(regex);
 
-  if (result && "groups" in result) {
+  if (result && 'groups' in result) {
     const data = result.groups as TypeInstructionValue;
     instTable.table.clearData();
     instTable.table.addRow(data);
@@ -492,7 +502,7 @@ function updateColumnValues(instTable: InstTable, binEncoding: string) {
 }
 
 function updateInstructionInfo(instruction: RowComponent) {
-  const info = document.getElementById("instruction-detail") as HTMLElement;
+  const info = document.getElementById('instruction-detail') as HTMLElement;
   const {
     ir: { type }
   } = instruction.getData();
