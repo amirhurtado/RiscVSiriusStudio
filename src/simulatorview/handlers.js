@@ -1177,13 +1177,13 @@ export function IMCUOPCODE(element, cpuData) {
     () => {
       if (state.enabled) {
         const html = binFormattedDisplay(cpuData, "opcode");
-        setBinInstruction(cpuData, html);
+        cpuData.setBinInstruction(html);
       }
     },
     () => {
       if (state.enabled) {
         const html = currentBinInst(cpuData);
-        setBinInstruction(cpuData, html);
+        cpuData.setBinInstruction(html);
       }
     }
   );
@@ -1216,13 +1216,13 @@ export function IMCUFUNCT3(element, cpuData) {
     () => {
       if (state.enabled) {
         const html = binFormattedDisplay(cpuData, "funct3");
-        setBinInstruction(cpuData, html);
+        cpuData.setBinInstruction(html);
       }
     },
     () => {
       if (state.enabled) {
         const html = currentBinInst(cpuData);
-        setBinInstruction(cpuData, html);
+        cpuData.setBinInstruction(html);
       }
     }
   );
@@ -1260,13 +1260,13 @@ export function IMCUFUNCT7(element, cpuData) {
     () => {
       if (state.enabled) {
         const html = binFormattedDisplay(cpuData, "funct7");
-        setBinInstruction(cpuData, html);
+        cpuData.setBinInstruction(html);
       }
     },
     () => {
       if (state.enabled) {
         const html = currentBinInst(cpuData);
-        setBinInstruction(cpuData, html);
+        cpuData.setBinInstruction(html);
       }
     }
   );
@@ -1331,13 +1331,13 @@ export function IMRURS1(element, cpuData) {
     () => {
       if (state.enabled) {
         const html = binFormattedDisplay(cpuData, "rs1");
-        setBinInstruction(cpuData, html);
+        cpuData.setBinInstruction(html);
       }
     },
     () => {
       if (state.enabled) {
         const html = currentBinInst(cpuData);
-        setBinInstruction(cpuData, html);
+        cpuData.setBinInstruction(html);
       }
     }
   );
@@ -1375,13 +1375,13 @@ export function IMRURS2(element, cpuData) {
     () => {
       if (state.enabled) {
         const html = binFormattedDisplay(cpuData, "rs2");
-        setBinInstruction(cpuData, html);
+        cpuData.setBinInstruction(html);
       }
     },
     () => {
       if (state.enabled) {
         const html = currentBinInst(cpuData);
-        setBinInstruction(cpuData, html);
+        cpuData.setBinInstruction(html);
       }
     }
   );
@@ -1419,13 +1419,13 @@ export function IMRURDEST(element, cpuData) {
     () => {
       if (state.enabled) {
         const html = binFormattedDisplay(cpuData, "rd");
-        setBinInstruction(cpuData, html);
+        cpuData.setBinInstruction(html);
       }
     },
     () => {
       if (state.enabled) {
         const html = currentBinInst(cpuData);
-        setBinInstruction(cpuData, html);
+        cpuData.setBinInstruction(html);
       }
     }
   );
@@ -1848,21 +1848,13 @@ export function ADD4CT(element, cpuData) {
   });
 }
 // !LOG
-function setBinInstruction(cpuData, html) {
-  const {
-    cpuElements: { LOGTEXTBIN: text },
-  } = cpuData;
-  const binText = text.getElementsByTagName("div")[2];
-  binText.innerHTML = html;
-}
-
-function setAsmInstruction(cpuData, html) {
-  const {
-    cpuElements: { LOGTEXTASSEMBLER: text },
-  } = cpuData;
-  const asmText = text.getElementsByTagName("div")[3];
-  asmText.innerHTML = html;
-}
+// function setBinInstruction(cpuData, html) {
+//   const {
+//     cpuElements: { LOGTEXTBIN: text },
+//   } = cpuData;
+//   const binText = text.getElementsByTagName("div")[2];
+//   binText.innerHTML = html;
+// }
 
 function setImmInstruction(cpuData, html) {
   const {
@@ -1879,35 +1871,6 @@ function setHexInstruction(cpuData, html) {
 
   const hexText = text.getElementsByTagName("div")[2];
   hexText.innerHTML = html;
-}
-
-export function LOGTEXTASSEMBLER(element, cpuData) {
-  const {
-    cpuElements: { LOGTEXTHEX: text },
-    instruction: { asm },
-  } = cpuData;
-
-  setAsmInstruction(cpuData, "--no instruction loaded--");
-
-  applyClass(element, "instructionDisabled");
-  document.addEventListener("SimulatorUpdate", (e) => {
-    setAsmInstruction(cpuData, asm);
-    applyClass(element, "instruction");
-  });
-}
-
-function LOGTEXTBIN(element, cpuData) {
-  const {
-    cpuElements: { LOGTEXTBIN: text },
-  } = cpuData;
-
-  setBinInstruction(cpuData, "--no instruction loaded--");
-  applyClass(element, "instructionDisabled");
-  document.addEventListener("SimulatorUpdate", (e) => {
-    const bin = cpuData.instruction.encoding.binEncoding;
-    setBinInstruction(cpuData, bin);
-    applyClass(element, "instruction");
-  });
 }
 
 export function LOGTEXTIMM(element, cpuData) {

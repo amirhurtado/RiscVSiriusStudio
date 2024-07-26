@@ -388,7 +388,7 @@ svg {
   }
   dl {
     display: grid;
-    grid-gap: 4px 16px;
+    grid-gap: 4px 10px;
   }
   dt {
     font-weight: bold;
@@ -414,4 +414,51 @@ svg {
 .grid-item-2 {
   /* border: 2px dashed peru; */
   grid-row: 2;
+}
+
+.toolbar-container {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  grid-template-rows: auto;
+}
+
+.toolbar-left {
+  grid-column: 1;
+  border: 1px dashed blue;
+
+}
+
+.toolbar-center {
+  grid-column: 2;
+  display: flex;
+  /* justify-content: left; */
+  align-items: center;
+  text-align: left;
+  border: 1px dashed red;
+  font-size: large;
+}
+
+.toolbar-right {
+  border: 1px dashed blue;
+  grid-column: 3;
+}
+
+.simulator-header-center {
+  font-family: Roboto Mono;
+  font-size: 2em;
+  display: grid;
+  grid-column: auto auto;
+  grid-row: auto;
+  #instruction-asm {
+    grid-column: 1;
+    
+    /* display: flex; */
+    /* text-align: left; */
+  }
+  #instruction-bin {
+    grid-column: 2;
+    /* display: flex; */
+    /* text-align: right; */
+    /* font-weight: bold; */
+  }
 }

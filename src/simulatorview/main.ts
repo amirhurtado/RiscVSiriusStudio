@@ -6,6 +6,7 @@ import {
 
 import * as Handlers from './handlers.js';
 import { logger } from '../utilities/logger.js';
+import { TextEditorRevealType } from 'vscode';
 
 provideVSCodeDesignSystem().register(allComponents);
 
@@ -37,7 +38,9 @@ let cpuData = {
   cpuElements: {}, // All the cpu elements with the attribute "data-cpuname" set to something.
   cpuElemStates: {}, // All the cpu elements with the attribute "data-cpuname" set to something.
   registers: [] as string[],
-  logger: log
+  logger: log,
+  // Utility function to set the binary text of the simulator
+  setBinInstruction: (html: string) => {}
 };
 
 function main() {
@@ -197,6 +200,20 @@ function enableStep() {
 function setInstruction(instruction: any, result: any) {
   cpuData.instruction = instruction;
   cpuData.result = result;
+
+  const instAsm = document.getElementById('instruction-asm') as HTMLElement;
+  const instBin = document.getElementById('instruction-bin') as HTMLElement;
+  if (instAsm && instBin) {
+    document.addEventListener('SimulatorUpdate', () => {
+      instAsm.innerHTML = (cpuData.instruction as any).asm;
+    });
+    cpuData.setBinInstruction = (html) => {
+      instBin.innerHTML = html;
+    };
+    cpuData.setBinInstruction(
+      (cpuData.instruction as any).encoding.binEncoding
+    );
+  }
   log('info', { m: 'Execution result', result });
   document.dispatchEvent(cpuData.updateEvent);
 }
