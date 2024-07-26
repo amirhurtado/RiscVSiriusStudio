@@ -1,5 +1,13 @@
 import _ from "../../node_modules/lodash-es/lodash.js";
-import { usesRegister, usesALU, writesRU } from "../utilities/instructions.js";
+import {
+  usesRegister,
+  usesALU,
+  writesRU,
+  usesFunct7,
+  usesFunct3,
+  usesIMM,
+  usesRs2,
+} from "../utilities/instructions.js";
 
 function undefinedFunc0() {}
 
@@ -514,6 +522,51 @@ export function RU(element, cpuData) {
   });
 }
 
+function immTooltipText(type, cpuData) {
+  const instruction = cpuData.instruction;
+  const instType = instruction.type;
+  const selectImmBits = {
+    I: {
+      bits: 12,
+      value2: instruction.encoding.imm12,
+      value10: instruction.imm12,
+      instrcution: "[31:20]",
+      imm: "[11:0]",
+    },
+    S: 12,
+    B: 12,
+    U: 20,
+    J: 20,
+  };
+  const info = selectImmBits[instType];
+  const immLength = `${info.bits} bits.`;
+  const immValue2 = `${info.value2}.`;
+  const immValue10 = `${info.value10}.`;
+  const instPosition = `${info.instrcution} bits in instruction.`;
+  const immPosition = `${info.imm} bits in immediate.`;
+
+  const selector = {
+    general: `<span class="tooltipinfo">
+              <dl>
+                <dt>Value(10)</dt> <dd>${immValue10}</dd>
+                <dt>Value(2)</dt> <dd>${immValue2}</dd>
+                <dt>Length</dt> <dd>${immLength}</dd>
+              </dl>
+              </span>`,
+    detailed: `<span class="tooltipinfo">
+              <dl>
+                <dt>Value(10)</dt> <dd>${immValue10}</dd>
+                <dt>Value(2)</dt> <dd>${immValue2}</dd>
+                <dt>Length</dt> <dd>${immLength}</dd>
+                <dt>Position</dt> <dd>${instPosition}</dd>
+                <dt>Position</dt> <dd>${immPosition}</dd>
+              </dl>
+              </span>`,
+  };
+
+  return selector[type];
+}
+
 export function IMM(element, cpuData) {
   const {
     cpuElements: { SgnIMMSrcPTH: signal, SgnIMMSRCVAL: value },
@@ -531,27 +584,14 @@ export function IMM(element, cpuData) {
     cpuData,
     element,
     () => {
-      return `<span class="tooltipinfo">
-            <ul>
-            <li>Value: TODO!</li>
-            <li>Bit length: TODO!</li>
-            </ul>
-            </span>`;
+      return immTooltipText("general", cpuData);
     },
     () => {
-      return `<span class="tooltipinfo">
-            <ul>
-            <li>Value: TODO!</li>
-            <li>Value(2): TODO!</li>
-            <li>Value(8): TODO!</li>
-            </ul>
-            </span>`;
+      return immTooltipText("detailed", cpuData);
     }
   );
   document.addEventListener("SimulatorUpdate", (e) => {
-    // Immediate unit available for all but R instructions
-    // console.log("[IMM] new instruction: ");
-    if (instruction.type !== "R") {
+    if (usesIMM(cpuData.instruction.type)) {
       applyClass(element, "component");
       signals.forEach((e) => {
         applyClass(e, "signal");
@@ -587,6 +627,18 @@ export function ALUA(element, cpuData) {
   const path0Visible = (inst) => {
     return inst === "R" || inst === "I" || inst === "S";
   };
+  tooltipEvt(
+    "ALUA",
+    cpuData,
+    path0,
+    () => {
+      const value = cpuData.result.RURS1Val;
+      return `<span class="tooltipinfo">
+              <p>${value}</p>
+              </span>`;
+    },
+    undefinedFunc0
+  );
   document.addEventListener("SimulatorUpdate", (e) => {
     const instType = cpuData.instruction.type;
     state.enabled = instType !== "U";
@@ -627,14 +679,27 @@ export function ALUB(element, cpuData) {
   });
   applyClass(signal, "signalDisabled");
   const path0Visible = (inst) => {
-    return inst === "R" || inst === "B" || inst === "J";
+    return usesRs2(inst);
+    // return inst === "R" || inst === "B" || inst === "J";
   };
+  tooltipEvt(
+    "ALUB",
+    cpuData,
+    path0,
+    () => {
+      const value = cpuData.result.RURS2Val;
+      return `<span class="tooltipinfo">
+              <p>${value}</p>
+              </span>`;
+    },
+    undefinedFunc0
+  );
   document.addEventListener("SimulatorUpdate", (e) => {
     // Always enabled for all instructions
     state.enabled = true;
     applyClass(element, "component");
     applyClass(signal, "signal");
-    const instType = instruction.type;
+    const instType = cpuData.instruction.type;
     if (path0Visible(instType)) {
       applyClass(path0, "connection muxPath");
       applyClass(path1, "connectionDisabled muxPathDisabled");
@@ -1056,6 +1121,41 @@ export function PCALUA(element, cpuData) {
   });
 }
 
+/**
+ * Computes the tooltip text presented on the connections between the
+ * instruction memory and the control unit.
+ *
+ * @param {string} connection type of data requested. Possible values are:
+ * - 'opcode': information for the connection to the opcode.
+ * - 'funct3': for information regarding the funct3 connection.
+ * - 'funct7': for information about the funtc7 connection.
+ * @param {any} cpuData simulator information.
+ */
+function imCUTooltipText(connection, cpuData) {
+  const {
+    type,
+    opcode,
+    funct3,
+    funct7,
+    encoding: { funct3: funct3Bin },
+  } = cpuData.instruction;
+
+  const title = _.capitalize(connection);
+  const detail = {
+    opcode: `<dt>Value(2)</dt> <dd>${opcode}</dd>`,
+    funct3: `<dt>Value(2)</dt> <dd>${funct3Bin}</dd>
+             <dt>Value(10)</dt> <dd>${funct3}</dd>`,
+    funct7: `<dt>Value(2)</dt> <dd>${funct7}</dd>`,
+  };
+
+  const txt = `<span class="tooltipinfo">
+              <h1>${title}</h1>
+              <dl>${detail[connection]}</dl>
+              </span>`;
+
+  return txt;
+}
+
 export function IMCUOPCODE(element, cpuData) {
   applyClass(element, "connectionDisabled");
   const {
@@ -1063,6 +1163,15 @@ export function IMCUOPCODE(element, cpuData) {
     instruction: instruction,
   } = cpuData;
   focus(element);
+  tooltipEvt(
+    "IMCUOPCODE",
+    cpuData,
+    element,
+    () => {
+      return imCUTooltipText("opcode", cpuData);
+    },
+    undefinedFunc0
+  );
   mouseHover(
     element,
     () => {
@@ -1092,6 +1201,16 @@ export function IMCUFUNCT3(element, cpuData) {
   } = cpuData;
   applyClass(element, "connectionDisabled");
   focus(element);
+  tooltipEvt(
+    "IMCUFUNCT3",
+    cpuData,
+    element,
+    () => {
+      return imCUTooltipText("funct3", cpuData);
+    },
+    undefinedFunc0
+  );
+
   mouseHover(
     element,
     () => {
@@ -1108,9 +1227,14 @@ export function IMCUFUNCT3(element, cpuData) {
     }
   );
   document.addEventListener("SimulatorUpdate", (e) => {
-    applyClass(element, "connection");
-    pathOnTop(element);
-    state.enabled = true;
+    if (usesFunct3(cpuData.instruction.type)) {
+      applyClass(element, "connection");
+      pathOnTop(element);
+      state.enabled = true;
+    } else {
+      applyClass(element, "connectionDisabled");
+      state.enabled = false;
+    }
   });
 }
 
@@ -1122,6 +1246,15 @@ export function IMCUFUNCT7(element, cpuData) {
 
   applyClass(element, "connectionDisabled");
   focus(element);
+  tooltipEvt(
+    "IMCUFUNCT7",
+    cpuData,
+    element,
+    () => {
+      return imCUTooltipText("funct7", cpuData);
+    },
+    undefinedFunc0
+  );
   mouseHover(
     element,
     () => {
@@ -1138,10 +1271,42 @@ export function IMCUFUNCT7(element, cpuData) {
     }
   );
   document.addEventListener("SimulatorUpdate", (e) => {
-    applyClass(element, "connection");
-    pathOnTop(element);
-    state.enabled = true;
+    const instType = cpuData.instruction.type;
+    if (usesFunct7(instType)) {
+      applyClass(element, "connection");
+      pathOnTop(element);
+      state.enabled = true;
+    } else {
+      applyClass(element, "connectionDisabled");
+      state.enabled = false;
+    }
   });
+}
+
+/**
+ * Computes the tooltip text presented on the connections between the
+ * instruction memory and the registers unit.
+ *
+ * @param {string} connection type of data requested. Possible values are:
+ * - 'rs1': information for the connection to the rs1.
+ * - 'rs2': for information regarding the rs2 connection.
+ * - 'rd': for information about the rd connection.
+ * @param {any} cpuData simulator information.
+ */
+function imRUTooltipText(connection, cpuData) {
+  const value10 = cpuData.instruction[connection].regenc;
+  const value2 = cpuData.instruction.encoding[connection];
+
+  const title = _.capitalize(connection);
+  const detail = `<dt>Value(2)</dt> <dd>${value2}</dd>
+                 <dt>Value(10)</dt> <dd>${value10}</dd>`;
+
+  const txt = `<span class="tooltipinfo">
+              <h1>${title}</h1>
+              <dl>${detail}</dl>
+              </span>`;
+
+  return txt;
 }
 
 export function IMRURS1(element, cpuData) {
@@ -1152,6 +1317,15 @@ export function IMRURS1(element, cpuData) {
 
   applyClass(element, "connectionDisabled");
   focus(element);
+  tooltipEvt(
+    "IMRURS1",
+    cpuData,
+    element,
+    () => {
+      return imRUTooltipText("rs1", cpuData);
+    },
+    undefinedFunc0
+  );
   mouseHover(
     element,
     () => {
@@ -1187,6 +1361,15 @@ export function IMRURS2(element, cpuData) {
 
   applyClass(element, "connectionDisabled");
   focus(element);
+  tooltipEvt(
+    "IMRURS2",
+    cpuData,
+    element,
+    () => {
+      return imRUTooltipText("rs2", cpuData);
+    },
+    undefinedFunc0
+  );
   mouseHover(
     element,
     () => {
@@ -1222,6 +1405,15 @@ export function IMRURDEST(element, cpuData) {
 
   applyClass(element, "connectionDisabled");
   focus(element);
+  tooltipEvt(
+    "IMRURDEST",
+    cpuData,
+    element,
+    () => {
+      return imRUTooltipText("rd", cpuData);
+    },
+    undefinedFunc0
+  );
   mouseHover(
     element,
     () => {
@@ -1252,8 +1444,7 @@ export function IMIMM(element, cpuData) {
   applyClass(element, "connectionDisabled");
   focus(element);
   document.addEventListener("SimulatorUpdate", (e) => {
-    const instType = instruction.type;
-    if (instType !== "R") {
+    if (usesIMM(cpuData.instrcution.type)) {
       applyClass(element, "connection");
       state.enabled = true;
     } else {
@@ -1307,8 +1498,7 @@ export function IMMALUB(element, cpuData) {
   applyClass(element, "connectionDisabled");
   focus(element);
   document.addEventListener("SimulatorUpdate", (e) => {
-    const instType = instruction.type;
-    if (instType !== "R" && instType !== "U") {
+    if (usesIMM(cpuData.instruction.type)) {
       applyClass(element, "connection");
       state.enabled = true;
     } else {
@@ -1321,13 +1511,25 @@ export function IMMALUB(element, cpuData) {
 export function RUALUA(element, cpuData) {
   const {
     cpuElemStates: { RUALUA: state },
-    instruction: instruction,
   } = cpuData;
   applyClass(element, "connectionDisabled");
   focus(element);
+  tooltipEvt(
+    "RUALUA",
+    cpuData,
+    element,
+    () => {
+      const value = cpuData.result.RURS1Val;
+      return `<span class="tooltipinfo">
+              <p>${value}</p>
+              </span>`;
+    },
+    undefinedFunc0
+  );
   document.addEventListener("SimulatorUpdate", (e) => {
-    const instType = instruction.type;
-    if (instType !== "J" && instType !== "B") {
+    const instType = cpuData.instruction.type;
+    // if (instType !== "J" && instType !== "B") {
+    if (usesRegister("rs1", instType)) {
       state.enabled = true;
       pathOnTop(element);
       applyClass(element, "connection");
@@ -1346,9 +1548,21 @@ export function RUALUB(element, cpuData) {
 
   applyClass(element, "connectionDisabled");
   focus(element);
+  tooltipEvt(
+    "RUALUB",
+    cpuData,
+    element,
+    () => {
+      const value = cpuData.result.RURS2Val;
+      return `<span class="tooltipinfo">
+              <p>${value}</p>
+              </span>`;
+    },
+    undefinedFunc0
+  );
   document.addEventListener("SimulatorUpdate", (e) => {
-    const instType = instruction.type;
-    if (instType === "R") {
+    const instType = cpuData.instruction.type;
+    if (usesRegister("rs2", instType)) {
       state.enabled = true;
       pathOnTop(element);
       applyClass(element, "connection");
@@ -1427,6 +1641,18 @@ export function ALUAALU(element, cpuData) {
 
   applyClass(element, "connectionDisabled");
   focus(element);
+  tooltipEvt(
+    "ALUAALU",
+    cpuData,
+    element,
+    () => {
+      const value = cpuData.result.ALUARes;
+      return `<span class="tooltipinfo">
+              <p>${value}</p>
+              </span>`;
+    },
+    undefinedFunc0
+  );
   document.addEventListener("SimulatorUpdate", (e) => {
     state.enabled = true;
     applyClass(element, "connection");
@@ -1439,6 +1665,18 @@ export function ALUBALU(element, cpuData) {
   } = cpuData;
   applyClass(element, "connectionDisabled");
   focus(element);
+  tooltipEvt(
+    "ALUBALU",
+    cpuData,
+    element,
+    () => {
+      const value = cpuData.result.ALUBRes;
+      return `<span class="tooltipinfo">
+              <p>${value}</p>
+              </span>`;
+    },
+    undefinedFunc0
+  );
   document.addEventListener("SimulatorUpdate", (e) => {
     state.enabled = true;
     applyClass(element, "connection");

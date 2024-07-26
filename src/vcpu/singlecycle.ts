@@ -74,7 +74,11 @@ export class SCCPU {
       ALUOp: '0110',
       ADD4Res: parseInt(this.currentInstruction().inst) + 4,
       WBMUXRes: aluRes,
-      RUWr: 1
+      RUWr: 1,
+      RURS1Val: 42,
+      RURS2Val: 42,
+      ALUARes: 42,
+      ALUBRes: 43
     };
   }
 

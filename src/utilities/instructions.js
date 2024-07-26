@@ -77,6 +77,9 @@ export function usesALU(instType) {
   return false;
 }
 
+export function usesIMM(instType) {
+  return instType !== "R";
+}
 /**
  * Tests if an instruction writes to the RU
  * @param {*} instType the instruction type
@@ -89,4 +92,28 @@ export function writesRU(instType) {
       return true;
   }
   return false;
+}
+
+/**
+ * Returns the function type from a given opcode.
+ */
+export function opcodeToType(opcode) {
+  switch (opcode) {
+    case "0110011":
+      return "R";
+    case "0010011":
+    case "0000011":
+    case "1100111":
+    case "1110011":
+      return "I";
+    case "0100011":
+      return "S";
+    case "1100011":
+      return "B";
+    case "1101111":
+      return "J";
+    case "0110111":
+    case "0010111":
+      return "U";
+  }
 }
