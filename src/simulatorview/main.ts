@@ -45,6 +45,15 @@ let cpuData = {
 
 function main() {
   log('info', { message: 'Initializing simulator events' });
+
+  const zoomIn = document.getElementById('zoom-in') as Button;
+  zoomIn.addEventListener('click', () => {
+    resizeSVG(1.01);
+  });
+  const zoomOut = document.getElementById('zoom-out') as Button;
+  zoomOut.addEventListener('click', () => {
+    resizeSVG(0.99);
+  });
   const step = document.getElementById('step-execution') as Button;
   cpuData.stepButton = step;
   step.addEventListener('click', (e) => {
@@ -205,14 +214,14 @@ function setInstruction(instruction: any, result: any) {
   const instBin = document.getElementById('instruction-bin') as HTMLElement;
   if (instAsm && instBin) {
     document.addEventListener('SimulatorUpdate', () => {
-      instAsm.innerHTML = (cpuData.instruction as any).asm;
+      const inst = (cpuData.instruction as any).asm;
+      instAsm.innerHTML = `<span class="instruction">${inst}</span>`;
     });
     cpuData.setBinInstruction = (html) => {
       instBin.innerHTML = html;
     };
-    cpuData.setBinInstruction(
-      (cpuData.instruction as any).encoding.binEncoding
-    );
+    const inst = (cpuData.instruction as any).encoding.binEncoding;
+    cpuData.setBinInstruction(`<span class="instruction">${inst}</span>`);
   }
   log('info', { m: 'Execution result', result });
   document.dispatchEvent(cpuData.updateEvent);
@@ -287,4 +296,14 @@ function updateRegister(name: string, value: string) {
   const index = parseInt(name.substring(1));
   log('info', { m: 'Updating value', name: name, idx: index, val: value });
   cpuData.registers[index] = value;
+}
+
+function resizeSVG(factor: number) {
+  const view = document.body as HTMLElement;
+  const scalex = view.getBoundingClientRect().width / view.offsetWidth;
+  const scaley = view.getBoundingClientRect().height / view.offsetHeight;
+
+  const newScale = scalex * factor * 100;
+  view.style.scale = newScale + '%';
+  // svg.currentScale = svg.currentScale * scale;
 }

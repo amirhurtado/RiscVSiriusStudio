@@ -86,7 +86,7 @@ function currentBinInst(cpuData) {
       encoding: { binEncoding: bin },
     },
   } = cpuData;
-  return bin;
+  return `<span class="instruction">${bin}</span>`;
 }
 
 function tooltipEvt(name, cpuData, element, htmlGen, htmlDet) {
