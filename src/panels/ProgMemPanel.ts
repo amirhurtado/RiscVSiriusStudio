@@ -5,11 +5,11 @@ import {
   Uri,
   EventEmitter,
   window
-} from "vscode";
-import { getUri } from "../utilities/getUri";
-import { getNonce } from "../utilities/getNonce";
-import { applyDecoration } from "../utilities/editor-utils";
-import { logger } from "../utilities/logger";
+} from 'vscode';
+import { getUri } from '../utilities/getUri';
+import { getNonce } from '../utilities/getNonce';
+import { applyDecoration } from '../utilities/editor-utils';
+import { logger } from '../utilities/logger';
 
 export class ProgMemPanelView implements WebviewViewProvider {
   public static currentview: ProgMemPanelView | undefined;
@@ -49,7 +49,7 @@ export class ProgMemPanelView implements WebviewViewProvider {
       enableScripts: true,
       localResourceRoots: [
         this.extensionUri,
-        Uri.joinPath(this.extensionUri, "node_modules") // Required for codicon]
+        Uri.joinPath(this.extensionUri, 'node_modules') // Required for codicon]
       ]
     };
     webviewView.webview.html = this._getHtmlForWebview(
@@ -63,43 +63,43 @@ export class ProgMemPanelView implements WebviewViewProvider {
   private activateMessageListener() {
     this._view.webview.onDidReceiveMessage((message: any) => {
       switch (message.command) {
-        case "highlightCodeLine":
+        case 'highlightCodeLine':
           if (window.activeTextEditor) {
             applyDecoration(message.lineNumber, window.activeTextEditor);
-            console.log("Should highlight line ", message);
+            console.log('Should highlight line ', message);
           } else {
-            console.log("no editor active!");
+            console.log('no editor active!');
           }
           break;
-        case "log-info":
-          logger().info("info", message.obj);
+        case 'log-info':
+          logger().info('info', message.obj);
           break;
-        case "SHOW_WARNING_LOG":
+        case 'SHOW_WARNING_LOG':
           window.showWarningMessage(message.data.message);
           break;
         default:
-          window.showWarningMessage("Unrecognized messaged from the view");
+          window.showWarningMessage('Unrecognized messaged from the view');
           break;
       }
     });
   }
 
   private _getHtmlForWebview(webview: Webview, extensionUri: Uri) {
-    const progmemUri = getUri(webview, extensionUri, ["out", "progmemview.js"]);
+    const progmemUri = getUri(webview, extensionUri, ['out', 'progmemview.js']);
     const nonce = getNonce();
     const tabulatorCSS = getUri(webview, extensionUri, [
-      "out",
-      "tabulator.min.css"
+      'out',
+      'tabulator.min.css'
     ]);
-    const panelsCSS = getUri(webview, extensionUri, ["out", "panels.css"]);
+    const panelsCSS = getUri(webview, extensionUri, ['out', 'panels.css']);
 
     const codiconsUri = webview.asWebviewUri(
       Uri.joinPath(
         extensionUri,
-        "node_modules",
-        "@vscode/codicons",
-        "dist",
-        "codicon.css"
+        'node_modules',
+        '@vscode/codicons',
+        'dist',
+        'codicon.css'
       )
     );
     return `
@@ -112,21 +112,21 @@ export class ProgMemPanelView implements WebviewViewProvider {
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
         <body>
-          <section>
-              <h4>Options</h4>
-              <vscode-checkbox id="code-sync" checked>Code synchronization
-              </vscode-checkbox>
-              <vscode-checkbox id="instruction-as-binary" checked>Show instructions in binary</vscode-checkbox>
-          </section>
-          <section>
-            <h4>Program memory</h4>
-            <div id="progmem-table" style="margin-top:1rem;"></div>
-          </section>
-          <section>
-              <h4>Instruction detail</h4>
-              <span id="instruction-detail"></span><br>
-              <div id="progmem-instruction" style="margin-top:1rem;"></div>
-          </section>
+        <section>
+        <h4>Program memory</h4>
+        <div id="progmem-table" style="margin-top:1rem;"></div>
+        </section>
+        <section>
+        <h4>Instruction detail</h4>
+        <span id="instruction-detail"></span><br>
+        <div id="progmem-instruction" style="margin-top:1rem;"></div>
+        </section>
+        <section>
+            <h4>Options</h4>
+            <vscode-checkbox id="code-sync" checked>Code synchronization
+            </vscode-checkbox>
+            <vscode-checkbox id="instruction-as-binary" checked>Show instructions in binary</vscode-checkbox>
+        </section>
           <script type="module" nonce="${nonce}" src="${progmemUri}"></script>
         </body>
       </html>`;
