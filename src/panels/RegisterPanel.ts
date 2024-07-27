@@ -5,10 +5,10 @@ import {
   Uri,
   EventEmitter,
   window
-} from "vscode";
-import { getUri } from "../utilities/getUri";
-import { getNonce } from "../utilities/getNonce";
-import { logger } from "../utilities/logger";
+} from 'vscode';
+import { getUri } from '../utilities/getUri';
+import { getNonce } from '../utilities/getNonce';
+import { logger } from '../utilities/logger';
 
 export class RegisterPanelView implements WebviewViewProvider {
   public static currentview: RegisterPanelView | undefined;
@@ -59,11 +59,11 @@ export class RegisterPanelView implements WebviewViewProvider {
   private activateMessageListener() {
     this._view.webview.onDidReceiveMessage((message: any) => {
       switch (message.command) {
-        case "log-info":
-          logger().info("info", message.obj);
+        case 'log-info':
+          logger().info('info', message.obj);
           break;
 
-        case "SHOW_WARNING_LOG":
+        case 'SHOW_WARNING_LOG':
           window.showWarningMessage(message.data.message);
           break;
         default:
@@ -74,15 +74,15 @@ export class RegisterPanelView implements WebviewViewProvider {
 
   private _getHtmlForWebview(webview: Webview, extensionUri: Uri) {
     const registerswUri = getUri(webview, extensionUri, [
-      "out",
-      "registersview.js"
+      'out',
+      'registersview.js'
     ]);
     const nonce = getNonce();
     const tabulatorCSS = getUri(webview, extensionUri, [
-      "out",
-      "tabulator.min.css"
+      'out',
+      'tabulator.min.css'
     ]);
-    const panelsCSS = getUri(webview, extensionUri, ["out", "panels.css"]);
+    const panelsCSS = getUri(webview, extensionUri, ['out', 'panels.css']);
 
     return `
       <html>
@@ -93,13 +93,12 @@ export class RegisterPanelView implements WebviewViewProvider {
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
         <body>
-        <p>Drag a register between groups to improve traceability and interaction with its values.</p>
+          <div id="registers-table" style="margin-top:1rem;"></div>
           <div class="search-container">
             <div class="search-element">
               <vscode-checkbox id="sort-last-modified">Sort by last modified</vscode-checkbox>
             </div>
           </div>
-          <div id="registers-table" style="margin-top:1rem;"></div>
           <script type="module" nonce="${nonce}" src="${registerswUri}"></script>
         </body>
       </html>`;
