@@ -46,6 +46,18 @@ export function usesRegister(name, instType) {
   };
   return selector[name](instType);
 }
+
+export function usedRegisters(instType) {
+  const select = {
+    R: ["rs1", "rs2", "rd"],
+    I: ["rs1", "rd"],
+    S: ["rs1", "rs2"],
+    B: ["rs1", "rs2"],
+    U: ["rd"],
+    J: ["rd"],
+  };
+  return select[instType];
+}
 /**
  * Tests if an instruction uses fuct3
  * @param {*} instType the instruction type

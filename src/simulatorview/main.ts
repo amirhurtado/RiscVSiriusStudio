@@ -6,8 +6,8 @@ import {
 
 import * as Handlers from './handlers.js';
 import { SimulatorInfo } from './SimulatorInfo.js';
-// import { logger } from '../utilities/logger.js';
-// import { TextEditorRevealType } from 'vscode';
+import { InstructionView } from './InstructionView.js';
+import { usedRegisters } from '../utilities/instructions.js';
 
 provideVSCodeDesignSystem().register(allComponents);
 
@@ -30,26 +30,12 @@ function log(kind: string, object: any = {}) {
   vscode.postMessage({ command: 'log-' + kind, obj: { object } });
 }
 
-// // Global data for the simulator
-// let cpuData = {
-//   updateEvent: new Event('SimulatorUpdate'),
-//   stepButton: {}, // Button to signal new instruction
-//   instruction: {}, // Current instruction
-//   result: {}, // Execution result of the current instruction
-//   cpuElements: {}, // All the cpu elements with the attribute "data-cpuname" set to something.
-//   cpuElemStates: {}, // All the cpu elements with the attribute "data-cpuname" set to something.
-//   simElements: {},
-//   registers: [] as string[],
-//   logger: log,
-//   // Utility function to set the binary text of the simulator
-//   setBinInstruction: (html: string) => {}
-// };
-
 function main() {
   log('info', { simulatorView: 'Initializing simulator events' });
   log('info', { simulatorView: 'Initializing Simulator information' });
   const cpuData = new SimulatorInfo(log);
   cpuData.initializeSVGElements(Handlers);
+  const instView = new InstructionView();
 
   const step = document.getElementById('step-execution') as Button;
   step.addEventListener('click', (e) => {
@@ -60,20 +46,37 @@ function main() {
     });
   });
 
+  const inspect = document.getElementById('inspect-registers') as Button;
+  inspect.addEventListener('click', (e) => {
+    const registers = usedRegisters(cpuData.instructionType()) as string[];
+    registers.forEach((reg) => {
+      const register = cpuData.getInstruction()[reg].regeq;
+      sendMessageToExtension({
+        command: 'event',
+        from: 'simulator',
+        message: 'watchRegister',
+        register: register
+      });
+    });
+  });
+  // Install message dispatcher
   window.addEventListener('message', (event) => {
-    messageDispatch(event, cpuData);
+    messageDispatch(event, cpuData, instView);
   });
 
   installListeners(cpuData);
   log('info', { simulatorView: 'Initialization finished' });
 }
 
-function messageDispatch(event: MessageEvent, cpuData: SimulatorInfo) {
+function messageDispatch(
+  event: MessageEvent,
+  cpuData: SimulatorInfo,
+  instView: InstructionView
+) {
   const message = event.data;
-  // log('info', { msg: message });
   switch (message.operation) {
     case 'setInstruction':
-      setInstruction(message.instruction, message.result, cpuData);
+      setInstruction(message.instruction, message.result, cpuData, instView);
       break;
     case 'updateRegister':
       log('info', 'set register data');
@@ -85,7 +88,12 @@ function messageDispatch(event: MessageEvent, cpuData: SimulatorInfo) {
   }
 }
 
-function setInstruction(instruction: any, result: any, cpuData: SimulatorInfo) {
+function setInstruction(
+  instruction: any,
+  result: any,
+  cpuData: SimulatorInfo,
+  instView: InstructionView
+) {
   cpuData.setInstruction(instruction, result);
 
   cpuData.setBinaryInstruction(
@@ -96,6 +104,10 @@ function setInstruction(instruction: any, result: any, cpuData: SimulatorInfo) {
     `<span class="instruction">${instruction.asm}</span>`
   );
 
+  const inspect = document.getElementById('inspect-registers') as Button;
+  inspect.disabled = false;
+
+  instView.setCurrentType(cpuData.instructionType());
   log('info', { m: 'Execution result', result });
   cpuData.update();
 }
@@ -132,22 +144,6 @@ function setInstruction(instruction: any, result: any, cpuData: SimulatorInfo) {
  * defined. Every element is stored in the cpuElements object inside the cpuData
  * object under the value of the attribute.
  */
-
-// function updateRegister(name: string, value: string) {
-//   const index = parseInt(name.substring(1));
-//   log('info', { m: 'Updating value', name: name, idx: index, val: value });
-//   cpuData.registers[index] = value;
-// }
-
-function resizeSVG(factor: number) {
-  const view = document.body as HTMLElement;
-  const scaleX = view.getBoundingClientRect().width / view.offsetWidth;
-  const scaleY = view.getBoundingClientRect().height / view.offsetHeight;
-
-  const newScale = scaleX * factor * 100;
-  view.style.scale = newScale + '%';
-  // svg.currentScale = svg.currentScale * scale;
-}
 
 function installListeners(cpuData: SimulatorInfo) {
   // Install some listeners

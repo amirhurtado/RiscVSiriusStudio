@@ -82,7 +82,7 @@ export class SimulatorInfo {
     if (state !== undefined) {
       return state;
     } else {
-      throw Error('Missing element');
+      throw Error('Missing element: ' + element);
     }
   }
 
@@ -91,7 +91,7 @@ export class SimulatorInfo {
     if (element !== undefined) {
       initializer(element, this);
     } else {
-      throw Error('Initialization of a missing element');
+      throw Error('Initialization of a missing element: ' + name);
     }
   }
 
@@ -101,7 +101,8 @@ export class SimulatorInfo {
     });
 
     const elements = document.querySelectorAll(
-      '#svg-simulator [data-cpuname]:not(:has([data-cpuname]))'
+      // '#svg-simulator [data-cpuname]:not(:has([data-cpuname]))'
+      '#main-svg [data-cpuname]:not(:has([data-cpuname]))'
     );
 
     elements.forEach((e) => {

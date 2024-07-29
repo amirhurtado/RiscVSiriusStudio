@@ -46,6 +46,7 @@ export class SCCPU {
     // console.log('called current instruction ', this.program[this.pc]);
     return this.program[this.pc];
   }
+
   private computeALURes(A: string, B: string, ALUOp: string): string {
     const numA = parseInt(A, 2);
     const numB = parseInt(B, 2);

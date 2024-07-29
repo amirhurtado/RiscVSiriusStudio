@@ -90,7 +90,7 @@ export class RVSimulationContext {
       operation: 'setRegisterData',
       registers: this.cpu.getRegisterFile().getRegisterData()
     });
-    console.log('Simulation context', 'program initialized', program);
+    // console.log('Simulation context', 'program initialized', program);
   }
 
   private sendToSimulator(message: any) {
@@ -155,6 +155,15 @@ export class RVSimulationContext {
                   result: result
                 });
                 this.cpu?.nextInstruction();
+              }
+              break;
+            case 'watchRegister':
+              {
+                console.log('Watch register ', message.register);
+                this.sendToRegisters({
+                  operation: 'watchRegister',
+                  register: message.register
+                });
               }
               break;
             case 'imMouseenter':

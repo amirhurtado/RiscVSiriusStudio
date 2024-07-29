@@ -1,3 +1,5 @@
+/*eslint camelcase: "error"*/
+
 import _ from "../../node_modules/lodash-es/lodash.js";
 import {
   usesRegister,
@@ -112,6 +114,7 @@ function tooltipEvt(name, cpuData, element, htmlGen, htmlDet) {
  */
 function pathOnTop(element) {
   const realElement = element.parentElement;
+  // const realElement = element;
   realElement.parentElement.appendChild(realElement);
 }
 /**
@@ -274,7 +277,6 @@ export function CU(element, cpuData) {
     () => {
       const { asm } = cpuData.getInstruction();
       return `<span class="tooltipinfo">
-              <h1>Flags for: <b>${asm}</b></h1>
               <dl>
                 <dt>ALUASrc</dt> <dd>COMPUTEME</dd>
                 <dt>ALUBSrc</dt> <dd>COMPUTEME</dd>
@@ -611,8 +613,6 @@ export function ALUA(element, cpuData) {
       ALUAMUXIC0: path0,
       SgnALUASrcPTH: signal,
     },
-    cpuElemStates: { ALUA: state },
-    instruction: instruction,
   } = cpuData.getInfo();
 
   const paths = [path0, path1];
@@ -639,7 +639,7 @@ export function ALUA(element, cpuData) {
   document.addEventListener("SimulatorUpdate", (e) => {
     const instType = cpuData.instructionType();
     instType !== "U" ? cpuData.enable("ALUA") : cpuData.disable("ALUA");
-    if (cpuData.enabled()) {
+    if (cpuData.enabled("ALUA")) {
       applyClass(element, "component");
       applyClass(signal, "signal");
       if (path0Visible(instType)) {
@@ -666,8 +666,6 @@ export function ALUB(element, cpuData) {
       ALUBMUXIC0: path0,
       SgnALUBSrcPTH: signal,
     },
-    cpuElemStates: { ALUB: state },
-    instruction: instruction,
   } = cpuData.getInfo();
 
   applyClass(element, "componentDisabled");

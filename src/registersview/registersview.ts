@@ -86,7 +86,14 @@ function dispatch(event: MessageEvent, table: Tabulator) {
     case 'clearSelection':
       table.deselectRow();
       break;
+    case 'watchRegister':
+      watchRegister(data.register, table);
+      break;
   }
+}
+
+function watchRegister(registerName: string, table: Tabulator) {
+  table.updateData([{ rawName: registerName, watched: true }]);
 }
 
 function selectRegister(register: string, table: Tabulator) {
