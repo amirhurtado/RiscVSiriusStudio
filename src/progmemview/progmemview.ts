@@ -190,6 +190,7 @@ function updateProgram(program: Array<any>, table: Tabulator) {
     tableData.pop();
     i++;
   }
+  table.redraw(true);
 }
 
 function parseInstruction(
@@ -226,9 +227,9 @@ function tableSetup(): Tabulator {
     height: '100%',
     maxHeight: '100%',
     data: tableData,
-    layout: 'fitDataTable',
+    // layout: 'fitDataTable',
     // layout: "fitDataFill",
-    // layout: "fitColumns",
+    layout: 'fitColumns',
     // layout: "fitDataStretch",
     // layout: "fitData",
 
@@ -239,8 +240,9 @@ function tableSetup(): Tabulator {
       {
         title: 'PC',
         field: 'address',
-        minWidth: 50,
-        maxWidth: 80,
+        minWidth: 30,
+        maxWidth: 40,
+
         headerHozAlign: 'center',
         cssClass: 'address-column',
         visible: true,

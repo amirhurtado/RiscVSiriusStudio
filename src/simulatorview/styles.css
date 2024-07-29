@@ -400,9 +400,12 @@ html {
 
 .grid-container {
   /* border: 2px dashed red; */
+  padding-top: 1em;
   display: grid;
   grid-template-columns: minmax(0,1fr);
-  grid-template-rows: auto auto;
+  /* grid-template-rows: 5% 90% 5%; */
+  grid-template-rows: auto auto auto;
+  row-gap: 1em;
 }
 
 .grid-item-1 {
@@ -413,6 +416,11 @@ html {
 .grid-item-2 {
   /* border: 2px dashed peru; */
   grid-row: 2;
+}
+
+.grid-item-3 {
+  border: 2px dashed peru;
+  grid-row: 3;
 }
 
 .toolbar-container {
@@ -460,4 +468,17 @@ html {
     justify-self: right;
     /* border: 1pt solid rgb(255, 94, 0); */
   }
+}
+
+.bottom-container {
+  display: grid;
+  grid-template-columns: fit-content(25%);
+  grid-template-rows: auto;
+}
+
+.bottom-left {
+  border: 1pt solid magenta;
+  grid-column: 1;
+  justify-self: left;
+  /* align-items: center; */
 }

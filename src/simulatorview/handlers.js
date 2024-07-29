@@ -32,7 +32,6 @@ function applyClass(comp, cls) {
 }
 
 function binFormattedDisplay(cpuData, selection) {
-  const { instruction: instruction } = cpuData;
   const formatLists = { R: [1, 1, 5, 5, 5, 3, 5, 7] };
   const selectors = {
     opcode: [7],
@@ -41,14 +40,14 @@ function binFormattedDisplay(cpuData, selection) {
     rs1: [4],
     rs2: [3],
   };
-  const type = instruction.type;
+  const type = cpuData.instructionType();
   let s = [];
   if (selection === "funct7" && type === "R") {
     s.push(1);
   } else {
     s = selectors[selection];
   }
-  return formatInstruction(instruction, formatLists[type], s);
+  return formatInstruction(cpuData.getInstruction(), formatLists[type], s);
 }
 
 function splitInstruction(binInst, specL) {
@@ -82,25 +81,23 @@ function formatInstruction(instruction, type, selected) {
 
 function currentBinInst(cpuData) {
   const {
-    instruction: {
-      encoding: { binEncoding: bin },
-    },
-  } = cpuData;
+    encoding: { binEncoding: bin },
+  } = cpuData.getInstruction();
   return `<span class="instruction">${bin}</span>`;
 }
 
 function tooltipEvt(name, cpuData, element, htmlGen, htmlDet) {
   element.addEventListener("mousemove", (e) => {
-    const state = cpuData.cpuElemStates[name];
-    if (state.enabled) {
+    const state = cpuData.getInfo().cpuElemStates[name];
+    if (cpuData.enabled(name)) {
       const tooltipText = htmlGen();
       const tooltipTextDetail = htmlDet !== undefinedFunc0 ? htmlDet() : null;
       showTooltip(e, tooltipText, tooltipTextDetail);
     }
   });
   element.addEventListener("mouseout", () => {
-    const state = cpuData.cpuElemStates[name];
-    if (state.enabled) {
+    const state = cpuData.getInfo().cpuElemStates[name];
+    if (cpuData.enabled(name)) {
       hideTooltip();
     }
   });
@@ -148,12 +145,12 @@ function mouseHover(element, mmove, mout) {
 export function CLK(element, cpuData) {
   const {
     cpuElemStates: { CLK: state },
-  } = cpuData;
+  } = cpuData.getInfo();
 
   applyClass(element, "component");
   document.addEventListener("SimulatorUpdate", (e) => {
     applyClass(element, "component");
-    state.enabled = true;
+    cpuData.enable("CLK");
   });
 }
 
@@ -161,7 +158,7 @@ export function PC(element, cpuData) {
   const {
     cpuElements: { PCCLOCK: clock },
     cpuElemStates: { PC: state },
-  } = cpuData;
+  } = cpuData.getInfo();
 
   const components = [element, clock];
   components.forEach((e) => {
@@ -172,7 +169,7 @@ export function PC(element, cpuData) {
     cpuData,
     element,
     () => {
-      const inst = cpuData.instruction.inst;
+      const inst = cpuData.getInstruction().inst;
       return `<span class="tooltipinfo">
               <h1>Current address</h1>
               <p>${inst}</p>
@@ -184,7 +181,7 @@ export function PC(element, cpuData) {
     components.forEach((e) => {
       applyClass(e, "component");
     });
-    state.enabled = true;
+    cpuData.enable("PC");
   });
 }
 
@@ -192,14 +189,14 @@ export function ADD4(element, cpuData) {
   const {
     cpuElements: { ADD4WBMUX: add4WBMux },
     cpuElemStates: { ADD4: state },
-  } = cpuData;
+  } = cpuData.getInfo();
 
   applyClass(element, "componentDisabled");
   applyClass(add4WBMux, "connectionDisabled");
 
   document.addEventListener("SimulatorUpdate", (e) => {
     applyClass(element, "component");
-    state.enabled = true;
+    cpuData.enable("ADD4");
     applyClass(add4WBMux, "connectionDisabled");
   });
 }
@@ -208,7 +205,7 @@ export function IM(element, cpuData) {
   const {
     cpuElements: { IMADDRESSTEXT: addressText, IMINSTRUCTIONTEXT: instText },
     cpuElemStates: { IM: state },
-  } = cpuData;
+  } = cpuData.getInfo();
 
   const inputs = [addressText, instText];
   applyClass(element, "componentDisabled");
@@ -220,7 +217,7 @@ export function IM(element, cpuData) {
     cpuData,
     addressText,
     () => {
-      const inst = cpuData.instruction.inst;
+      const inst = cpuData.getInstruction().inst;
       return `<span class="tooltipinfo">
               <h1>Current address</h1>
               <p>${inst}</p>
@@ -234,14 +231,14 @@ export function IM(element, cpuData) {
     cpuData,
     instText,
     () => {
-      const inst = cpuData.instruction.asm;
+      const inst = cpuData.getInstruction().asm;
       return `<span class="tooltipinfo">
               <h1>Current instruction</h1>
               <p>${inst}</p>
               </span>`;
     },
     () => {
-      const { asm, type, pseudo } = cpuData.instruction;
+      const { asm, type, pseudo } = cpuData.getInstruction();
       return `<span class="tooltipinfo">
               <h1>Current instruction</h1>
               <dl>
@@ -257,7 +254,7 @@ export function IM(element, cpuData) {
     inputs.forEach((e) => {
       applyClass(e, "inputText");
     });
-    state.enabled = true;
+    cpuData.enable("IM");
   });
 }
 
@@ -265,7 +262,7 @@ export function CU(element, cpuData) {
   const {
     cpuElements: { CUArrow: arrow },
     cpuElemStates: { CU: state },
-  } = cpuData;
+  } = cpuData.getInfo();
 
   [element, arrow].forEach((e) => {
     applyClass(e, "componentDisabled");
@@ -275,7 +272,7 @@ export function CU(element, cpuData) {
     cpuData,
     arrow,
     () => {
-      const { asm } = cpuData.instruction;
+      const { asm } = cpuData.getInstruction();
       return `<span class="tooltipinfo">
               <h1>Flags for: <b>${asm}</b></h1>
               <dl>
@@ -294,15 +291,15 @@ export function CU(element, cpuData) {
     [element, arrow].forEach((e) => {
       applyClass(e, "component");
     });
-    state.enabled = true;
+    cpuData.enable("CU");
   });
 }
 
 function registerTooltipText(name, type, cpuData) {
-  const { regname, regeq, regenc } = cpuData.instruction[name];
-  const binEnc = cpuData.instruction.encoding[name];
-  const { registers } = cpuData;
-  const value = registers[parseInt(regenc)];
+  const instruction = cpuData.getInstruction();
+  const { regname, regeq, regenc } = instruction[name];
+  const binEnc = instruction.encoding[name];
+  const value = cpuData.getRegisterValue(parseInt(regenc));
   /* TODO: Sometimes value gets undefined. Seems to be a problem with message
    passing. cpuData.logger("info", { m: "registerTooltip", v: value });
   */
@@ -331,9 +328,9 @@ function registerTooltipText(name, type, cpuData) {
 function setRUWr(cpuData) {
   const {
     cpuElements: { SgnRUWRVAL: ruwrSignalValue },
-    result: { RUWr },
-  } = cpuData;
-  ruwrSignalValue.getElementsByTagName("div")[2].innerHTML = RUWr;
+  } = cpuData.getInfo();
+  ruwrSignalValue.getElementsByTagName("div")[2].innerHTML =
+    cpuData.instructionResult().RUWr;
 }
 
 export function RU(element, cpuData) {
@@ -351,7 +348,7 @@ export function RU(element, cpuData) {
       RUTEXTOUTRD2: val2Text,
     },
     cpuElemStates: { RU: state },
-  } = cpuData;
+  } = cpuData.getInfo();
 
   const components = [element, clock];
   const inputs = [rs1Text, rs2Text, rdText, datawrText, ruwrText];
@@ -376,14 +373,14 @@ export function RU(element, cpuData) {
     cpuData,
     rs1Text,
     () => {
-      if (usesRegister("rs1", cpuData.instruction.type)) {
+      if (usesRegister("rs1", cpuData.instructionType())) {
         return registerTooltipText("rs1", "general", cpuData);
       } else {
         return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
       }
     },
     () => {
-      if (usesRegister("rs1", cpuData.instruction.type)) {
+      if (usesRegister("rs1", cpuData.instructionType())) {
         return registerTooltipText("rs1", "detailed", cpuData);
       } else {
         return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
@@ -395,14 +392,14 @@ export function RU(element, cpuData) {
     cpuData,
     rs2Text,
     () => {
-      if (usesRegister("rs2", cpuData.instruction.type)) {
+      if (usesRegister("rs2", cpuData.instructionType())) {
         return registerTooltipText("rs2", "general", cpuData);
       } else {
         return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
       }
     },
     () => {
-      if (usesRegister("rs2", cpuData.instruction.type)) {
+      if (usesRegister("rs2", cpuData.instructionType())) {
         return registerTooltipText("rs2", "detailed", cpuData);
       } else {
         return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
@@ -414,14 +411,14 @@ export function RU(element, cpuData) {
     cpuData,
     rdText,
     () => {
-      if (usesRegister("rd", cpuData.instruction.type)) {
+      if (usesRegister("rd", cpuData.instructionType())) {
         return registerTooltipText("rd", "general", cpuData);
       } else {
         return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
       }
     },
     () => {
-      if (usesRegister("rd", cpuData.instruction.type)) {
+      if (usesRegister("rd", cpuData.instructionType())) {
         return registerTooltipText("rd", "detailed", cpuData);
       } else {
         return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
@@ -433,14 +430,14 @@ export function RU(element, cpuData) {
     cpuData,
     val1Text,
     () => {
-      if (usesRegister("rs1", cpuData.instruction.type)) {
+      if (usesRegister("rs1", cpuData.instructionType())) {
         return registerTooltipText("rs1", "valueGeneral", cpuData);
       } else {
         return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
       }
     },
     () => {
-      if (usesRegister("rs1", cpuData.instruction.type)) {
+      if (usesRegister("rs1", cpuData.instructionType())) {
         return registerTooltipText("rs1", "valueGeneral", cpuData);
       } else {
         return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
@@ -452,14 +449,14 @@ export function RU(element, cpuData) {
     cpuData,
     val2Text,
     () => {
-      if (usesRegister("rs2", cpuData.instruction.type)) {
+      if (usesRegister("rs2", cpuData.instructionType())) {
         return registerTooltipText("rs2", "valueGeneral", cpuData);
       } else {
         return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
       }
     },
     () => {
-      if (usesRegister("rs2", cpuData.instruction.type)) {
+      if (usesRegister("rs2", cpuData.instructionType())) {
         return registerTooltipText("rs2", "valueGeneral", cpuData);
       } else {
         return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
@@ -471,8 +468,8 @@ export function RU(element, cpuData) {
     cpuData,
     datawrText,
     () => {
-      if (writesRU(cpuData.instruction.type)) {
-        const value = cpuData.result.WBMUXRes;
+      if (writesRU(cpuData.instructionType)) {
+        const value = cpuData.instructionResult().WBMUXRes;
         return `<span class="tooltipinfo">
             <ul>
             <li>Value: ${value}</li>
@@ -493,7 +490,7 @@ export function RU(element, cpuData) {
   );
 
   document.addEventListener("SimulatorUpdate", (e) => {
-    const instType = cpuData.instruction.type;
+    const instType = cpuData.instructionType();
     setRUWr(cpuData);
     components.forEach((e) => {
       applyClass(e, "component");
@@ -518,13 +515,13 @@ export function RU(element, cpuData) {
     signals.forEach((e) => {
       applyClass(e, "signal");
     });
-    state.enabled = true;
+    cpuData.enable("RU");
   });
 }
 
 function immTooltipText(type, cpuData) {
-  const instruction = cpuData.instruction;
-  const instType = instruction.type;
+  const instruction = cpuData.getInstruction();
+  const instType = cpuData.instructionType();
   const selectImmBits = {
     I: {
       bits: 12,
@@ -572,7 +569,7 @@ export function IMM(element, cpuData) {
     cpuElements: { SgnIMMSrcPTH: signal, SgnIMMSRCVAL: value },
     cpuElemStates: { IMM: state },
     instruction: instruction,
-  } = cpuData;
+  } = cpuData.getInfo();
 
   applyClass(element, "componentDisabled");
   const signals = [signal, value];
@@ -591,18 +588,18 @@ export function IMM(element, cpuData) {
     }
   );
   document.addEventListener("SimulatorUpdate", (e) => {
-    if (usesIMM(cpuData.instruction.type)) {
+    if (usesIMM(cpuData.instructionType())) {
       applyClass(element, "component");
       signals.forEach((e) => {
         applyClass(e, "signal");
       });
-      state.enabled = true;
+      cpuData.enable("IMM");
     } else {
       applyClass(element, "componentDisabled");
       signals.forEach((e) => {
         applyClass(e, "signalDisabled");
       });
-      state.enabled = false;
+      cpuData.disable("IMM");
     }
   });
 }
@@ -616,7 +613,7 @@ export function ALUA(element, cpuData) {
     },
     cpuElemStates: { ALUA: state },
     instruction: instruction,
-  } = cpuData;
+  } = cpuData.getInfo();
 
   const paths = [path0, path1];
   applyClass(element, "componentDisabled");
@@ -632,7 +629,7 @@ export function ALUA(element, cpuData) {
     cpuData,
     path0,
     () => {
-      const value = cpuData.result.RURS1Val;
+      const value = cpuData.instructionResult().RURS1Val;
       return `<span class="tooltipinfo">
               <p>${value}</p>
               </span>`;
@@ -640,9 +637,9 @@ export function ALUA(element, cpuData) {
     undefinedFunc0
   );
   document.addEventListener("SimulatorUpdate", (e) => {
-    const instType = cpuData.instruction.type;
-    state.enabled = instType !== "U";
-    if (state.enabled) {
+    const instType = cpuData.instructionType();
+    instType !== "U" ? cpuData.enable("ALUA") : cpuData.disable("ALUA");
+    if (cpuData.enabled()) {
       applyClass(element, "component");
       applyClass(signal, "signal");
       if (path0Visible(instType)) {
@@ -671,7 +668,7 @@ export function ALUB(element, cpuData) {
     },
     cpuElemStates: { ALUB: state },
     instruction: instruction,
-  } = cpuData;
+  } = cpuData.getInfo();
 
   applyClass(element, "componentDisabled");
   [path1, path0].forEach((x) => {
@@ -687,7 +684,7 @@ export function ALUB(element, cpuData) {
     cpuData,
     path0,
     () => {
-      const value = cpuData.result.RURS2Val;
+      const value = cpuData.instructionResult().RURS2Val;
       return `<span class="tooltipinfo">
               <p>${value}</p>
               </span>`;
@@ -696,10 +693,10 @@ export function ALUB(element, cpuData) {
   );
   document.addEventListener("SimulatorUpdate", (e) => {
     // Always enabled for all instructions
-    state.enabled = true;
+    cpuData.enable("ALUB");
     applyClass(element, "component");
     applyClass(signal, "signal");
-    const instType = cpuData.instruction.type;
+    const instType = cpuData.instructionType();
     if (path0Visible(instType)) {
       applyClass(path0, "connection muxPath");
       applyClass(path1, "connectionDisabled muxPathDisabled");
@@ -711,7 +708,7 @@ export function ALUB(element, cpuData) {
 }
 
 function aluTooltipText(name, cpuData) {
-  const { A: valA, B: valB, ALURes: valALURes } = cpuData.result;
+  const { A: valA, B: valB, ALURes: valALURes } = cpuData.instructionResult();
   const data = {
     A: `<span class="tooltipinfo">
         <dl>
@@ -735,9 +732,10 @@ function aluTooltipText(name, cpuData) {
 function setALUOp(cpuData) {
   const {
     cpuElements: { SgnALUOPVAL: aluSignalValue },
-    result: { ALUOp },
-  } = cpuData;
-  aluSignalValue.getElementsByTagName("div")[2].innerHTML = ALUOp;
+  } = cpuData.getInfo();
+
+  aluSignalValue.getElementsByTagName("div")[2].innerHTML =
+    cpuData.instructionResult().ALUOp;
 }
 
 export function ALU(element, cpuData) {
@@ -751,7 +749,7 @@ export function ALU(element, cpuData) {
     },
     cpuElemStates: { ALU: state },
     instruction: instruction,
-  } = cpuData;
+  } = cpuData.getInfo();
 
   const inputs = [textA, textB];
   const signals = [aluSignal, aluSignalValue];
@@ -815,9 +813,9 @@ export function ALU(element, cpuData) {
   );
 
   document.addEventListener("SimulatorUpdate", (e) => {
-    cpuData.logger("info", { m: "At ALU", v: cpuData.result });
+    cpuData.log("info", { m: "At ALU", v: cpuData.result });
     // !TODO: Enabled for all components?
-    state.enabled = true;
+    cpuData.enable("ALU");
     applyClass(element, "component");
     inputs.forEach((e) => {
       applyClass(e, "inputText");
@@ -835,7 +833,7 @@ export function BU(element, cpuData) {
     cpuElements: { SgnBUBROPPTH: signal, SgnBUBROPVAL: signalVal },
     cpuElemStates: { BU: state },
     instruction: instruction,
-  } = cpuData;
+  } = cpuData.getInfo();
   const signals = [signal, signalVal];
   applyClass(element, "componentDisabled");
   signals.forEach((e) => {
@@ -844,7 +842,7 @@ export function BU(element, cpuData) {
   document.addEventListener("SimulatorUpdate", (e) => {
     // Branch unit is always enabled as it controls NextPCSrc. When in a branch
     // instruction its inputs coming from the registers will be enabled.
-    state.enabled = true;
+    cpuData.enable("BU");
     applyClass(element, "component");
     signals.forEach((e) => {
       applyClass(e, "signal");
@@ -868,7 +866,7 @@ export function DM(element, cpuData) {
     },
     cpuElemStates: { DM: state },
     instruction: instruction,
-  } = cpuData;
+  } = cpuData.getInfo();
 
   const components = [element, clock];
   const connections = [clkConnection, wbmuxConnection];
@@ -888,10 +886,10 @@ export function DM(element, cpuData) {
     applyClass(e, "connectionDisabled");
   });
   document.addEventListener("SimulatorUpdate", (e) => {
-    const instType = instruction.type;
-    if (instType === "S" || instruction.opcode === "0000011") {
+    const instType = cpuData.instructionType();
+    if (instType === "S" || cpuData.instructionOpcode() === "0000011") {
       // Data memory only available for S and load instructions
-      state.enabled = true;
+      cpuData.enable("DM");
       signals.forEach((e) => {
         applyClass(e, "signal");
       });
@@ -926,7 +924,7 @@ export function BUMUX(element, cpuData) {
     cpuElements: { BUMUXIC1: path1, BUMUXIC0: path0 },
     cpuElemStates: { BUMUX: state },
     instruction: instruction,
-  } = cpuData;
+  } = cpuData.getInfo();
 
   const connections = [path1, path0];
   applyClass(element, "componentDisabled");
@@ -937,10 +935,10 @@ export function BUMUX(element, cpuData) {
     return inst === "J" || inst === "B" || opcode === "1100111";
   };
   document.addEventListener("SimulatorUpdate", (e) => {
-    state.enabled = true;
+    cpuData.enable("BUMUX");
     applyClass(element, "component");
-    const instType = instruction.type;
-    const instOC = instruction.opcode;
+    const instType = cpuData.instructionType();
+    const instOC = cpuData.instructionOpcode();
     if (path1Visible(instType, instOC)) {
       applyClass(path1, "connection muxPath");
       applyClass(path0, "connectionDisabled muxPathDisabled");
@@ -961,7 +959,7 @@ export function WBMUX(element, cpuData) {
     },
     cpuElemStates: { WBMUX: state },
     instruction: instruction,
-  } = cpuData;
+  } = cpuData.getInfo();
 
   applyClass(element, "componentDisabled");
   applyClass(signal, "signalDisabled");
@@ -979,12 +977,15 @@ export function WBMUX(element, cpuData) {
   };
   document.addEventListener("SimulatorUpdate", (e) => {
     // Disabled for B and S
-    const instType = cpuData.instruction.type;
-    state.enabled = instType !== "B" && instType !== "S";
-    if (state.enabled) {
+    const instType = cpuData.instructionType();
+    instType !== "B" && instType !== "S"
+      ? cpuData.enable("WBMUX")
+      : cpuData.disable("WBMUX");
+
+    if (cpuData.enabled("WBMUX")) {
       applyClass(element, "component");
       applyClass(signal, "signal");
-      const instOC = cpuData.instruction.opcode;
+      const instOC = cpuData.instructionOpcode();
       if (path00Visible(instType, instOC)) {
         [path00].forEach((x) => {
           applyClass(x, "connection muxPath");
@@ -1020,12 +1021,12 @@ export function CLKPC(element, cpuData) {
   const {
     cpuElemStates: { CLKPC: state },
     instruction: instruction,
-  } = cpuData;
+  } = cpuData.getInfo();
 
   applyClass(element, "connectionDisabled");
   focus(element);
   document.addEventListener("SimulatorUpdate", (e) => {
-    state.enabled = true;
+    cpuData.enable("CLKPC");
     pathOnTop(element);
     applyClass(element, "connection");
   });
@@ -1034,12 +1035,12 @@ export function CLKPC(element, cpuData) {
 export function CLKRU(element, cpuData) {
   const {
     cpuElemStates: { CLKRU: state },
-  } = cpuData;
+  } = cpuData.getInfo();
 
   applyClass(element, "connectionDisabled");
   focus(element);
   document.addEventListener("SimulatorUpdate", (e) => {
-    state.enabled = true;
+    cpuData.enable("CLKRU");
     pathOnTop(element);
     applyClass(element, "connection");
   });
@@ -1054,7 +1055,7 @@ export function CLKDM(element, cpuData) {
 export function PCIM(element, cpuData) {
   const {
     cpuElemStates: { PCIM: state },
-  } = cpuData;
+  } = cpuData.getInfo();
 
   applyClass(element, "connectionDisabled");
   focus(element);
@@ -1063,7 +1064,7 @@ export function PCIM(element, cpuData) {
     cpuData,
     element,
     () => {
-      const inst = cpuData.instruction.inst;
+      const inst = cpuData.getInstruction().inst;
       return `<span class="tooltipinfo">
               <h1>PC ⇔ IM</h1>
               <p>Instruction: ${inst}</p>
@@ -1072,7 +1073,7 @@ export function PCIM(element, cpuData) {
     undefinedFunc0
   );
   document.addEventListener("SimulatorUpdate", (e) => {
-    state.enabled = true;
+    cpuData.enable("PCIM");
     applyClass(element, "connection");
   });
 }
@@ -1080,7 +1081,7 @@ export function PCIM(element, cpuData) {
 export function PCADD4(element, cpuData) {
   const {
     cpuElemStates: { PCADD4: state },
-  } = cpuData;
+  } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   // focus(element);
   tooltipEvt(
@@ -1088,7 +1089,7 @@ export function PCADD4(element, cpuData) {
     cpuData,
     element,
     () => {
-      const inst = cpuData.instruction.inst;
+      const inst = cpuData.getInstruction().inst;
       return `<span class="tooltipinfo">
               <h1>PC ⇔ ADD4</h1>
               <p>Value: ${inst}</p>
@@ -1098,7 +1099,7 @@ export function PCADD4(element, cpuData) {
   );
   document.addEventListener("SimulatorUpdate", (e) => {
     applyClass(element, "connection");
-    state.enabled = true;
+    cpuData.enable("PCADD4");
   });
 }
 
@@ -1106,17 +1107,17 @@ export function PCALUA(element, cpuData) {
   const {
     cpuElemStates: { PCALUA: state },
     instruction: instruction,
-  } = cpuData;
+  } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
   document.addEventListener("SimulatorUpdate", (e) => {
-    const instType = instruction.type;
+    const instType = cpuData.instructionType();
     if (instType === "J" || instType === "B") {
       applyClass(element, "connection");
-      state.enabled = true;
+      cpuData.enable("PCALUA");
     } else {
       applyClass(element, "connectionDisabled");
-      state.enabled = false;
+      cpuData.disable("PCALUA");
     }
   });
 }
@@ -1138,7 +1139,7 @@ function imCUTooltipText(connection, cpuData) {
     funct3,
     funct7,
     encoding: { funct3: funct3Bin },
-  } = cpuData.instruction;
+  } = cpuData.getInstruction();
 
   const title = _.capitalize(connection);
   const detail = {
@@ -1161,7 +1162,7 @@ export function IMCUOPCODE(element, cpuData) {
   const {
     cpuElemStates: { IMCUOPCODE: state },
     instruction: instruction,
-  } = cpuData;
+  } = cpuData.getInfo();
   focus(element);
   tooltipEvt(
     "IMCUOPCODE",
@@ -1175,20 +1176,20 @@ export function IMCUOPCODE(element, cpuData) {
   mouseHover(
     element,
     () => {
-      if (state.enabled) {
+      if (cpuData.enabled("IMCUOPCODE")) {
         const html = binFormattedDisplay(cpuData, "opcode");
-        cpuData.setBinInstruction(html);
+        cpuData.setBinaryInstruction(html);
       }
     },
     () => {
-      if (state.enabled) {
+      if (cpuData.enabled("IMCUOPCODE")) {
         const html = currentBinInst(cpuData);
-        cpuData.setBinInstruction(html);
+        cpuData.setBinaryInstruction(html);
       }
     }
   );
   document.addEventListener("SimulatorUpdate", (e) => {
-    state.enabled = true;
+    cpuData.enable("IMCUOPCODE");
     pathOnTop(element);
     applyClass(element, "connection");
   });
@@ -1198,7 +1199,7 @@ export function IMCUFUNCT3(element, cpuData) {
   const {
     cpuElemStates: { IMCUFUNCT3: state },
     instruction: instruction,
-  } = cpuData;
+  } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
   tooltipEvt(
@@ -1214,26 +1215,26 @@ export function IMCUFUNCT3(element, cpuData) {
   mouseHover(
     element,
     () => {
-      if (state.enabled) {
+      if (cpuData.enabled("IMCUFUNCT3")) {
         const html = binFormattedDisplay(cpuData, "funct3");
-        cpuData.setBinInstruction(html);
+        cpuData.setBinaryInstruction(html);
       }
     },
     () => {
-      if (state.enabled) {
+      if (cpuData.enabled("IMCUFUNCT3")) {
         const html = currentBinInst(cpuData);
-        cpuData.setBinInstruction(html);
+        cpuData.setBinaryInstruction(html);
       }
     }
   );
   document.addEventListener("SimulatorUpdate", (e) => {
-    if (usesFunct3(cpuData.instruction.type)) {
+    if (usesFunct3(cpuData.instructionType())) {
       applyClass(element, "connection");
       pathOnTop(element);
-      state.enabled = true;
+      cpuData.enable("IMCUFUNCT3");
     } else {
       applyClass(element, "connectionDisabled");
-      state.enabled = false;
+      cpuData.disable("IMCUFUNCT3");
     }
   });
 }
@@ -1242,7 +1243,7 @@ export function IMCUFUNCT7(element, cpuData) {
   const {
     cpuElemStates: { IMCUFUNCT7: state },
     instruction: instruction,
-  } = cpuData;
+  } = cpuData.getInfo();
 
   applyClass(element, "connectionDisabled");
   focus(element);
@@ -1258,27 +1259,27 @@ export function IMCUFUNCT7(element, cpuData) {
   mouseHover(
     element,
     () => {
-      if (state.enabled) {
+      if (cpuData.enabled("IMCUFUNCT7")) {
         const html = binFormattedDisplay(cpuData, "funct7");
-        cpuData.setBinInstruction(html);
+        cpuData.setBinaryInstruction(html);
       }
     },
     () => {
-      if (state.enabled) {
+      if (cpuData.enable("IMCUFUNCT7")) {
         const html = currentBinInst(cpuData);
-        cpuData.setBinInstruction(html);
+        cpuData.setBinaryInstruction(html);
       }
     }
   );
   document.addEventListener("SimulatorUpdate", (e) => {
-    const instType = cpuData.instruction.type;
+    const instType = cpuData.instructionType();
     if (usesFunct7(instType)) {
       applyClass(element, "connection");
       pathOnTop(element);
-      state.enabled = true;
+      cpuData.enable("IMCUFUNCT7");
     } else {
       applyClass(element, "connectionDisabled");
-      state.enabled = false;
+      cpuData.disable("IMCUFUNCT7");
     }
   });
 }
@@ -1294,8 +1295,8 @@ export function IMCUFUNCT7(element, cpuData) {
  * @param {any} cpuData simulator information.
  */
 function imRUTooltipText(connection, cpuData) {
-  const value10 = cpuData.instruction[connection].regenc;
-  const value2 = cpuData.instruction.encoding[connection];
+  const value10 = cpuData.getInstruction()[connection].regenc;
+  const value2 = cpuData.getInstruction().encoding[connection];
 
   const title = _.capitalize(connection);
   const detail = `<dt>Value(2)</dt> <dd>${value2}</dd>
@@ -1312,8 +1313,7 @@ function imRUTooltipText(connection, cpuData) {
 export function IMRURS1(element, cpuData) {
   const {
     cpuElemStates: { IMRURS1: state },
-    instruction: instruction,
-  } = cpuData;
+  } = cpuData.getInfo();
 
   applyClass(element, "connectionDisabled");
   focus(element);
@@ -1329,26 +1329,26 @@ export function IMRURS1(element, cpuData) {
   mouseHover(
     element,
     () => {
-      if (state.enabled) {
+      if (cpuData.enabled("IMRURS1")) {
         const html = binFormattedDisplay(cpuData, "rs1");
-        cpuData.setBinInstruction(html);
+        cpuData.setBinaryInstruction(html);
       }
     },
     () => {
-      if (state.enabled) {
+      if (cpuData.enabled("IMRURS1")) {
         const html = currentBinInst(cpuData);
-        cpuData.setBinInstruction(html);
+        cpuData.setBinaryInstruction(html);
       }
     }
   );
   document.addEventListener("SimulatorUpdate", (e) => {
-    if (usesRegister("rs1", cpuData.instruction.type)) {
+    if (usesRegister("rs1", cpuData.instructionType())) {
       applyClass(element, "connection");
       pathOnTop(element);
-      state.enabled = true;
+      cpuData.enable("IMRURS1");
     } else {
       applyClass(element, "connectionDisabled");
-      state.enabled = false;
+      cpuData.disable("IMRURS1");
     }
   });
 }
@@ -1356,8 +1356,7 @@ export function IMRURS1(element, cpuData) {
 export function IMRURS2(element, cpuData) {
   const {
     cpuElemStates: { IMRURS2: state },
-    instruction: instruction,
-  } = cpuData;
+  } = cpuData.getInfo();
 
   applyClass(element, "connectionDisabled");
   focus(element);
@@ -1373,26 +1372,26 @@ export function IMRURS2(element, cpuData) {
   mouseHover(
     element,
     () => {
-      if (state.enabled) {
+      if (cpuData.enabled("IMRURS2")) {
         const html = binFormattedDisplay(cpuData, "rs2");
-        cpuData.setBinInstruction(html);
+        cpuData.setBinaryInstruction(html);
       }
     },
     () => {
-      if (state.enabled) {
+      if (cpuData.enabled("IMRURS2")) {
         const html = currentBinInst(cpuData);
-        cpuData.setBinInstruction(html);
+        cpuData.setBinaryInstruction(html);
       }
     }
   );
   document.addEventListener("SimulatorUpdate", (e) => {
-    if (usesRegister("rs2", cpuData.instruction.type)) {
+    if (usesRegister("rs2", cpuData.instructionType())) {
       applyClass(element, "connection");
       pathOnTop(element);
-      state.enabled = true;
+      cpuData.enable("IMRURS2");
     } else {
       applyClass(element, "connectionDisabled");
-      state.enabled = false;
+      cpuData.disable("IMRURS2");
     }
   });
 }
@@ -1400,8 +1399,7 @@ export function IMRURS2(element, cpuData) {
 export function IMRURDEST(element, cpuData) {
   const {
     cpuElemStates: { IMRURDEST: state },
-    instruction: instruction,
-  } = cpuData;
+  } = cpuData.getInfo();
 
   applyClass(element, "connectionDisabled");
   focus(element);
@@ -1417,39 +1415,38 @@ export function IMRURDEST(element, cpuData) {
   mouseHover(
     element,
     () => {
-      if (state.enabled) {
+      if (cpuData.enabled("IMRURDEST")) {
         const html = binFormattedDisplay(cpuData, "rd");
-        cpuData.setBinInstruction(html);
+        cpuData.setBinaryInstruction(html);
       }
     },
     () => {
-      if (state.enabled) {
+      if (cpuData.enabled("IMRURDEST")) {
         const html = currentBinInst(cpuData);
-        cpuData.setBinInstruction(html);
+        cpuData.setBinaryInstruction(html);
       }
     }
   );
   document.addEventListener("SimulatorUpdate", (e) => {
     applyClass(element, "connection");
     pathOnTop(element);
-    state.enabled = true;
+    cpuData.enable("IMRURDEST");
   });
 }
 
 export function IMIMM(element, cpuData) {
   const {
     cpuElemStates: { IMIMM: state },
-    instruction: instruction,
-  } = cpuData;
+  } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
   document.addEventListener("SimulatorUpdate", (e) => {
-    if (usesIMM(cpuData.instrcution.type)) {
+    if (usesIMM(cpuData.instructionType())) {
       applyClass(element, "connection");
-      state.enabled = true;
+      cpuData.enable("IMIMM");
     } else {
       applyClass(element, "connectionDisabled");
-      state.enabled = false;
+      cpuData.disable("IMIMM");
     }
   });
 }
@@ -1457,7 +1454,7 @@ export function IMIMM(element, cpuData) {
 export function WBMUXRU(element, cpuData) {
   const {
     cpuElemStates: { WBMUXRU: state },
-  } = cpuData;
+  } = cpuData.getInfo();
 
   applyClass(element, "connectionDisabled");
   focus(element);
@@ -1467,8 +1464,8 @@ export function WBMUXRU(element, cpuData) {
     element,
     () => {
       switch (true) {
-        case writesRU(cpuData.instruction.type): {
-          const value = cpuData.result.ALURes;
+        case writesRU(cpuData.instructionType()): {
+          const value = cpuData.instructionResult().ALURes;
           return `<span class="tooltipinfo">
                   <p>${value}</p>
                   </span>`;
@@ -1480,12 +1477,12 @@ export function WBMUXRU(element, cpuData) {
     undefinedFunc0
   );
   document.addEventListener("SimulatorUpdate", (e) => {
-    if (writesRU(cpuData.instruction.type)) {
+    if (writesRU(cpuData.instructionType())) {
       applyClass(element, "connection");
-      state.enabled = true;
+      cpuData.enable("WBMUXRU");
     } else {
       applyClass(element, "connectionDisabled");
-      state.enabled = false;
+      cpuData.disable("WBMUXRU");
     }
   });
 }
@@ -1494,16 +1491,16 @@ export function IMMALUB(element, cpuData) {
   const {
     cpuElemStates: { IMMALUB: state },
     instruction: instruction,
-  } = cpuData;
+  } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
   document.addEventListener("SimulatorUpdate", (e) => {
-    if (usesIMM(cpuData.instruction.type)) {
+    if (usesIMM(cpuData.instructionType())) {
       applyClass(element, "connection");
-      state.enabled = true;
+      cpuData.enable("IMMALUB");
     } else {
       applyClass(element, "connectionDisabled");
-      state.enabled = false;
+      cpuData.disable("IMMALUB");
     }
   });
 }
@@ -1511,7 +1508,7 @@ export function IMMALUB(element, cpuData) {
 export function RUALUA(element, cpuData) {
   const {
     cpuElemStates: { RUALUA: state },
-  } = cpuData;
+  } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
   tooltipEvt(
@@ -1519,7 +1516,7 @@ export function RUALUA(element, cpuData) {
     cpuData,
     element,
     () => {
-      const value = cpuData.result.RURS1Val;
+      const value = cpuData.instructionResult().RURS1Val;
       return `<span class="tooltipinfo">
               <p>${value}</p>
               </span>`;
@@ -1527,15 +1524,15 @@ export function RUALUA(element, cpuData) {
     undefinedFunc0
   );
   document.addEventListener("SimulatorUpdate", (e) => {
-    const instType = cpuData.instruction.type;
+    const instType = cpuData.instructionType();
     // if (instType !== "J" && instType !== "B") {
     if (usesRegister("rs1", instType)) {
-      state.enabled = true;
+      cpuData.enable("RUALUA");
       pathOnTop(element);
       applyClass(element, "connection");
     } else {
       applyClass(element, "connectionDisabled");
-      state.enabled = false;
+      cpuData.disable("RUALUA");
     }
   });
 }
@@ -1544,7 +1541,7 @@ export function RUALUB(element, cpuData) {
   const {
     cpuElemStates: { RUALUB: state },
     instruction: instruction,
-  } = cpuData;
+  } = cpuData.getInfo();
 
   applyClass(element, "connectionDisabled");
   focus(element);
@@ -1553,7 +1550,7 @@ export function RUALUB(element, cpuData) {
     cpuData,
     element,
     () => {
-      const value = cpuData.result.RURS2Val;
+      const value = cpuData.instructionResult().RURS2Val;
       return `<span class="tooltipinfo">
               <p>${value}</p>
               </span>`;
@@ -1561,14 +1558,14 @@ export function RUALUB(element, cpuData) {
     undefinedFunc0
   );
   document.addEventListener("SimulatorUpdate", (e) => {
-    const instType = cpuData.instruction.type;
+    const instType = cpuData.instructionType();
     if (usesRegister("rs2", instType)) {
-      state.enabled = true;
+      cpuData.enable("RUALUB");
       pathOnTop(element);
       applyClass(element, "connection");
     } else {
       applyClass(element, "connectionDisabled");
-      state.enabled = false;
+      cpuData.disable("RUALUB");
     }
   });
 }
@@ -1577,18 +1574,18 @@ export function RUDM(element, cpuData) {
   const {
     cpuElemStates: { RUDM: state },
     instruction: instruction,
-  } = cpuData;
+  } = cpuData.getInfo();
 
   applyClass(element, "connectionDisabled");
   focus(element);
   document.addEventListener("SimulatorUpdate", (e) => {
-    const instType = instruction.type;
+    const instType = cpuData.instructionType();
     if (instType === "S") {
       applyClass(element, "connection");
-      state.enabled = true;
+      cpuData.enable("RUDM");
     } else {
       applyClass(element, "connectionDisabled");
-      state.enabled = false;
+      cpuData.disable("RUDM");
     }
   });
 }
@@ -1597,20 +1594,18 @@ export function RURS1BU(element, cpuData) {
   const {
     cpuElemStates: { RURS1BU: state },
     instruction: instruction,
-
-    logger: log,
-  } = cpuData;
-  log("error", "RURS1BU handler");
+  } = cpuData.getInfo();
+  cpuData.log("error", "RURS1BU handler");
   applyClass(element, "connectionDisabled");
   focus(element);
   document.addEventListener("SimulatorUpdate", (e) => {
-    const instType = instruction.type;
+    const instType = cpuData.instructionType();
     if (instType === "B") {
-      state.enabled = true;
+      cpuData.enable("RURS1BU");
       applyClass(element, "connection");
     } else {
       applyClass(element, "connectionDisabled");
-      state.enabled = false;
+      cpuData.disable("RURS1BU");
     }
   });
 }
@@ -1619,17 +1614,17 @@ export function RURS2BU(element, cpuData) {
   const {
     cpuElemStates: { RURS2BU: state },
     instruction: instruction,
-  } = cpuData;
+  } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
   document.addEventListener("SimulatorUpdate", (e) => {
-    const instType = instruction.type;
+    const instType = cpuData.instructionType();
     if (instType === "B") {
-      state.enabled = true;
+      cpuData.enable("RURS2BU");
       applyClass(element, "connection");
     } else {
       applyClass(element, "connectionDisabled");
-      state.enabled = false;
+      cpuData.disable("RURS2BU");
     }
   });
 }
@@ -1637,7 +1632,7 @@ export function RURS2BU(element, cpuData) {
 export function ALUAALU(element, cpuData) {
   const {
     cpuElemStates: { ALUAALU: state },
-  } = cpuData;
+  } = cpuData.getInfo();
 
   applyClass(element, "connectionDisabled");
   focus(element);
@@ -1646,7 +1641,7 @@ export function ALUAALU(element, cpuData) {
     cpuData,
     element,
     () => {
-      const value = cpuData.result.ALUARes;
+      const value = cpuData.instructionResult().ALUARes;
       return `<span class="tooltipinfo">
               <p>${value}</p>
               </span>`;
@@ -1654,7 +1649,7 @@ export function ALUAALU(element, cpuData) {
     undefinedFunc0
   );
   document.addEventListener("SimulatorUpdate", (e) => {
-    state.enabled = true;
+    cpuData.enable("ALUAALU");
     applyClass(element, "connection");
   });
 }
@@ -1662,7 +1657,7 @@ export function ALUAALU(element, cpuData) {
 export function ALUBALU(element, cpuData) {
   const {
     cpuElemStates: { ALUBALU: state },
-  } = cpuData;
+  } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
   tooltipEvt(
@@ -1670,7 +1665,7 @@ export function ALUBALU(element, cpuData) {
     cpuData,
     element,
     () => {
-      const value = cpuData.result.ALUBRes;
+      const value = cpuData.instructionResult().ALUBRes;
       return `<span class="tooltipinfo">
               <p>${value}</p>
               </span>`;
@@ -1678,7 +1673,7 @@ export function ALUBALU(element, cpuData) {
     undefinedFunc0
   );
   document.addEventListener("SimulatorUpdate", (e) => {
-    state.enabled = true;
+    cpuData.enable("ALUBALU");
     applyClass(element, "connection");
   });
 }
@@ -1687,17 +1682,17 @@ export function ALUDM(element, cpuData) {
   const {
     cpuElemStates: { ALUDM: state },
     instruction: instruction,
-  } = cpuData;
+  } = cpuData.getInfo();
 
   applyClass(element, "connectionDisabled");
   focus(element);
   document.addEventListener("SimulatorUpdate", (e) => {
-    const instType = instruction.type;
-    if (instType === "S" || instruction.opcode === "0000011") {
-      state.enabled = true;
+    const instType = cpuData.instructionType();
+    if (instType === "S" || cpuData.instructionOpcode() === "0000011") {
+      cpuData.enable("ALUDM");
       applyClass(element, "connection");
     } else {
-      state.enabled = false;
+      cpuData.disable("ALUDM");
       applyClass(element, "connectionDisabled");
     }
   });
@@ -1707,7 +1702,7 @@ export function ALUWBMUX(element, cpuData) {
   const {
     cpuElemStates: { ALUWBMUX: state },
     instruction: instruction,
-  } = cpuData;
+  } = cpuData.getInfo();
 
   applyClass(element, "connectionDisabled");
   focus(element);
@@ -1716,7 +1711,7 @@ export function ALUWBMUX(element, cpuData) {
     cpuData,
     element,
     () => {
-      const value = cpuData.result.ALURes;
+      const value = cpuData.instructionResult().ALURes;
       return `<span class="tooltipinfo">
                 <p>${value}</p>
               </span>`;
@@ -1724,12 +1719,12 @@ export function ALUWBMUX(element, cpuData) {
     undefinedFunc0
   );
   document.addEventListener("SimulatorUpdate", (e) => {
-    if (usesALU(cpuData.instruction.type)) {
+    if (usesALU(cpuData.instructionType())) {
       applyClass(element, "connection");
-      state.enabled = true;
+      cpuData.enable("ALUWBMUX");
     } else {
       applyClass(element, "connectionDisabled");
-      state.enabled = false;
+      cpuData.disable("ALUWBMUX");
     }
   });
 }
@@ -1738,13 +1733,13 @@ export function DMWBMUX(element, cpuData) {
   const {
     cpuElemStates: { DMWBMUX: state },
     instruction: instruction,
-  } = cpuData;
+  } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
   document.addEventListener("SimulatorUpdate", (e) => {
     // ! TODO DMWBMUX always enabled
     applyClass(element, "connection");
-    state.enabled = true;
+    cpuData.enable("DMWBMUX");
   });
 }
 
@@ -1752,11 +1747,11 @@ export function ADD4WBMUX(element, cpuData) {
   const {
     cpuElemStates: { ADD4WBMUX: state },
     instruction: instruction,
-  } = cpuData;
+  } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
   document.addEventListener("SimulatorUpdate", (e) => {
-    state.enabled = true;
+    cpuData.enable("ADD4WBMUX");
   });
 }
 
@@ -1764,12 +1759,12 @@ export function BUBUMUX(element, cpuData) {
   const {
     cpuElemStates: { BUBUMUX: state },
     instruction: instruction,
-  } = cpuData;
+  } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
   document.addEventListener("SimulatorUpdate", (e) => {
     applyClass(element, "connection");
-    state.enabled = true;
+    cpuData.enable("BUBUMUX");
   });
 }
 
@@ -1777,19 +1772,19 @@ export function ALUBUMUX(element, cpuData) {
   const {
     cpuElemStates: { ALUBUMUX: state },
     instruction: instruction,
-  } = cpuData;
+  } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
   document.addEventListener("SimulatorUpdate", (e) => {
     // ALUBUMUX enabled on S and ILoad instructions
-    const instType = instruction.type;
-    const instOC = instruction.opcode;
+    const instType = cpuData.instructionType();
+    const instOC = cpuData.instructionOpcode();
     if (instType === "S" || instOC === "0000011") {
       applyClass(element, "connection");
-      state.enabled = true;
+      cpuData.enable("ALUBUMUX");
     } else {
       applyClass(element, "connectionDisabled");
-      state.enabled = false;
+      cpuData.disable("ALUBUMUX");
     }
   });
 }
@@ -1798,7 +1793,7 @@ export function ADD4BUMUX(element, cpuData) {
   const {
     cpuElemStates: { ADD4BUMUX: state },
     instruction: instruction,
-  } = cpuData;
+  } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
   tooltipEvt(
@@ -1806,7 +1801,7 @@ export function ADD4BUMUX(element, cpuData) {
     cpuData,
     element,
     () => {
-      const value = cpuData.result.ADD4Res;
+      const value = cpuData.instructionResult().ADD4Res;
       return `<span class="tooltipinfo">
               <h1>ADD4 ⇔ BUMUX</h1>
               <p>Value: ${value}</p>
@@ -1817,7 +1812,7 @@ export function ADD4BUMUX(element, cpuData) {
   document.addEventListener("SimulatorUpdate", (e) => {
     applyClass(element, "connection");
     pathOnTop(element);
-    state.enabled = true;
+    cpuData.enable("ADD4BUMUX");
   });
 }
 
@@ -1825,11 +1820,11 @@ export function BUMUXPC(element, cpuData) {
   const {
     cpuElemStates: { BUMUXPC: state },
     instruction: instruction,
-  } = cpuData;
+  } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
   document.addEventListener("SimulatorUpdate", (e) => {
-    state.enabled = true;
+    cpuData.enable("BUMUXPC");
     applyClass(element, "connection");
   });
 }
@@ -1838,20 +1833,20 @@ export function ADD4CT(element, cpuData) {
   const {
     cpuElemStates: { ADD4CT: state },
     instruction: instruction,
-  } = cpuData;
+  } = cpuData.getInfo();
 
   applyClass(element, "connectionDisabled");
   focus(element);
   document.addEventListener("SimulatorUpdate", (e) => {
-    state.enabled = true;
+    cpuData.enable("ADD4CT");
     applyClass(element, "connection");
   });
 }
 // !LOG
-// function setBinInstruction(cpuData, html) {
+// function setBinaryInstruction(cpuData, html) {
 //   const {
 //     cpuElements: { LOGTEXTBIN: text },
-//   } = cpuData;
+//   } = cpuData.getInfo();
 //   const binText = text.getElementsByTagName("div")[2];
 //   binText.innerHTML = html;
 // }
@@ -1859,7 +1854,7 @@ export function ADD4CT(element, cpuData) {
 function setImmInstruction(cpuData, html) {
   const {
     cpuElements: { LOGTEXTIMM: text },
-  } = cpuData;
+  } = cpuData.getInfo();
   const immText = text.getElementsByTagName("div")[2];
   immText.innerHTML = html;
 }
@@ -1867,7 +1862,7 @@ function setImmInstruction(cpuData, html) {
 function setHexInstruction(cpuData, html) {
   const {
     cpuElements: { LOGTEXTHEX: text },
-  } = cpuData;
+  } = cpuData.getInfo();
 
   const hexText = text.getElementsByTagName("div")[2];
   hexText.innerHTML = html;
@@ -1877,7 +1872,7 @@ export function LOGTEXTIMM(element, cpuData) {
   const {
     cpuElements: { LOGTEXTBIN: text },
     instruction: instruction,
-  } = cpuData;
+  } = cpuData.getInfo();
 
   setImmInstruction(cpuData, "--no immediate for instruction--");
   applyClass(element, "instructionDisabled");
@@ -1890,7 +1885,7 @@ function LOGTEXTHEX(element, cpuData) {
   const {
     cpuElements: { LOGTEXTBIN: text },
     instruction: instruction,
-  } = cpuData;
+  } = cpuData.getInfo();
 
   setHexInstruction(cpuData, "--no hex --");
   applyClass(element, "instructionDisabled");
@@ -1899,51 +1894,4 @@ function LOGTEXTHEX(element, cpuData) {
     setHexInstruction(cpuData, hex);
     applyClass(element, "instruction");
   });
-}
-
-function displayType(instruction, element, expected, e) {
-  const actual = instruction.type;
-  if (expected === actual) {
-    applyClass(element, "instTypeHigh");
-  } else {
-    applyClass(element, "instType");
-  }
-}
-
-const checkInstruction = _.curry(displayType);
-
-export function LOGTYPER(element, cpuData) {
-  const { instruction: instruction, stepButton: step } = cpuData;
-  applyClass(element, "instType");
-  step.addEventListener("click", checkInstruction(instruction, element, "R"));
-}
-
-export function LOGTYPEI(element, cpuData) {
-  const { instruction: instruction, stepButton: step } = cpuData;
-  applyClass(element, "instType");
-  step.addEventListener("click", checkInstruction(instruction, element, "I"));
-}
-
-export function LOGTYPES(element, cpuData) {
-  const { instruction: instruction, stepButton: step } = cpuData;
-  applyClass(element, "instType");
-  step.addEventListener("click", checkInstruction(instruction, element, "S"));
-}
-
-export function LOGTYPEB(element, cpuData) {
-  const { instruction: instruction, stepButton: step } = cpuData;
-  applyClass(element, "instType");
-  step.addEventListener("click", checkInstruction(instruction, element, "B"));
-}
-
-export function LOGTYPEU(element, cpuData) {
-  const { instruction: instruction, stepButton: step } = cpuData;
-  applyClass(element, "instType");
-  step.addEventListener("click", checkInstruction(instruction, element, "U"));
-}
-
-export function LOGTYPEJ(element, cpuData) {
-  const { instruction: instruction, stepButton: step } = cpuData;
-  applyClass(element, "instType");
-  step.addEventListener("click", checkInstruction(instruction, element, "J"));
 }

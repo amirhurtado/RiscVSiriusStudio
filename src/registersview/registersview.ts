@@ -185,7 +185,7 @@ function tableSetup(): Tabulator {
       { title: 'Watched', field: 'watched', visible: false },
       { title: 'Modified', field: 'modified', visible: false },
       { title: 'id', field: 'id', visible: false },
-      { title: 'rawName', field: 'rawName', visible: true }
+      { title: 'rawName', field: 'rawName', visible: false }
     ]
   });
 

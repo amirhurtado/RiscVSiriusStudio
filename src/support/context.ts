@@ -154,6 +154,7 @@ export class RVSimulationContext {
                   instruction: instruction,
                   result: result
                 });
+                this.cpu?.nextInstruction();
               }
               break;
             case 'imMouseenter':
