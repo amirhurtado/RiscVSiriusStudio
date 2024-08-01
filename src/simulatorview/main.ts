@@ -3,6 +3,14 @@ import {
   Button,
   allComponents
 } from '@vscode/webview-ui-toolkit';
+import {
+  computePosition,
+  flip,
+  shift,
+  offset,
+  arrow,
+  Placement
+} from '@floating-ui/dom';
 
 import * as Handlers from './handlers.js';
 import { SimulatorInfo } from './SimulatorInfo.js';
@@ -32,6 +40,7 @@ function log(kind: string, object: any = {}) {
 
 function main() {
   log('info', { simulatorView: 'Initializing simulator events' });
+  // document.body.classList.add('p-3 m-0 border-0');
   log('info', { simulatorView: 'Initializing Simulator information' });
   const cpuData = new SimulatorInfo(log);
   cpuData.initializeSVGElements(Handlers);
@@ -59,6 +68,7 @@ function main() {
       });
     });
   });
+
   // Install message dispatcher
   window.addEventListener('message', (event) => {
     messageDispatch(event, cpuData, instView);
@@ -112,6 +122,62 @@ function setInstruction(
   cpuData.update();
 }
 
+/**
+ *
+ * @param element to install the tooltip on
+ * @param text function to compute the tooltip text
+ */
+function setTooltip(
+  element: Element,
+  place: Placement,
+  text: string | Function
+) {
+  const tooltip = document.getElementById('tooltip') as HTMLElement;
+  function update() {
+    // const arrowElement = document.getElementById('arrow') as HTMLElement;
+    // element.style.border = '2pt dashed red';
+
+    /**
+     * If the element has a g tag then it is probably an svg element from
+     * draw.io. In that case we go deep in the hierarchy to position the tooltip
+     * properly.
+     */
+    if (element.tagName === 'g') {
+      // could be an svg element from draw.io
+      const elems = element.getElementsByTagName('rect');
+      if (elems.length > 0) {
+        element = elems[0];
+      }
+    }
+    computePosition(element, tooltip, {
+      placement: place,
+      // middleware: [arrow({ element: arrowElement })]
+      middleware: [flip(), shift({ padding: 5 })]
+    }).then(({ x, y, placement, middlewareData }) => {
+      Object.assign(tooltip.style, { left: `${x}px`, top: `${y}px` });
+    });
+    tooltip.innerHTML = typeof text === 'string' ? text : text();
+  }
+
+  function showTooltip() {
+    tooltip.style.display = 'block';
+    update();
+  }
+  function hideTooltip() {
+    tooltip.style.display = '';
+    element.style.border = 'none';
+  }
+
+  const events: [keyof HTMLElementEventMap, () => void][] = [
+    ['mouseenter', showTooltip],
+    ['mouseleave', hideTooltip],
+    ['focus', showTooltip],
+    ['blur', hideTooltip]
+  ];
+  events.forEach(([event, listener]) => {
+    element.addEventListener(event, listener);
+  });
+}
 /**
  * Simulator initialization.
  *

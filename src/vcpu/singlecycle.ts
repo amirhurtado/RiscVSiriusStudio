@@ -79,7 +79,8 @@ export class SCCPU {
       RURS1Val: 42,
       RURS2Val: 42,
       ALUARes: 42,
-      ALUBRes: 43
+      ALUBRes: 43,
+      IMM32: 57
     };
   }
 

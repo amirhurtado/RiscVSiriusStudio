@@ -1,3 +1,6 @@
+import { computePosition, flip, shift, Placement } from '@floating-ui/dom';
+import * as bootstrap from 'bootstrap';
+
 export class SimulatorInfo {
   /**
    * Event dispatched to update the state of the graphical elements.
@@ -24,6 +27,7 @@ export class SimulatorInfo {
    */
   private result: any | undefined;
 
+  private tooltip: HTMLElement;
   private logger: Function;
 
   public constructor(log: Function) {
@@ -41,9 +45,88 @@ export class SimulatorInfo {
     this.instruction = undefined;
     this.result = undefined;
 
+    this.tooltip = document.getElementById('tooltip') as HTMLElement;
+
     this.log('info', 'SimulatorInfo constructor finished');
   }
 
+  public installTooltip(
+    element: Element,
+    place: Placement,
+    text: string | Function,
+    dependsOn?: string
+  ) {
+    const tooltip = this.tooltip;
+    const logger = this.logger;
+    const cpuData = this;
+
+    function update(evt: Event) {
+      logger('info', { m: 'Update function called' });
+      /**
+       * If the element has a g tag then it is probably an svg element from
+       * draw.io. In that case we go deep in the hierarchy to position the tooltip
+       * properly.
+       */
+      if (element.tagName === 'g') {
+        // could be an svg element from draw.io
+
+        const elements = element.getElementsByTagName('rect');
+        if (elements.length > 0) {
+          element = elements[0];
+        } else {
+          logger('info', { m: 'inside a group without rect' });
+          const elements = element.querySelectorAll(
+            '#main-svg div:not(:has(div))'
+          );
+          if (elements.length > 0) {
+            element = elements[0];
+          }
+        }
+      }
+      computePosition(element, tooltip, {
+        placement: place,
+        // middleware: [arrow({ element: arrowElement })]
+        middleware: [flip(), shift({ padding: 5 })]
+      }).then(({ x, y, placement, middlewareData }) => {
+        Object.assign(tooltip.style, { left: `${x}px`, top: `${y}px` });
+      });
+
+      tooltip.innerHTML = typeof text === 'string' ? text : text();
+
+      // if (typeof dependsOn !== 'undefined') {
+      //   if (cpuData.enabled(dependsOn)) {
+      //   }
+      // } else {
+      //   tooltip.innerHTML = 'element disabled';
+      // }
+    }
+
+    function showTooltip(evt: Event) {
+      if (evt instanceof MouseEvent && (evt as MouseEvent).altKey) {
+        return;
+      }
+      if (typeof dependsOn !== 'undefined' && !cpuData.enabled(dependsOn)) {
+        logger('info', { m: 'tooltip depends on', k: dependsOn });
+        return;
+      }
+      update(evt);
+      tooltip.style.display = 'block';
+    }
+
+    function hideTooltip() {
+      tooltip.style.display = '';
+    }
+
+    const events: [keyof HTMLElementEventMap, (e: Event) => void][] = [
+      ['mouseenter', showTooltip],
+      ['mouseleave', hideTooltip],
+      ['focus', showTooltip],
+      ['blur', hideTooltip]
+    ];
+    events.forEach(([event, listener]) => {
+      element.addEventListener(event, listener);
+    });
+  }
   public setInstruction(instruction: any, result: any) {
     this.instruction = instruction;
     this.result = result;

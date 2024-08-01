@@ -11,22 +11,43 @@ import {
   usesRs2,
 } from "../utilities/instructions.js";
 
+import { computePosition, flip, shift, offset } from "@floating-ui/dom";
+
+var paragraph = _.template(
+  '<span class="m-0 p-0 lh-1"><p class="m-0 p-0 lh-1"><%- text %></p></span>'
+);
+
+var tabular = _.template(
+  '<% print(`<span class="container bg-primary m-0 p-0 border-primary lh-1">\n`); print(`<table class="table table-sm table-borderless p-0 m-0 lh-1">\n<tbody>`); _.forEach(pairs, function([label, value]) {  %>\t<tr><th scope="row"><%- label %></th><td><%- value %></td></tr>\n<%}); print(`</tbody></table></span>`); %>'
+);
+
+// style = "border: 1pt dashed black !important;";
+const preamble = 'class="container bg-primary p-0 border-primary " ';
+
 function undefinedFunc0() {}
 
-const showTooltip = (evt, text, etext) => {
+const showTooltip = (evt, element, text, extendedText) => {
+  // If alt key is pressed then don't show up.
   if (evt.altKey) {
     return;
   }
   let tooltip = document.getElementById("tooltip");
-  tooltip.innerHTML = evt.shiftKey && etext ? etext : text;
-  tooltip.style.display = "inline-block";
-  tooltip.style.left = evt.pageX + 10 + "px";
-  tooltip.style.top = evt.pageY + 10 + "px";
+  computePosition(element, tooltip, {
+    placement: "right",
+    // middleware: [offset(6), flip(), shift({ padding: 5 })],
+  }).then(({ x, y }) => {
+    Object.assign(tooltip.style, { left: `${x}px`, top: `${y}px` });
+  });
+
+  tooltip.innerHTML = evt.shiftKey && extendedText ? extendedText : text;
+  // tooltip.style.display = "inline-block";
+  // tooltip.style.left = evt.pageX + 10 + "px";
+  // tooltip.style.top = evt.pageY + 10 + "px";
 };
 
 const hideTooltip = () => {
-  var tooltip = document.getElementById("tooltip");
-  tooltip.style.display = "none";
+  // var tooltip = document.getElementById("tooltip");
+  // tooltip.style.display = "none";
 };
 
 function applyClass(comp, cls) {
@@ -94,7 +115,7 @@ function tooltipEvt(name, cpuData, element, htmlGen, htmlDet) {
     if (cpuData.enabled(name)) {
       const tooltipText = htmlGen();
       const tooltipTextDetail = htmlDet !== undefinedFunc0 ? htmlDet() : null;
-      showTooltip(e, tooltipText, tooltipTextDetail);
+      showTooltip(e, element, tooltipText, tooltipTextDetail);
     }
   });
   element.addEventListener("mouseout", () => {
@@ -151,6 +172,7 @@ export function CLK(element, cpuData) {
   } = cpuData.getInfo();
 
   applyClass(element, "component");
+  cpuData.installTooltip(element, "bottom", paragraph({ text: "Clock" }));
   document.addEventListener("SimulatorUpdate", (e) => {
     applyClass(element, "component");
     cpuData.enable("CLK");
@@ -167,19 +189,13 @@ export function PC(element, cpuData) {
   components.forEach((e) => {
     applyClass(e, "componentDisabled");
   });
-  tooltipEvt(
-    "PC",
-    cpuData,
-    element,
-    () => {
-      const inst = cpuData.getInstruction().inst;
-      return `<span class="tooltipinfo">
-              <h1>Current address</h1>
-              <p>${inst}</p>
-              </span>`;
-    },
-    undefinedFunc0
-  );
+
+  const text = () => {
+    const inst = cpuData.getInstruction().inst;
+    return paragraph({ text: inst });
+  };
+  cpuData.installTooltip(element, "bottom", text);
+
   document.addEventListener("SimulatorUpdate", (e) => {
     components.forEach((e) => {
       applyClass(e, "component");
@@ -215,43 +231,33 @@ export function IM(element, cpuData) {
   inputs.forEach((e) => {
     applyClass(e, "inputTextDisabled");
   });
-  tooltipEvt(
-    "IM",
-    cpuData,
+
+  cpuData.installTooltip(
     addressText,
+    "top-start",
     () => {
       const inst = cpuData.getInstruction().inst;
-      return `<span class="tooltipinfo">
-              <h1>Current address</h1>
-              <p>${inst}</p>
-              </span>`;
+      return paragraph({ text: inst });
     },
-    // TODO: probably show next instruction or the contents of the memory
-    undefinedFunc0
+    "IM"
   );
-  tooltipEvt(
-    "IM",
-    cpuData,
+
+  cpuData.installTooltip(
     instText,
-    () => {
-      const inst = cpuData.getInstruction().asm;
-      return `<span class="tooltipinfo">
-              <h1>Current instruction</h1>
-              <p>${inst}</p>
-              </span>`;
-    },
+    "bottom",
     () => {
       const { asm, type, pseudo } = cpuData.getInstruction();
-      return `<span class="tooltipinfo">
-              <h1>Current instruction</h1>
-              <dl>
-                <dt>Assembler</dt><dd> ${asm}</dd>
-                <dt>Type</dt><dd> ${type}</dd>
-                <dt>Pseudo</dt><dd> ${pseudo}</dd>
-              </dl>
-              </span>`;
-    }
+      return tabular({
+        pairs: [
+          ["Assembler", asm],
+          ["Type", type],
+          ["Pseudo", pseudo],
+        ],
+      });
+    },
+    "IM"
   );
+
   document.addEventListener("SimulatorUpdate", (e) => {
     applyClass(element, "component");
     inputs.forEach((e) => {
@@ -270,24 +276,23 @@ export function CU(element, cpuData) {
   [element, arrow].forEach((e) => {
     applyClass(e, "componentDisabled");
   });
-  tooltipEvt(
-    "CU",
-    cpuData,
+  cpuData.installTooltip(
     arrow,
+    "left-start",
     () => {
       const { asm } = cpuData.getInstruction();
-      return `<span class="tooltipinfo">
-              <dl>
-                <dt>ALUASrc</dt> <dd>COMPUTEME</dd>
-                <dt>ALUBSrc</dt> <dd>COMPUTEME</dd>
-                <dt>IMSrc</dt>   <dd>COMPUTEME</dd>
-                <dt>ALUOp</dt>   <dd>COMPUTEME</dd>
-                <dt>BROp</dt>   <dd>COMPUTEME</dd>
-                <dt>RUDataWrSrc</dt>   <dd>COMPUTEME</dd>
-              </dl>
-              </span>`;
+      return tabular({
+        pairs: [
+          ["ALUASrc", "COMPUTE"],
+          ["ALUBSrc", "COMPUTE"],
+          ["IMSrc", "COMPUTE"],
+          ["ALUOp", "COMPUTE"],
+          ["BROp", "COMPUTE"],
+          ["RUDataWrSrc", "COMPUTE"],
+        ],
+      });
     },
-    undefinedFunc0
+    "CU"
   );
   document.addEventListener("SimulatorUpdate", (e) => {
     [element, arrow].forEach((e) => {
@@ -302,27 +307,23 @@ function registerTooltipText(name, type, cpuData) {
   const { regname, regeq, regenc } = instruction[name];
   const binEnc = instruction.encoding[name];
   const value = cpuData.getRegisterValue(parseInt(regenc));
-  /* TODO: Sometimes value gets undefined. Seems to be a problem with message
-   passing. cpuData.logger("info", { m: "registerTooltip", v: value });
-  */
+
   const data = {
-    general: `<span class="tooltipinfo">
-              <dl>
-                <dt>Register</dt><dd>${regname} (${regeq})</dd>
-              </dl>
-              </span>`,
-    detailed: `<span class="tooltipinfo">
-              <dl>
-                <dt>Register</dt><dd>${regname} (${regeq})</dd>
-                <dt>Encoding</dt><dd>${binEnc} </dd>
-              </dl>
-              </span>`,
-    valueGeneral: `<span class="tooltipinfo">
-              <dl>
-                <dt>Register</dt><dd>${regname} (${regeq})</dd>
-                <dt>Value</dt><dd>${value}</dd>
-              </dl>
-              </span>`,
+    general: tabular({
+      pairs: [["Register", `${regname} (${regeq})`]],
+    }),
+    detailed: tabular({
+      pairs: [
+        ["Register", `${regname} (${regeq})`],
+        ["Encoding", binEnc],
+      ],
+    }),
+    valueGeneral: tabular({
+      pairs: [
+        ["Register", `${regname} (${regeq})`],
+        ["Value", value],
+      ],
+    }),
   };
   return data[type];
 }
@@ -370,125 +371,79 @@ export function RU(element, cpuData) {
     applyClass(e, "signalDisabled");
   });
 
-  tooltipEvt(
-    "RU",
-    cpuData,
+  cpuData.installTooltip(
     rs1Text,
-    () => {
-      if (usesRegister("rs1", cpuData.instructionType())) {
-        return registerTooltipText("rs1", "general", cpuData);
-      } else {
-        return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
-      }
-    },
+    "right-end",
     () => {
       if (usesRegister("rs1", cpuData.instructionType())) {
         return registerTooltipText("rs1", "detailed", cpuData);
       } else {
-        return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
-      }
-    }
-  );
-  tooltipEvt(
-    "RU",
-    cpuData,
-    rs2Text,
-    () => {
-      if (usesRegister("rs2", cpuData.instructionType())) {
-        return registerTooltipText("rs2", "general", cpuData);
-      } else {
-        return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
+        return paragraph({ text: "Unused for this instruction" });
       }
     },
+    "RU"
+  );
+  cpuData.installTooltip(
+    rs2Text,
+    "left-start",
     () => {
       if (usesRegister("rs2", cpuData.instructionType())) {
         return registerTooltipText("rs2", "detailed", cpuData);
       } else {
-        return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
-      }
-    }
-  );
-  tooltipEvt(
-    "RU",
-    cpuData,
-    rdText,
-    () => {
-      if (usesRegister("rd", cpuData.instructionType())) {
-        return registerTooltipText("rd", "general", cpuData);
-      } else {
-        return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
+        return paragraph({ text: "Unused for this instruction" });
       }
     },
+    "RU"
+  );
+  cpuData.installTooltip(
+    rdText,
+    "left-end",
     () => {
       if (usesRegister("rd", cpuData.instructionType())) {
         return registerTooltipText("rd", "detailed", cpuData);
       } else {
-        return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
+        return paragraph({ text: "Unused for this instruction" });
       }
-    }
+    },
+    "RU"
   );
-  tooltipEvt(
-    "RU",
-    cpuData,
+
+  cpuData.installTooltip(
     val1Text,
+    "bottom-start",
     () => {
       if (usesRegister("rs1", cpuData.instructionType())) {
         return registerTooltipText("rs1", "valueGeneral", cpuData);
       } else {
-        return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
+        return paragraph({ text: "Unused for this instruction" });
       }
     },
-    () => {
-      if (usesRegister("rs1", cpuData.instructionType())) {
-        return registerTooltipText("rs1", "valueGeneral", cpuData);
-      } else {
-        return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
-      }
-    }
+    "RU"
   );
-  tooltipEvt(
-    "RU",
-    cpuData,
+  cpuData.installTooltip(
     val2Text,
+    "bottom-start",
     () => {
       if (usesRegister("rs2", cpuData.instructionType())) {
         return registerTooltipText("rs2", "valueGeneral", cpuData);
       } else {
-        return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
+        return paragraph({ text: "Unused for this instruction" });
       }
     },
-    () => {
-      if (usesRegister("rs2", cpuData.instructionType())) {
-        return registerTooltipText("rs2", "valueGeneral", cpuData);
-      } else {
-        return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
-      }
-    }
+    "RU"
   );
-  tooltipEvt(
-    "RU",
-    cpuData,
+  cpuData.installTooltip(
     datawrText,
+    "left",
     () => {
-      if (writesRU(cpuData.instructionType)) {
+      if (writesRU(cpuData.instructionType())) {
         const value = cpuData.instructionResult().WBMUXRes;
-        return `<span class="tooltipinfo">
-            <ul>
-            <li>Value: ${value}</li>
-            </ul>
-            </span>`;
+        return tabular({ pairs: [["Value", value]] });
       } else {
-        return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
+        return paragraph({ text: "Unused for this instruction" });
       }
     },
-    undefinedFunc0
-    // () => {
-    //   if (usesRegister("rs2", cpuData.instruction.type)) {
-    //     return registerTooltipText("rs2", "valueGeneral", cpuData);
-    //   } else {
-    //     return `<span class="tooltipinfo"><p>Unused for this instruction</p></span>`;
-    //   }
-    // }
+    "RU"
   );
 
   document.addEventListener("SimulatorUpdate", (e) => {
@@ -544,26 +499,15 @@ function immTooltipText(type, cpuData) {
   const instPosition = `${info.instrcution} bits in instruction.`;
   const immPosition = `${info.imm} bits in immediate.`;
 
-  const selector = {
-    general: `<span class="tooltipinfo">
-              <dl>
-                <dt>Value(10)</dt> <dd>${immValue10}</dd>
-                <dt>Value(2)</dt> <dd>${immValue2}</dd>
-                <dt>Length</dt> <dd>${immLength}</dd>
-              </dl>
-              </span>`,
-    detailed: `<span class="tooltipinfo">
-              <dl>
-                <dt>Value(10)</dt> <dd>${immValue10}</dd>
-                <dt>Value(2)</dt> <dd>${immValue2}</dd>
-                <dt>Length</dt> <dd>${immLength}</dd>
-                <dt>Position</dt> <dd>${instPosition}</dd>
-                <dt>Position</dt> <dd>${immPosition}</dd>
-              </dl>
-              </span>`,
-  };
-
-  return selector[type];
+  return tabular({
+    pairs: [
+      ["Value(10)", immValue10],
+      ["Value(2)", immValue2],
+      ["Length", immLength],
+      ["Position", instPosition],
+      ["Position", immPosition],
+    ],
+  });
 }
 
 export function IMM(element, cpuData) {
@@ -578,16 +522,13 @@ export function IMM(element, cpuData) {
   signals.forEach((e) => {
     applyClass(e, "signalDisabled");
   });
-  tooltipEvt(
-    "IMM",
-    cpuData,
+  cpuData.installTooltip(
     element,
-    () => {
-      return immTooltipText("general", cpuData);
-    },
+    "top",
     () => {
       return immTooltipText("detailed", cpuData);
-    }
+    },
+    "IMM"
   );
   document.addEventListener("SimulatorUpdate", (e) => {
     if (usesIMM(cpuData.instructionType())) {
@@ -624,18 +565,16 @@ export function ALUA(element, cpuData) {
   const path0Visible = (inst) => {
     return inst === "R" || inst === "I" || inst === "S";
   };
-  tooltipEvt(
-    "ALUA",
-    cpuData,
+  cpuData.installTooltip(
     path0,
+    "bottom-start",
     () => {
       const value = cpuData.instructionResult().RURS1Val;
-      return `<span class="tooltipinfo">
-              <p>${value}</p>
-              </span>`;
+      return paragraph({ text: value });
     },
-    undefinedFunc0
+    "ALUA"
   );
+  // TODO: missing path1
   document.addEventListener("SimulatorUpdate", (e) => {
     const instType = cpuData.instructionType();
     instType !== "U" ? cpuData.enable("ALUA") : cpuData.disable("ALUA");
@@ -677,17 +616,23 @@ export function ALUB(element, cpuData) {
     return usesRs2(inst);
     // return inst === "R" || inst === "B" || inst === "J";
   };
-  tooltipEvt(
-    "ALUB",
-    cpuData,
+  cpuData.installTooltip(
     path0,
+    "top-start",
     () => {
       const value = cpuData.instructionResult().RURS2Val;
-      return `<span class="tooltipinfo">
-              <p>${value}</p>
-              </span>`;
+      return paragraph({ text: value });
     },
-    undefinedFunc0
+    "ALUA"
+  );
+  cpuData.installTooltip(
+    path1,
+    "bottom-start",
+    () => {
+      const value = cpuData.instructionResult().IMM32;
+      return paragraph({ text: value });
+    },
+    "ALUA"
   );
   document.addEventListener("SimulatorUpdate", (e) => {
     // Always enabled for all instructions
@@ -707,23 +652,15 @@ export function ALUB(element, cpuData) {
 
 function aluTooltipText(name, cpuData) {
   const { A: valA, B: valB, ALURes: valALURes } = cpuData.instructionResult();
+
   const data = {
-    A: `<span class="tooltipinfo">
-        <dl>
-          <dt>Value</dt><dd>${valA}</dd>
-        </dl>
-        </span>`,
-    B: `<span class="tooltipinfo">
-        <dl>
-          <dt>Value</dt><dd>${valB}</dd>
-        </dl>
-        </span>`,
-    ALURes: `<span class="tooltipinfo">
-            <dl>
-              <dt>Value</dt><dd>${valALURes}</dd>
-            </dl>
-            </span>`,
+    A: tabular({ pairs: [["Value", valA]] }),
+    B: tabular({ pairs: [["Value", valB]] }),
+    ALURes: tabular({ pairs: [["Value", valALURes]] }),
   };
+
+  // !TODO if the object is to functions we can save some time by lazily
+  // executing just one tabular.
   return data[name];
 }
 
@@ -761,53 +698,31 @@ export function ALU(element, cpuData) {
   });
   applyClass(valALURes, "outputTextDisabled");
 
-  tooltipEvt(
-    "ALU",
-    cpuData,
+  cpuData.installTooltip(
     textA,
+    "right",
     () => {
       return aluTooltipText("A", cpuData);
     },
-    () => {
-      return `<span class="tooltipinfo">FIXME
-            <ul>
-              <li>Value(10): {alua}</li>
-              <li>Value(2): {alua}</li>
-              <li>Encoding(2): {alua}</li>
-            </ul>`;
-    }
+    "ALU"
   );
-  tooltipEvt(
-    "ALU",
-    cpuData,
+
+  cpuData.installTooltip(
     textB,
+    "right",
     () => {
       return aluTooltipText("B", cpuData);
     },
-    () => {
-      return `<span class="tooltipinfo">FIXME
-            <ul>
-              <li>Value(10): {alub}</li>
-              <li>Value(2): {alub}</li>
-              <li>Encoding(2): {alub}</li>
-            </ul>`;
-    }
+    "ALU"
   );
-  tooltipEvt(
-    "ALU",
-    cpuData,
+
+  cpuData.installTooltip(
     valALURes,
+    "top-end",
     () => {
       return aluTooltipText("ALURes", cpuData);
     },
-    () => {
-      return `<span class="tooltipinfo">FIXME
-            <ul>
-              <li>Value(10): {alub}</li>
-              <li>Value(2): {alub}</li>
-              <li>Encoding(2): {alub}</li>
-            </ul>`;
-    }
+    "ALU"
   );
 
   document.addEventListener("SimulatorUpdate", (e) => {
@@ -1063,8 +978,8 @@ export function PCIM(element, cpuData) {
     element,
     () => {
       const inst = cpuData.getInstruction().inst;
-      return `<span class="tooltipinfo">
-              <h1>PC ⇔ IM</h1>
+      return `<span ${preamble}>
+              <p>PC ⇔ IM</p>
               <p>Instruction: ${inst}</p>
               </span>`;
     },
@@ -1088,8 +1003,8 @@ export function PCADD4(element, cpuData) {
     element,
     () => {
       const inst = cpuData.getInstruction().inst;
-      return `<span class="tooltipinfo">
-              <h1>PC ⇔ ADD4</h1>
+      return `<span ${preamble}>
+              <p>PC ⇔ ADD4</p>
               <p>Value: ${inst}</p>
               </span>`;
     },
@@ -1147,8 +1062,8 @@ function imCUTooltipText(connection, cpuData) {
     funct7: `<dt>Value(2)</dt> <dd>${funct7}</dd>`,
   };
 
-  const txt = `<span class="tooltipinfo">
-              <h1>${title}</h1>
+  const txt = `<span ${preamble}>
+              <p>${title}</p>
               <dl>${detail[connection]}</dl>
               </span>`;
 
@@ -1300,8 +1215,8 @@ function imRUTooltipText(connection, cpuData) {
   const detail = `<dt>Value(2)</dt> <dd>${value2}</dd>
                  <dt>Value(10)</dt> <dd>${value10}</dd>`;
 
-  const txt = `<span class="tooltipinfo">
-              <h1>${title}</h1>
+  const txt = `<span ${preamble}>
+              <p>${title}</p>
               <dl>${detail}</dl>
               </span>`;
 
@@ -1464,9 +1379,7 @@ export function WBMUXRU(element, cpuData) {
       switch (true) {
         case writesRU(cpuData.instructionType()): {
           const value = cpuData.instructionResult().ALURes;
-          return `<span class="tooltipinfo">
-                  <p>${value}</p>
-                  </span>`;
+          return paragraph({ text: value });
         }
         default:
           return "hola";
@@ -1515,9 +1428,7 @@ export function RUALUA(element, cpuData) {
     element,
     () => {
       const value = cpuData.instructionResult().RURS1Val;
-      return `<span class="tooltipinfo">
-              <p>${value}</p>
-              </span>`;
+      return paragraph({ text: value });
     },
     undefinedFunc0
   );
@@ -1549,9 +1460,7 @@ export function RUALUB(element, cpuData) {
     element,
     () => {
       const value = cpuData.instructionResult().RURS2Val;
-      return `<span class="tooltipinfo">
-              <p>${value}</p>
-              </span>`;
+      return paragraph({ text: value });
     },
     undefinedFunc0
   );
@@ -1640,9 +1549,7 @@ export function ALUAALU(element, cpuData) {
     element,
     () => {
       const value = cpuData.instructionResult().ALUARes;
-      return `<span class="tooltipinfo">
-              <p>${value}</p>
-              </span>`;
+      return paragraph({ text: value });
     },
     undefinedFunc0
   );
@@ -1664,9 +1571,7 @@ export function ALUBALU(element, cpuData) {
     element,
     () => {
       const value = cpuData.instructionResult().ALUBRes;
-      return `<span class="tooltipinfo">
-              <p>${value}</p>
-              </span>`;
+      return paragraph({ text: value });
     },
     undefinedFunc0
   );
@@ -1710,9 +1615,7 @@ export function ALUWBMUX(element, cpuData) {
     element,
     () => {
       const value = cpuData.instructionResult().ALURes;
-      return `<span class="tooltipinfo">
-                <p>${value}</p>
-              </span>`;
+      return paragraph({ text: value });
     },
     undefinedFunc0
   );
@@ -1800,8 +1703,8 @@ export function ADD4BUMUX(element, cpuData) {
     element,
     () => {
       const value = cpuData.instructionResult().ADD4Res;
-      return `<span class="tooltipinfo">
-              <h1>ADD4 ⇔ BUMUX</h1>
+      return `<span ${preamble}>
+              <p>ADD4 ⇔ BUMUX</p>
               <p>Value: ${value}</p>
               </span>`;
     },

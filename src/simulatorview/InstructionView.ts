@@ -1,4 +1,4 @@
-import { Button } from '@vscode/webview-ui-toolkit';
+import { Button, RadioGroup } from '@vscode/webview-ui-toolkit';
 
 import _ from 'lodash';
 
@@ -10,7 +10,7 @@ export class InstructionView {
     ['R', 'I', 'S', 'B', 'U', 'J'].forEach((instType) => {
       const element = document.getElementById(
         'instruction-type-' + _.lowerCase(instType)
-      ) as Button;
+      ) as Input;
       this.components.set(instType, element);
     });
     this.disableAll();
