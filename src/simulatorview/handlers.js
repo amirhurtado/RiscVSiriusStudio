@@ -1309,9 +1309,14 @@ export function IMRURDEST(element, cpuData) {
     }
   );
   document.addEventListener("SimulatorUpdate", (e) => {
-    applyClass(element, "connection");
-    pathOnTop(element);
-    cpuData.enable("IMRURDEST");
+    if (usesRegister("rd", cpuData.instructionType())) {
+      applyClass(element, "connection");
+      pathOnTop(element);
+      cpuData.enable("IMRURDEST");
+    } else {
+      applyClass(element, "connectionDisabled");
+      cpuData.disable("IMRURDEST");
+    }
   });
 }
 
