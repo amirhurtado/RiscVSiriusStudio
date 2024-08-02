@@ -14,15 +14,18 @@ import {
 import { computePosition, flip, shift, offset } from "@floating-ui/dom";
 
 var paragraph = _.template(
-  '<span class="m-0 p-0 lh-1"><p class="m-0 p-0 lh-1"><%- text %></p></span>'
+  `<span class="m-0 p-0 lh-1">
+    <p class="m-0 p-0 lh-1"><%- text %></p>
+    </span>`
 );
 
 var tabular = _.template(
-  '<% print(`<span class="container bg-primary m-0 p-0 border-primary lh-1">\n`); print(`<table class="table table-sm table-borderless p-0 m-0 lh-1">\n<tbody>`); _.forEach(pairs, function([label, value]) {  %>\t<tr><th scope="row"><%- label %></th><td><%- value %></td></tr>\n<%}); print(`</tbody></table></span>`); %>'
+  `<% print('<span class="container bg-primary m-0 p-0 border-primary lh-1">'); 
+      print('<table class="table table-sm table-borderless p-0 m-0 lh-1"><tbody>');
+      _.forEach(pairs, function([label, value]) {  %> <tr><th scope="row"><%- label %></th><td><%- value %></td></tr> <%});
+      print('</body></span>'); 
+   %>`
 );
-
-// style = "border: 1pt dashed black !important;";
-const preamble = 'class="container bg-primary p-0 border-primary " ';
 
 function undefinedFunc0() {}
 
@@ -938,6 +941,7 @@ export function CLKPC(element, cpuData) {
 
   applyClass(element, "connectionDisabled");
   focus(element);
+  cpuData.installTooltip(element, "right", paragraph({ text: "Clock ⇔ PC" }));
   document.addEventListener("SimulatorUpdate", (e) => {
     cpuData.enable("CLKPC");
     pathOnTop(element);
@@ -972,19 +976,15 @@ export function PCIM(element, cpuData) {
 
   applyClass(element, "connectionDisabled");
   focus(element);
-  tooltipEvt(
-    "PCIM",
-    cpuData,
-    element,
-    () => {
-      const inst = cpuData.getInstruction().inst;
-      return `<span ${preamble}>
-              <p>PC ⇔ IM</p>
-              <p>Instruction: ${inst}</p>
-              </span>`;
-    },
-    undefinedFunc0
-  );
+  cpuData.installTooltip(element, "top", () => {
+    const inst = cpuData.getInstruction().inst;
+    return tabular({
+      pairs: [
+        ["PC ⇔ IM", ""],
+        ["Instruction", inst],
+      ],
+    });
+  });
   document.addEventListener("SimulatorUpdate", (e) => {
     cpuData.enable("PCIM");
     applyClass(element, "connection");
@@ -997,19 +997,16 @@ export function PCADD4(element, cpuData) {
   } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   // focus(element);
-  tooltipEvt(
-    "PCIM",
-    cpuData,
-    element,
-    () => {
-      const inst = cpuData.getInstruction().inst;
-      return `<span ${preamble}>
-              <p>PC ⇔ ADD4</p>
-              <p>Value: ${inst}</p>
-              </span>`;
-    },
-    undefinedFunc0
-  );
+  cpuData.installTooltip(element, "left", () => {
+    const inst = cpuData.getInstruction().inst;
+    return tabular({
+      pairs: [
+        ["PC ⇔ ADD4", ""],
+        ["Instruction", inst],
+      ],
+    });
+  });
+
   document.addEventListener("SimulatorUpdate", (e) => {
     applyClass(element, "connection");
     cpuData.enable("PCADD4");
@@ -1056,18 +1053,28 @@ function imCUTooltipText(connection, cpuData) {
 
   const title = _.capitalize(connection);
   const detail = {
-    opcode: `<dt>Value(2)</dt> <dd>${opcode}</dd>`,
-    funct3: `<dt>Value(2)</dt> <dd>${funct3Bin}</dd>
-             <dt>Value(10)</dt> <dd>${funct3}</dd>`,
-    funct7: `<dt>Value(2)</dt> <dd>${funct7}</dd>`,
+    opcode: tabular({
+      pairs: [
+        [title, ""],
+        ["Value(2)", opcode],
+      ],
+    }),
+    funct3: tabular({
+      pairs: [
+        [title, ""],
+        ["Value(2)", funct3Bin],
+        ["Value(10)", funct3],
+      ],
+    }),
+
+    funct7: tabular({
+      pairs: [
+        [title, ""],
+        ["Value(2)", funct7],
+      ],
+    }),
   };
-
-  const txt = `<span ${preamble}>
-              <p>${title}</p>
-              <dl>${detail[connection]}</dl>
-              </span>`;
-
-  return txt;
+  return detail[connection];
 }
 
 export function IMCUOPCODE(element, cpuData) {
@@ -1077,21 +1084,15 @@ export function IMCUOPCODE(element, cpuData) {
     instruction: instruction,
   } = cpuData.getInfo();
   focus(element);
-  tooltipEvt(
-    "IMCUOPCODE",
-    cpuData,
-    element,
-    () => {
-      return imCUTooltipText("opcode", cpuData);
-    },
-    undefinedFunc0
-  );
+  cpuData.installTooltip(element, "left", () => {
+    return imCUTooltipText("opcode", cpuData);
+  });
   mouseHover(
     element,
     () => {
       if (cpuData.enabled("IMCUOPCODE")) {
         const html = binFormattedDisplay(cpuData, "opcode");
-        cpuData.setBinaryInstruction(html);
+        cpuData.setBinaryInstruction(html, "opcode");
       }
     },
     () => {
@@ -1115,22 +1116,16 @@ export function IMCUFUNCT3(element, cpuData) {
   } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
-  tooltipEvt(
-    "IMCUFUNCT3",
-    cpuData,
-    element,
-    () => {
-      return imCUTooltipText("funct3", cpuData);
-    },
-    undefinedFunc0
-  );
-
+  cpuData.installTooltip(element, "left", () => {
+    //return imCUTooltipText("funct3", cpuData);
+    return "hola";
+  });
   mouseHover(
     element,
     () => {
       if (cpuData.enabled("IMCUFUNCT3")) {
         const html = binFormattedDisplay(cpuData, "funct3");
-        cpuData.setBinaryInstruction(html);
+        cpuData.setBinaryInstruction(html, "funct3");
       }
     },
     () => {
@@ -1160,21 +1155,15 @@ export function IMCUFUNCT7(element, cpuData) {
 
   applyClass(element, "connectionDisabled");
   focus(element);
-  tooltipEvt(
-    "IMCUFUNCT7",
-    cpuData,
-    element,
-    () => {
-      return imCUTooltipText("funct7", cpuData);
-    },
-    undefinedFunc0
-  );
+  cpuData.installTooltip(element, "left", () => {
+    return imCUTooltipText("funct7", cpuData);
+  });
   mouseHover(
     element,
     () => {
       if (cpuData.enabled("IMCUFUNCT7")) {
         const html = binFormattedDisplay(cpuData, "funct7");
-        cpuData.setBinaryInstruction(html);
+        cpuData.setBinaryInstruction(html, "funct7");
       }
     },
     () => {
@@ -1212,15 +1201,10 @@ function imRUTooltipText(connection, cpuData) {
   const value2 = cpuData.getInstruction().encoding[connection];
 
   const title = _.capitalize(connection);
-  const detail = `<dt>Value(2)</dt> <dd>${value2}</dd>
-                 <dt>Value(10)</dt> <dd>${value10}</dd>`;
 
-  const txt = `<span ${preamble}>
-              <p>${title}</p>
-              <dl>${detail}</dl>
-              </span>`;
-
-  return txt;
+  return tabular({
+    pairs: [[title, ""], [("Value(2)", value2)], [("Value(10)", value10)]],
+  });
 }
 
 export function IMRURS1(element, cpuData) {
@@ -1244,7 +1228,7 @@ export function IMRURS1(element, cpuData) {
     () => {
       if (cpuData.enabled("IMRURS1")) {
         const html = binFormattedDisplay(cpuData, "rs1");
-        cpuData.setBinaryInstruction(html);
+        cpuData.setBinaryInstruction(html, "rs1");
       }
     },
     () => {
@@ -1287,7 +1271,7 @@ export function IMRURS2(element, cpuData) {
     () => {
       if (cpuData.enabled("IMRURS2")) {
         const html = binFormattedDisplay(cpuData, "rs2");
-        cpuData.setBinaryInstruction(html);
+        cpuData.setBinaryInstruction(html, "rs2");
       }
     },
     () => {
@@ -1330,7 +1314,7 @@ export function IMRURDEST(element, cpuData) {
     () => {
       if (cpuData.enabled("IMRURDEST")) {
         const html = binFormattedDisplay(cpuData, "rd");
-        cpuData.setBinaryInstruction(html);
+        cpuData.setBinaryInstruction(html, "rd");
       }
     },
     () => {
@@ -1703,7 +1687,7 @@ export function ADD4BUMUX(element, cpuData) {
     element,
     () => {
       const value = cpuData.instructionResult().ADD4Res;
-      return `<span ${preamble}>
+      return `<span >
               <p>ADD4 ⇔ BUMUX</p>
               <p>Value: ${value}</p>
               </span>`;

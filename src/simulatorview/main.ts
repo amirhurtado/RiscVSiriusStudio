@@ -42,9 +42,9 @@ function main() {
   log('info', { simulatorView: 'Initializing simulator events' });
   // document.body.classList.add('p-3 m-0 border-0');
   log('info', { simulatorView: 'Initializing Simulator information' });
-  const cpuData = new SimulatorInfo(log);
-  cpuData.initializeSVGElements(Handlers);
   const instView = new InstructionView();
+  const cpuData = new SimulatorInfo(log, instView);
+  cpuData.initializeSVGElements(Handlers);
 
   const step = document.getElementById('step-execution') as Button;
   step.addEventListener('click', (e) => {
@@ -106,10 +106,6 @@ function setInstruction(
 ) {
   cpuData.setInstruction(instruction, result);
 
-  cpuData.setBinaryInstruction(
-    `<span class="instruction">${instruction.encoding.binEncoding}</span>`
-  );
-
   cpuData.setAssemblerInstruction(
     `<span class="instruction">${instruction.asm}</span>`
   );
@@ -117,7 +113,8 @@ function setInstruction(
   const inspect = document.getElementById('inspect-registers') as Button;
   inspect.disabled = false;
 
-  instView.setCurrentType(cpuData.instructionType());
+  instView.newInstruction(cpuData.getInstruction());
+
   log('info', { m: 'Execution result', result });
   cpuData.update();
 }

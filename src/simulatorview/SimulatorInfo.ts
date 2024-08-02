@@ -1,5 +1,6 @@
 import { computePosition, flip, shift, Placement } from '@floating-ui/dom';
 import * as bootstrap from 'bootstrap';
+import { InstructionView } from './InstructionView';
 
 export class SimulatorInfo {
   /**
@@ -29,8 +30,9 @@ export class SimulatorInfo {
 
   private tooltip: HTMLElement;
   private logger: Function;
+  private instView: InstructionView;
 
-  public constructor(log: Function) {
+  public constructor(log: Function, instView: InstructionView) {
     this.logger = log;
     this.log('info', { simulatorInfo: 'SimulatorInfo constructor' });
 
@@ -38,6 +40,7 @@ export class SimulatorInfo {
     this.cpuElements = new Map<string, Element>();
     this.cpuEnabled = new Map<string, boolean>();
     this.registers = new Array(32).fill(0);
+    this.instView = instView;
 
     /**
      * These will be initialized as soon as the simulator starts its execution.
@@ -253,9 +256,12 @@ export class SimulatorInfo {
     return this.result;
   }
 
-  public setBinaryInstruction(html: string) {
-    const instBin = document.getElementById('instruction-bin') as HTMLElement;
-    instBin.innerHTML = html;
+  public setBinaryInstruction(html: string, fields?: string[]) {
+    if (fields) {
+      this.instView.setBin(html, fields);
+    } else {
+      this.instView.setBin(html);
+    }
   }
 
   public setAssemblerInstruction(html: string) {
