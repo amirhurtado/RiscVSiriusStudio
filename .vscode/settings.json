@@ -15,6 +15,7 @@
     "CLKPC",
     "CLKRU",
     "cpuname",
+    "funct",
     "IMCUOPCODE",
     "LOGTEXTASSEMBLER",
     "LOGTEXTBIN"

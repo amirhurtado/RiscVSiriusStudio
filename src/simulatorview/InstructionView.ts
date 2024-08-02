@@ -21,8 +21,8 @@ export class InstructionView {
     this.binView.newInstruction(instruction);
     this.setType(instruction.type);
   }
-  public setBin(binEncoding: string, fields?: string[]) {
-    this.binView.setInstruction(binEncoding, fields);
+  public setBin(fields?: string[]) {
+    this.binView.setInstruction(fields);
   }
   public setType(type: string) {
     this.typeView.setType(type);
@@ -44,7 +44,7 @@ class BinaryInstructionView {
   public newInstruction(instruction: any) {
     this.instruction = instruction;
     const binEncoding = this.instruction.encoding.binEncoding;
-    const match = extractGroups(binEncoding);
+    const match = extractGroups(binEncoding, instruction.type);
     if (match) {
       this.fields = match;
     } else {
@@ -53,14 +53,23 @@ class BinaryInstructionView {
     this.setInstruction();
   }
 
-  public setInstruction(binEncoding?: string, fields?: string[]) {
+  public setInstruction(fields?: string[]) {
+    const select = {
+      R: formatRInstructionAsHTML,
+      I: formatIInstructionAsHTML
+    };
+
     if (fields) {
-      this.output.innerHTML = formatRInstructionAsHTML(this.fields, fields);
+      this.output.innerHTML = select[this.instruction.type](
+        this.fields,
+        fields
+      );
     } else {
-      this.output.innerHTML = formatRInstructionAsHTML(this.fields, []);
+      this.output.innerHTML = select[this.instruction.type](this.fields, []);
     }
   }
 }
+
 function format(str: string, highlight: boolean) {
   return highlight ? highlightText({ text: str }) : text({ text: str });
 }
@@ -77,10 +86,30 @@ function formatRInstructionAsHTML(instruction: any, highlight: string[]) {
   return inst;
 }
 
-function extractGroups(inputString: string): Record<string, string> | null {
-  const regex =
+function formatIInstructionAsHTML(instruction: any, highlight: string[]) {
+  const imm = format(instruction['imm'], highlight.includes('imm'));
+  const rs1 = format(instruction['rs1'], highlight.includes('rs1'));
+  const funct3 = format(instruction['funct3'], highlight.includes('funct3'));
+  const rd = format(instruction['rd'], highlight.includes('rd'));
+  const opcode = format(instruction['opcode'], highlight.includes('opcode'));
+  const inst = `<p class="h4">${imm}-${rs1}-${funct3}-${rd}-${opcode}</p>`;
+  return inst;
+}
+
+function extractGroups(
+  inputString: string,
+  instType: string
+): Record<string, string> | null {
+  const regexR =
     /^(?<funct7>[01]{7})(?<rs2>[01]{5})(?<rs1>[01]{5})(?<funct3>[01]{3})(?<rd>[01]{5})(?<opcode>[01]{7})$/g;
-  const match = regex.exec(inputString);
+  const regexI =
+    /^(?<imm>[01]{12})(?<rs1>[01]{5})(?<funct3>[01]{3})(?<rd>[01]{5})(?<opcode>[01]{7})$/g;
+
+  const select = {
+    R: regexR,
+    I: regexI
+  };
+  const match = select[instType].exec(inputString);
 
   if (match && match.groups) {
     return match.groups;

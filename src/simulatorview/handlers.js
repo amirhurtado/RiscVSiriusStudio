@@ -850,6 +850,10 @@ export function BUMUX(element, cpuData) {
   const path1Visible = (inst, opcode) => {
     return inst === "J" || inst === "B" || opcode === "1100111";
   };
+  cpuData.installTooltip(path0, "top", () => {
+    const value = cpuData.instructionResult().ADD4Res;
+    return paragraph({ text: value });
+  });
   document.addEventListener("SimulatorUpdate", (e) => {
     cpuData.enable("BUMUX");
     applyClass(element, "component");
@@ -891,6 +895,10 @@ export function WBMUX(element, cpuData) {
   const path10Visible = (inst, opcode) => {
     return inst === "J" || opcode === "1100111";
   };
+  cpuData.installTooltip(path00, "bottom", () => {
+    const value = cpuData.instructionResult().ALURes;
+    return paragraph({ text: value });
+  });
   document.addEventListener("SimulatorUpdate", (e) => {
     // Disabled for B and S
     const instType = cpuData.instructionType();
@@ -1091,14 +1099,12 @@ export function IMCUOPCODE(element, cpuData) {
     element,
     () => {
       if (cpuData.enabled("IMCUOPCODE")) {
-        const html = binFormattedDisplay(cpuData, "opcode");
-        cpuData.setBinaryInstruction(html, "opcode");
+        cpuData.setBinaryInstruction("opcode");
       }
     },
     () => {
       if (cpuData.enabled("IMCUOPCODE")) {
-        const html = currentBinInst(cpuData);
-        cpuData.setBinaryInstruction(html);
+        cpuData.setBinaryInstruction();
       }
     }
   );
@@ -1117,21 +1123,18 @@ export function IMCUFUNCT3(element, cpuData) {
   applyClass(element, "connectionDisabled");
   focus(element);
   cpuData.installTooltip(element, "left", () => {
-    //return imCUTooltipText("funct3", cpuData);
-    return "hola";
+    return imCUTooltipText("funct3", cpuData);
   });
   mouseHover(
     element,
     () => {
       if (cpuData.enabled("IMCUFUNCT3")) {
-        const html = binFormattedDisplay(cpuData, "funct3");
-        cpuData.setBinaryInstruction(html, "funct3");
+        cpuData.setBinaryInstruction("funct3");
       }
     },
     () => {
       if (cpuData.enabled("IMCUFUNCT3")) {
-        const html = currentBinInst(cpuData);
-        cpuData.setBinaryInstruction(html);
+        cpuData.setBinaryInstruction();
       }
     }
   );
@@ -1199,11 +1202,16 @@ export function IMCUFUNCT7(element, cpuData) {
 function imRUTooltipText(connection, cpuData) {
   const value10 = cpuData.getInstruction()[connection].regenc;
   const value2 = cpuData.getInstruction().encoding[connection];
-
-  const title = _.capitalize(connection);
+  // return tabular({
+  //   pairs: [[title, ""], [("Value(2)", value2)], [("Value(10)", value10)]],
+  // });
 
   return tabular({
-    pairs: [[title, ""], [("Value(2)", value2)], [("Value(10)", value10)]],
+    pairs: [
+      [`IM ⇔ ${connection}`, ""],
+      ["Value10", value10],
+      ["Value2", value2],
+    ],
   });
 }
 
@@ -1214,27 +1222,19 @@ export function IMRURS1(element, cpuData) {
 
   applyClass(element, "connectionDisabled");
   focus(element);
-  tooltipEvt(
-    "IMRURS1",
-    cpuData,
-    element,
-    () => {
-      return imRUTooltipText("rs1", cpuData);
-    },
-    undefinedFunc0
-  );
+  cpuData.installTooltip(element, "top", () => {
+    return imRUTooltipText("rs1", cpuData);
+  });
   mouseHover(
     element,
     () => {
       if (cpuData.enabled("IMRURS1")) {
-        const html = binFormattedDisplay(cpuData, "rs1");
-        cpuData.setBinaryInstruction(html, "rs1");
+        cpuData.setBinaryInstruction("rs1");
       }
     },
     () => {
       if (cpuData.enabled("IMRURS1")) {
-        const html = currentBinInst(cpuData);
-        cpuData.setBinaryInstruction(html);
+        cpuData.setBinaryInstruction();
       }
     }
   );
@@ -1257,27 +1257,19 @@ export function IMRURS2(element, cpuData) {
 
   applyClass(element, "connectionDisabled");
   focus(element);
-  tooltipEvt(
-    "IMRURS2",
-    cpuData,
-    element,
-    () => {
-      return imRUTooltipText("rs2", cpuData);
-    },
-    undefinedFunc0
-  );
+  cpuData.installTooltip(element, "top", () => {
+    return imRUTooltipText("rs2", cpuData);
+  });
   mouseHover(
     element,
     () => {
       if (cpuData.enabled("IMRURS2")) {
-        const html = binFormattedDisplay(cpuData, "rs2");
-        cpuData.setBinaryInstruction(html, "rs2");
+        cpuData.setBinaryInstruction("rs2");
       }
     },
     () => {
       if (cpuData.enabled("IMRURS2")) {
-        const html = currentBinInst(cpuData);
-        cpuData.setBinaryInstruction(html);
+        cpuData.setBinaryInstruction();
       }
     }
   );
@@ -1300,27 +1292,19 @@ export function IMRURDEST(element, cpuData) {
 
   applyClass(element, "connectionDisabled");
   focus(element);
-  tooltipEvt(
-    "IMRURDEST",
-    cpuData,
-    element,
-    () => {
-      return imRUTooltipText("rd", cpuData);
-    },
-    undefinedFunc0
-  );
+  cpuData.installTooltip(element, "top", () => {
+    return imRUTooltipText("rd", cpuData);
+  });
   mouseHover(
     element,
     () => {
       if (cpuData.enabled("IMRURDEST")) {
-        const html = binFormattedDisplay(cpuData, "rd");
-        cpuData.setBinaryInstruction(html, "rd");
+        cpuData.setBinaryInstruction("rd");
       }
     },
     () => {
       if (cpuData.enabled("IMRURDEST")) {
-        const html = currentBinInst(cpuData);
-        cpuData.setBinaryInstruction(html);
+        cpuData.setBinaryInstruction();
       }
     }
   );
@@ -1337,6 +1321,16 @@ export function IMIMM(element, cpuData) {
   } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
+  mouseHover(
+    element,
+    () => {
+      // cpuData.setBinaryInstruction("imm");
+      cpuData.setBinaryInstruction("imm");
+    },
+    () => {
+      cpuData.setBinaryInstruction();
+    }
+  );
   document.addEventListener("SimulatorUpdate", (e) => {
     if (usesIMM(cpuData.instructionType())) {
       applyClass(element, "connection");
@@ -1355,22 +1349,15 @@ export function WBMUXRU(element, cpuData) {
 
   applyClass(element, "connectionDisabled");
   focus(element);
-  tooltipEvt(
-    "WBMUXRU",
-    cpuData,
-    element,
-    () => {
-      switch (true) {
-        case writesRU(cpuData.instructionType()): {
-          const value = cpuData.instructionResult().ALURes;
-          return paragraph({ text: value });
-        }
-        default:
-          return "hola";
-      }
-    },
-    undefinedFunc0
-  );
+  cpuData.installTooltip(element, "bottom", () => {
+    const value = cpuData.instructionResult().WBMUXRes;
+    return tabular({
+      pairs: [
+        ["WBMUX ⇔ RU", ""],
+        ["Value", value],
+      ],
+    });
+  });
   document.addEventListener("SimulatorUpdate", (e) => {
     if (writesRU(cpuData.instructionType())) {
       applyClass(element, "connection");
@@ -1389,6 +1376,15 @@ export function IMMALUB(element, cpuData) {
   } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
+  cpuData.installTooltip(element, "right", () => {
+    const value = cpuData.instructionResult().WBMUXRes;
+    return tabular({
+      pairs: [
+        ["IMM ⇔ ALUB", ""],
+        ["Value", value],
+      ],
+    });
+  });
   document.addEventListener("SimulatorUpdate", (e) => {
     if (usesIMM(cpuData.instructionType())) {
       applyClass(element, "connection");
@@ -1527,16 +1523,10 @@ export function ALUAALU(element, cpuData) {
 
   applyClass(element, "connectionDisabled");
   focus(element);
-  tooltipEvt(
-    "ALUAALU",
-    cpuData,
-    element,
-    () => {
-      const value = cpuData.instructionResult().ALUARes;
-      return paragraph({ text: value });
-    },
-    undefinedFunc0
-  );
+  cpuData.installTooltip(element, "top", () => {
+    const value = cpuData.instructionResult().ALUARes;
+    return paragraph({ text: value });
+  });
   document.addEventListener("SimulatorUpdate", (e) => {
     cpuData.enable("ALUAALU");
     applyClass(element, "connection");
@@ -1549,16 +1539,10 @@ export function ALUBALU(element, cpuData) {
   } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
-  tooltipEvt(
-    "ALUBALU",
-    cpuData,
-    element,
-    () => {
-      const value = cpuData.instructionResult().ALUBRes;
-      return paragraph({ text: value });
-    },
-    undefinedFunc0
-  );
+  cpuData.installTooltip(element, "top", () => {
+    const value = cpuData.instructionResult().ALUBRes;
+    return paragraph({ text: value });
+  });
   document.addEventListener("SimulatorUpdate", (e) => {
     cpuData.enable("ALUBALU");
     applyClass(element, "connection");
@@ -1593,16 +1577,15 @@ export function ALUWBMUX(element, cpuData) {
 
   applyClass(element, "connectionDisabled");
   focus(element);
-  tooltipEvt(
-    "ALUWBMUX",
-    cpuData,
-    element,
-    () => {
-      const value = cpuData.instructionResult().ALURes;
-      return paragraph({ text: value });
-    },
-    undefinedFunc0
-  );
+  cpuData.installTooltip(element, "bottom", () => {
+    const value = cpuData.instructionResult().ALURes;
+    return tabular({
+      pairs: [
+        ["ALU ⇔ WBMUX", ""],
+        ["Value", value],
+      ],
+    });
+  });
   document.addEventListener("SimulatorUpdate", (e) => {
     if (usesALU(cpuData.instructionType())) {
       applyClass(element, "connection");
@@ -1647,6 +1630,16 @@ export function BUBUMUX(element, cpuData) {
   } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
+  cpuData.installTooltip(element, "top", () => {
+    const BURes = cpuData.instructionResult().BURes;
+    const inst = cpuData.getInstruction().inst;
+    return tabular({
+      pairs: [
+        ["BU ⇔ BUMux", ""],
+        ["Instruction", BURes],
+      ],
+    });
+  });
   document.addEventListener("SimulatorUpdate", (e) => {
     applyClass(element, "connection");
     cpuData.enable("BUBUMUX");
@@ -1681,19 +1674,15 @@ export function ADD4BUMUX(element, cpuData) {
   } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
-  tooltipEvt(
-    "ADD4BUMUX",
-    cpuData,
-    element,
-    () => {
-      const value = cpuData.instructionResult().ADD4Res;
-      return `<span >
-              <p>ADD4 ⇔ BUMUX</p>
-              <p>Value: ${value}</p>
-              </span>`;
-    },
-    undefinedFunc0
-  );
+  cpuData.installTooltip(element, "top", () => {
+    const value = cpuData.instructionResult().ADD4Res;
+    return tabular({
+      pairs: [
+        ["ADD4 ⇔ BUMux", ""],
+        ["Instruction", value],
+      ],
+    });
+  });
   document.addEventListener("SimulatorUpdate", (e) => {
     applyClass(element, "connection");
     pathOnTop(element);
@@ -1708,6 +1697,16 @@ export function BUMUXPC(element, cpuData) {
   } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
+  cpuData.installTooltip(element, "top", () => {
+    const BUMUXRes = cpuData.instructionResult().BUMUXRes;
+    const inst = cpuData.getInstruction().inst;
+    return tabular({
+      pairs: [
+        ["NextPC ⇔ PC", ""],
+        ["Instruction", BUMUXRes],
+      ],
+    });
+  });
   document.addEventListener("SimulatorUpdate", (e) => {
     cpuData.enable("BUMUXPC");
     applyClass(element, "connection");

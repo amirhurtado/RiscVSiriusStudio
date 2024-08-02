@@ -256,12 +256,8 @@ export class SimulatorInfo {
     return this.result;
   }
 
-  public setBinaryInstruction(html: string, fields?: string[]) {
-    if (fields) {
-      this.instView.setBin(html, fields);
-    } else {
-      this.instView.setBin(html);
-    }
+  public setBinaryInstruction(fields?: string[]) {
+    this.instView.setBin(fields);
   }
 
   public setAssemblerInstruction(html: string) {
