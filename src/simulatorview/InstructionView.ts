@@ -10,15 +10,20 @@ var text = _.template(`<span class="m-0 p-0 h4"><%- text %></span>`);
 export class InstructionView {
   private typeView: InstructionTypeView;
   private binView: BinaryInstructionView;
+  private asmView: AssemblerView;
+
   private instruction: any | undefined;
 
   public constructor() {
     this.typeView = new InstructionTypeView();
     this.binView = new BinaryInstructionView();
+    this.asmView = new AssemblerView();
   }
+
   public newInstruction(instruction: any) {
     this.instruction = instruction;
     this.binView.newInstruction(instruction);
+    this.asmView.setInstruction(instruction);
     this.setType(instruction.type);
   }
   public setBin(fields?: string[]) {
@@ -126,6 +131,20 @@ function extractGroups(
     return match.groups;
   } else {
     return null;
+  }
+}
+class AssemblerView {
+  private output: HTMLElement;
+  private instruction: any | undefined;
+
+  public constructor() {
+    this.output = document.getElementById('instruction-asm') as Button;
+  }
+
+  public setInstruction(instruction: any) {
+    this.instruction = instruction;
+    const inst = `<p class="h4">${this.instruction.asm}</p>`;
+    this.output.innerHTML = inst;
   }
 }
 
