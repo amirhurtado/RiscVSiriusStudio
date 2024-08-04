@@ -2,7 +2,7 @@
  * Tests if an instruction uses rs1
  * @param {*} instType the instruction type
  */
-export function usesRs1(instType) {
+function usesRs1(instType) {
   switch (instType) {
     case "U":
     case "J":
@@ -15,7 +15,7 @@ export function usesRs1(instType) {
  * Tests if an instruction uses rs2
  * @param {*} instType the instruction type
  */
-export function usesRs2(instType) {
+function usesRs2(instType) {
   switch (instType) {
     case "R":
     case "S":
@@ -29,7 +29,7 @@ export function usesRs2(instType) {
  * Tests if an instruction uses rd
  * @param {*} instType the instruction type
  */
-export function usesRd(instType) {
+function usesRd(instType) {
   switch (instType) {
     case "S":
     case "B":
@@ -37,7 +37,12 @@ export function usesRd(instType) {
   }
   return true;
 }
-
+/**
+ * Tests whether register name is used during the execution of an instruction of type instType.
+ * @param {string } name: name of the register in x-format i.e. x3, etc.
+ * @param {*} instType: type of the instruction
+ * @returns
+ */
 export function usesRegister(name, instType) {
   const selector = {
     rs1: usesRs1,
@@ -89,23 +94,55 @@ export function usesALU(instType) {
   return false;
 }
 
+export function usesDM(instType, instOpcode) {
+  switch (true) {
+    case instType === "S": // Stores in memory
+    case instType === "I" && instOpcode === "0000011": // I load: load from memory
+      return true;
+  }
+  return false;
+}
+
+export function storesNextPC(instType, instOpcode) {
+  switch (true) {
+    case instType === "J":
+    case instType === "I" && instOpcode === "1100111":
+      return true;
+  }
+  return false;
+}
+
 export function usesIMM(instType) {
   return instType !== "R";
 }
 /**
  * Tests if an instruction writes to the RU
  * @param {*} instType the instruction type
+ * @param {*} instOpcode the instruction opcode
  */
-export function writesRU(instType) {
-  switch (instType) {
-    case "R":
-    case "I":
-    case "J":
+export function writesRU(instType, instOpcode) {
+  switch (true) {
+    case instType === "R":
+    case instType === "I" &&
+      (instOpcode === "0010011" ||
+        instOpcode === "0000011" ||
+        instOpcode === "1100111"):
+    case instType === "J":
+    case instType === "U":
       return true;
   }
   return false;
 }
 
+export function branchesOrJumps(instType, instOpcode) {
+  switch (true) {
+    case instType === "B":
+    case instType === "J":
+    case instType === "I" && instOpcode === "1100111":
+      return true;
+  }
+  return false;
+}
 /**
  * Returns the function type from a given opcode.
  */

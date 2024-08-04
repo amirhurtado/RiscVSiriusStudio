@@ -8,7 +8,9 @@ import {
   usesFunct7,
   usesFunct3,
   usesIMM,
-  usesRs2,
+  usesDM,
+  storesNextPC,
+  branchesOrJumps,
 } from "../utilities/instructions.js";
 
 import { computePosition, flip, shift, offset } from "@floating-ui/dom";
@@ -616,7 +618,7 @@ export function ALUB(element, cpuData) {
   });
   applyClass(signal, "signalDisabled");
   const path0Visible = (inst) => {
-    return usesRs2(inst);
+    return usesRegister("rs2", inst) && inst !== "S";
     // return inst === "R" || inst === "B" || inst === "J";
   };
   cpuData.installTooltip(
@@ -777,7 +779,6 @@ export function DM(element, cpuData) {
       SgnDMWRPTH: wrSignal,
       SgnDMWRVAL: wrSignalVal,
       CLKDM: clkConnection,
-      DMWBMUX: wbmuxConnection,
       MEMCLOCK: clock,
     },
     cpuElemStates: { DM: state },
@@ -785,7 +786,7 @@ export function DM(element, cpuData) {
   } = cpuData.getInfo();
 
   const components = [element, clock];
-  const connections = [clkConnection, wbmuxConnection];
+  const connections = [clkConnection];
   const signals = [ctrlSignal, wrSignal, ctrlSignalVal, wrSignalVal];
   const inputs = [addressText, datawrText];
 
@@ -900,11 +901,13 @@ export function WBMUX(element, cpuData) {
     return paragraph({ text: value });
   });
   document.addEventListener("SimulatorUpdate", (e) => {
-    // Disabled for B and S
     const instType = cpuData.instructionType();
-    instType !== "B" && instType !== "S"
-      ? cpuData.enable("WBMUX")
-      : cpuData.disable("WBMUX");
+    const instOpcode = cpuData.instructionOpcode();
+    if (writesRU(instType, instOpcode)) {
+      cpuData.enable("WBMUX");
+    } else {
+      cpuData.disable("WBMUX");
+    }
 
     if (cpuData.enabled("WBMUX")) {
       applyClass(element, "component");
@@ -1052,7 +1055,6 @@ export function PCALUA(element, cpuData) {
  */
 function imCUTooltipText(connection, cpuData) {
   const {
-    type,
     opcode,
     funct3,
     funct7,
@@ -1329,7 +1331,6 @@ export function IMIMM(element, cpuData) {
   mouseHover(
     element,
     () => {
-      // cpuData.setBinaryInstruction("imm");
       cpuData.setBinaryInstruction("imm");
     },
     () => {
@@ -1451,7 +1452,7 @@ export function RUALUB(element, cpuData) {
   );
   document.addEventListener("SimulatorUpdate", (e) => {
     const instType = cpuData.instructionType();
-    if (usesRegister("rs2", instType)) {
+    if (usesRegister("rs2", instType) && !usesIMM(instType)) {
       cpuData.enable("RUALUB");
       pathOnTop(element);
       applyClass(element, "connection");
@@ -1470,6 +1471,15 @@ export function RUDM(element, cpuData) {
 
   applyClass(element, "connectionDisabled");
   focus(element);
+  cpuData.installTooltip(element, "bottom", () => {
+    const value = cpuData.instructionResult().RURS2Val;
+    return tabular({
+      pairs: [
+        ["RU ⇔ DM", ""],
+        ["Value", value],
+      ],
+    });
+  });
   document.addEventListener("SimulatorUpdate", (e) => {
     const instType = cpuData.instructionType();
     if (instType === "S") {
@@ -1562,6 +1572,15 @@ export function ALUDM(element, cpuData) {
 
   applyClass(element, "connectionDisabled");
   focus(element);
+  cpuData.installTooltip(element, "bottom", () => {
+    const value = cpuData.instructionResult().ALURes;
+    return tabular({
+      pairs: [
+        ["ALU ⇔ DM", ""],
+        ["Value", value],
+      ],
+    });
+  });
   document.addEventListener("SimulatorUpdate", (e) => {
     const instType = cpuData.instructionType();
     if (instType === "S" || cpuData.instructionOpcode() === "0000011") {
@@ -1609,10 +1628,25 @@ export function DMWBMUX(element, cpuData) {
   } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
+  cpuData.installTooltip(element, "bottom", () => {
+    const value = cpuData.instructionResult().DMRes;
+    return tabular({
+      pairs: [
+        ["DM ⇔ WBMux", ""],
+        ["Value", value],
+      ],
+    });
+  });
   document.addEventListener("SimulatorUpdate", (e) => {
-    // ! TODO DMWBMUX always enabled
-    applyClass(element, "connection");
-    cpuData.enable("DMWBMUX");
+    const instType = cpuData.instructionType();
+    const instOpcode = cpuData.instructionOpcode();
+    if (writesRU(instType, instOpcode)) {
+      applyClass(element, "connection");
+      cpuData.enable("DMWBMUX");
+    } else {
+      applyClass(element, "connectionDisabled");
+      cpuData.disable("DMWBMUX");
+    }
   });
 }
 
@@ -1658,11 +1692,19 @@ export function ALUBUMUX(element, cpuData) {
   } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
+  cpuData.installTooltip(element, "bottom", () => {
+    const value = cpuData.instructionResult().ALURes;
+    return tabular({
+      pairs: [
+        ["ALU ⇔ BUMux", ""],
+        ["Value", value],
+      ],
+    });
+  });
   document.addEventListener("SimulatorUpdate", (e) => {
-    // ALUBUMUX enabled on S and ILoad instructions
     const instType = cpuData.instructionType();
-    const instOC = cpuData.instructionOpcode();
-    if (instType === "S" || instOC === "0000011") {
+    const instOpcode = cpuData.instructionOpcode();
+    if (branchesOrJumps(instType, instOpcode)) {
       applyClass(element, "connection");
       cpuData.enable("ALUBUMUX");
     } else {
