@@ -59,7 +59,8 @@ class BinaryInstructionView {
     const select = {
       R: formatRInstructionAsHTML,
       I: formatIInstructionAsHTML,
-      S: formatSInstructionAsHTML
+      S: formatSInstructionAsHTML,
+      B: formatBInstructionAsHTML
     };
 
     if (fields) {
@@ -109,6 +110,16 @@ function formatSInstructionAsHTML(instruction: any, highlight: string[]) {
   return inst;
 }
 
+function formatBInstructionAsHTML(instruction: any, highlight: string[]) {
+  const immP1 = format(instruction['immP1'], highlight.includes('imm'));
+  const rs1 = format(instruction['rs1'], highlight.includes('rs1'));
+  const funct3 = format(instruction['funct3'], highlight.includes('funct3'));
+  const immP2 = format(instruction['immP2'], highlight.includes('imm'));
+  const opcode = format(instruction['opcode'], highlight.includes('opcode'));
+  const inst = `<p class="h4">${immP1}-${rs1}-${funct3}-${immP2}-${opcode}</p>`;
+  return inst;
+}
+
 function extractGroups(
   inputString: string,
   instType: string
@@ -119,11 +130,14 @@ function extractGroups(
     /^(?<imm>[01]{12})(?<rs1>[01]{5})(?<funct3>[01]{3})(?<rd>[01]{5})(?<opcode>[01]{7})$/g;
   const regexS =
     /^(?<imm15_5>[01]{7})(?<rs2>[01]{5})(?<rs1>[01]{5})(?<funct3>[01]{3})(?<imm4_0>[01]{5})(?<opcode>[01]{7})$/g;
+  const regexB =
+    /^(?<immP1>[01]{7})(?<rs2>[01]{5})(?<rs1>[01]{5})(?<funct3>[01]{3})(?<immP2>[01]{5})(?<opcode>[01]{7})$/g;
 
   const select = {
     R: regexR,
     I: regexI,
-    S: regexS
+    S: regexS,
+    B: regexB
   };
   const match = select[instType].exec(inputString);
 

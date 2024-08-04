@@ -11,6 +11,7 @@ import {
   usesDM,
   storesNextPC,
   branchesOrJumps,
+  mightJump,
 } from "../utilities/instructions.js";
 
 import { computePosition, flip, shift, offset } from "@floating-ui/dom";
@@ -618,7 +619,7 @@ export function ALUB(element, cpuData) {
   });
   applyClass(signal, "signalDisabled");
   const path0Visible = (inst) => {
-    return usesRegister("rs2", inst) && inst !== "S";
+    return usesRegister("rs2", inst) && inst !== "S" && inst !== "B";
     // return inst === "R" || inst === "B" || inst === "J";
   };
   cpuData.installTooltip(
@@ -848,7 +849,8 @@ export function BUMUX(element, cpuData) {
   connections.forEach((x) => {
     applyClass(x, "connectionDisabled muxPathDisabled");
   });
-  const path1Visible = (inst, opcode) => {
+  const path1Visible = (instType, instOpcode, branchResult) => {
+    return mightJump(instType, instOpcode) && branchResult;
     return inst === "J" || inst === "B" || opcode === "1100111";
   };
   cpuData.installTooltip(path0, "top", () => {
@@ -859,8 +861,9 @@ export function BUMUX(element, cpuData) {
     cpuData.enable("BUMUX");
     applyClass(element, "component");
     const instType = cpuData.instructionType();
-    const instOC = cpuData.instructionOpcode();
-    if (path1Visible(instType, instOC)) {
+    const instOpcode = cpuData.instructionOpcode();
+    const branchResult = cpuData.instructionResult().BURes;
+    if (path1Visible(instType, instOpcode, branchResult)) {
       applyClass(path1, "connection muxPath");
       applyClass(path0, "connectionDisabled muxPathDisabled");
     } else {
@@ -1421,7 +1424,7 @@ export function RUALUA(element, cpuData) {
   document.addEventListener("SimulatorUpdate", (e) => {
     const instType = cpuData.instructionType();
     // if (instType !== "J" && instType !== "B") {
-    if (usesRegister("rs1", instType)) {
+    if (usesRegister("rs1", instType) && instType !== "B") {
       cpuData.enable("RUALUA");
       pathOnTop(element);
       applyClass(element, "connection");

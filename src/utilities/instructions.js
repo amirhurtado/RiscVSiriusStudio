@@ -112,6 +112,16 @@ export function storesNextPC(instType, instOpcode) {
   return false;
 }
 
+export function mightJump(instType, instOpcode) {
+  switch (true) {
+    case instType === "B":
+    case instType === "J":
+    case instType === "I" && instOpcode === "1101111":
+      return true;
+  }
+  return false;
+}
+
 export function usesIMM(instType) {
   return instType !== "R";
 }
