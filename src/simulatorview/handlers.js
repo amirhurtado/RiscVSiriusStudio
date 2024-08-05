@@ -11,7 +11,7 @@ import {
   usesDM,
   storesNextPC,
   branchesOrJumps,
-  mightJump,
+  storesMemRead,
 } from "../utilities/instructions.js";
 
 import { computePosition, flip, shift, offset } from "@floating-ui/dom";
@@ -850,8 +850,7 @@ export function BUMUX(element, cpuData) {
     applyClass(x, "connectionDisabled muxPathDisabled");
   });
   const path1Visible = (instType, instOpcode, branchResult) => {
-    return mightJump(instType, instOpcode) && branchResult;
-    return inst === "J" || inst === "B" || opcode === "1100111";
+    return branchesOrJumps(instType, instOpcode) && branchResult;
   };
   cpuData.installTooltip(path0, "top", () => {
     const value = cpuData.instructionResult().ADD4Res;
@@ -897,7 +896,7 @@ export function WBMUX(element, cpuData) {
     return opcode === "0000011";
   };
   const path10Visible = (inst, opcode) => {
-    return inst === "J" || opcode === "1100111";
+    return storesNextPC(inst, opcode);
   };
   cpuData.installTooltip(path00, "bottom", () => {
     const value = cpuData.instructionResult().ALURes;
@@ -1643,7 +1642,7 @@ export function DMWBMUX(element, cpuData) {
   document.addEventListener("SimulatorUpdate", (e) => {
     const instType = cpuData.instructionType();
     const instOpcode = cpuData.instructionOpcode();
-    if (writesRU(instType, instOpcode)) {
+    if (storesMemRead(instType, instOpcode)) {
       applyClass(element, "connection");
       cpuData.enable("DMWBMUX");
     } else {
@@ -1660,8 +1659,26 @@ export function ADD4WBMUX(element, cpuData) {
   } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
+  cpuData.installTooltip(element, "bottom", () => {
+    const value = cpuData.instructionResult().ADD4Res;
+    return tabular({
+      pairs: [
+        ["ADD4 ⇔ WBMux", ""],
+        ["Value", value],
+      ],
+    });
+  });
+
   document.addEventListener("SimulatorUpdate", (e) => {
-    cpuData.enable("ADD4WBMUX");
+    const instType = cpuData.instructionType();
+    const instOpcode = cpuData.instructionOpcode();
+    if (storesNextPC(instType, instOpcode)) {
+      cpuData.enable("ADD4WBMUX");
+      applyClass(element, "connection");
+    } else {
+      cpuData.disable("ADD4WBMUX");
+      applyClass(element, "connectionDisabled");
+    }
   });
 }
 

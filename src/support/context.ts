@@ -86,10 +86,6 @@ export class RVSimulationContext {
     // Ensure nothing is selected in the program memory and the registers views
     this.sendToMemory({ operation: 'clearSelection' });
     this.sendToRegisters({ operation: 'clearSelection' });
-    this.sendToSimulator({
-      operation: 'setRegisterData',
-      registers: this.cpu.getRegisterFile().getRegisterData()
-    });
     // console.log('Simulation context', 'program initialized', program);
   }
 
@@ -141,7 +137,7 @@ export class RVSimulationContext {
                 const instruction = this.cpu?.currentInstruction();
                 const result = this.cpu?.executeInstruction();
                 // Send messages to update the registers view.
-                if (writesRU(instruction.type)) {
+                if (writesRU(instruction.type, instruction.opcode)) {
                   this.sendToRegisters({
                     operation: 'setRegister',
                     register: instruction.rd.regeq,
