@@ -18,10 +18,8 @@ import {
   getFunct3,
   getFunct7
 } from '../utilities/instructions';
-/**
- * The result of the parsing is a representation of the actual program memory.
- * It is the code that will be executed by the simulator.
- */
+
+import _ from 'lodash';
 import { logger } from '../utilities/logger';
 
 class RegistersFile {
@@ -108,7 +106,7 @@ export class SCCPU {
     };
 
     const ALURes = selector[ALUOp](numA, numB) as number;
-    return ALURes.toString(2);
+    return _.padStart(ALURes.toString(2), 32, '0');
   }
 
   /**
@@ -134,7 +132,6 @@ export class SCCPU {
     const rs1Val = this.registers.readRegisterFromName(getRs1(instruction));
     const rs2Val = this.registers.readRegisterFromName(getRs2(instruction));
     const aluOp = getFunct7(instruction)[1] + getFunct3(instruction);
-
     const aluRes = this.computeALURes(rs1Val, rs2Val, aluOp);
     const add4Res = parseInt(this.currentInstruction().inst) + 4;
 
@@ -151,13 +148,13 @@ export class SCCPU {
       B: rs2Val,
       ALUOp: '0110',
       ALURes: aluRes,
-      BrOp: '00000',
+      BrOp: '00XXX',
       ADD4Res: add4Res,
       BURes: '0',
       BUMUXRes: add4Res,
       WBMUXRes: aluRes,
       RUDataWrSrc: '00',
-      RUWr: writesRU(this.currentType(), this.currentOpcode())
+      RUWr: writesRU(this.currentType(), this.currentOpcode()) ? '1' : '0'
 
       // IMM32: 57,
       // DMRes: 24,

@@ -275,6 +275,63 @@ export function IM(element, cpuData) {
   });
 }
 
+function cuArrowTooltipText(cpuData) {
+  const instType = cpuData.instructionType();
+  const result = cpuData.instructionResult();
+  switch (instType) {
+    case "R":
+      return tabular({
+        pairs: [
+          ["ALUASrc", result.ALUASrc],
+          ["ALUBSrc", result.ALUBSrc],
+          ["ALUOp", result.ALUOp],
+          ["BrOp", result.BrOp],
+          ["RUDataWrSrc", result.RUDataWrSrc],
+          ["NextPCSrc", result.BURes],
+          ["RUWr", result.RUWr],
+        ],
+      });
+    default:
+      return tabular({
+        pairs: [
+          ["ALUASrc", "COMPUTE"],
+          ["ALUBSrc", "COMPUTE"],
+          ["IMSrc", "COMPUTE"],
+          ["ALUOp", "COMPUTE"],
+          ["BROp", "COMPUTE"],
+          ["RUDataWrSrc", "COMPUTE"],
+        ],
+      });
+  }
+}
+
+function styleSignals(cpuData, instType, style) {
+  const {
+    cpuElements: {
+      SgnALUBSrcPTH: ALUBSignal,
+      SgnALUASrcPTH: ALUASignal,
+      SgnRUWRPTH: RUWrSignal,
+      SgnALUOPPTH: ALUOpSignal,
+      SgnWBPTH: RUDataWrSrcSignal,
+      SgnBUBROPPTH: BrOpSignal,
+    },
+  } = cpuData.getInfo();
+
+  const signalList = {
+    R: [
+      ALUBSignal,
+      ALUASignal,
+      RUWrSignal,
+      ALUOpSignal,
+      RUDataWrSrcSignal,
+      BrOpSignal,
+    ],
+  };
+  signalList[instType].forEach((signal) => {
+    applyClass(signal, style);
+  });
+}
+
 export function CU(element, cpuData) {
   const {
     cpuElements: { CUArrow: arrow },
@@ -289,19 +346,20 @@ export function CU(element, cpuData) {
     "left-start",
     () => {
       const { asm } = cpuData.getInstruction();
-      return tabular({
-        pairs: [
-          ["ALUASrc", "COMPUTE"],
-          ["ALUBSrc", "COMPUTE"],
-          ["IMSrc", "COMPUTE"],
-          ["ALUOp", "COMPUTE"],
-          ["BROp", "COMPUTE"],
-          ["RUDataWrSrc", "COMPUTE"],
-        ],
-      });
+      return cuArrowTooltipText(cpuData);
     },
     "CU"
   );
+  mouseHover(
+    arrow,
+    () => {
+      styleSignals(cpuData, cpuData.instructionType(), "signalHover");
+    },
+    () => {
+      styleSignals(cpuData, cpuData.instructionType(), "signal");
+    }
+  );
+
   document.addEventListener("SimulatorUpdate", (e) => {
     [element, arrow].forEach((e) => {
       applyClass(e, "component");
@@ -754,6 +812,14 @@ export function ALU(element, cpuData) {
   });
 }
 
+function setBrOp(cpuData) {
+  const {
+    cpuElements: { SgnBUBROPVAL: bropSignalValue },
+  } = cpuData.getInfo();
+  bropSignalValue.getElementsByTagName("div")[2].innerHTML =
+    cpuData.instructionResult().BrOp;
+}
+
 export function BU(element, cpuData) {
   const {
     cpuElements: { SgnBUBROPPTH: signal, SgnBUBROPVAL: signalVal },
@@ -765,11 +831,17 @@ export function BU(element, cpuData) {
   signals.forEach((e) => {
     applyClass(e, "signalDisabled");
   });
+  cpuData.installTooltip(element, "top", () => {
+    return paragraph({
+      text: "Not in a branch operation. Next instruction in the program memory will be executed.",
+    });
+  });
   document.addEventListener("SimulatorUpdate", (e) => {
     // Branch unit is always enabled as it controls NextPCSrc. When in a branch
     // instruction its inputs coming from the registers will be enabled.
     cpuData.enable("BU");
     applyClass(element, "component");
+    setBrOp(cpuData);
     signals.forEach((e) => {
       applyClass(e, "signal");
     });

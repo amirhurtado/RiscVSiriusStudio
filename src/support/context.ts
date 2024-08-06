@@ -123,6 +123,7 @@ export class RVSimulationContext {
       name: regName,
       value: value
     });
+    this.cpu?.getRegisterFile().writeRegister(regName, value);
   }
 
   private dispatch(message: any) {
@@ -195,6 +196,7 @@ export class RVSimulationContext {
               this.clearRegisterSelection();
               break;
             case 'registerUpdate':
+              console.log('Register update event ', message);
               this.updateRegister(message.name, message.value);
               break;
             default:

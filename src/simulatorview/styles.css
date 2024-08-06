@@ -214,6 +214,19 @@ html {
   }
 }
 
+/* For consistency reasons this class must be exactly equal to the one above. */ 
+.signalHover {
+  path {
+    stroke-width: var(--stroke-width-highlighted);
+    stroke: var(--signal-stroke-hover);
+    fill: var(--signal-stroke-hover);
+    animation: blinker 1.5s linear infinite;
+  }
+  div {
+    color: var(--signal-text-color-hover) !important;
+  }
+}
+
 .signalDisabled {
   path {
       stroke-width: var(--stroke-width);
