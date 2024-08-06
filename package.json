@@ -7,15 +7,17 @@
   "engines": {
     "vscode": "^1.75.0"
   },
-  "categories": [
-    "Programming Languages"
-  ],
+  "categories": ["Programming Languages"],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "rv-simulator.simulate",
-        "title": "RISCV simulator: simulate program execution"
+        "title": "RISCV simulator: simulate program execution",
+        "icon": {
+          "light": "media/play-svgrepo-com.svg",
+          "dark": "media/play-svgrepo-com.svg"
+        }
       },
       {
         "command": "rv-simulator.enableProgMemSync",
@@ -45,6 +47,14 @@
         }
       ]
     },
+    "menus": {
+      "view/title": [
+        {
+          "command": "rv-simulator.simulate",
+          "when": "view == rv-simulator.registers"
+        }
+      ]
+    },
     "keybindings": [
       {
         "key": "ctrl+f12",
@@ -54,13 +64,8 @@
     "languages": [
       {
         "id": "riscvasm",
-        "extensions": [
-          ".asm"
-        ],
-        "aliases": [
-          "RiscVAsm",
-          "riscvasm"
-        ],
+        "extensions": [".asm"],
+        "aliases": ["RiscVAsm", "riscvasm"],
         "configuration": "./riscv-configuration.json"
       }
     ],
