@@ -37,6 +37,7 @@ function usesRd(instType) {
   }
   return true;
 }
+
 /**
  * Tests whether register name is used during the execution of an instruction of type instType.
  * @param {string } name: name of the register in x-format i.e. x3, etc.
@@ -94,10 +95,34 @@ export function usesALU(instType) {
   return false;
 }
 
+export function isIArithmetic(instType, instOpcode) {
+  return instType === "I" && instOpcode === "0010011";
+}
+
+export function isILoad(instType, instOpcode) {
+  return instType === "I" && instOpcode === "0000011";
+}
+
+export function isIJump(instType, instOpcode) {
+  return instType === "I" && instOpcode === "1100111";
+}
+
+export function isIExt(instType, instOpcode) {
+  return instType === "I" && instOpcode === "1110011";
+}
+
+export function isLUI(instType, instOpcode) {
+  return instType === "U" && instOpcode === "0110111";
+}
+
+export function isAUIPC(instType, instOpcode) {
+  return instType === "U" && instOpcode === "0010111";
+}
+
 export function usesDM(instType, instOpcode) {
   switch (true) {
-    case instType === "S": // Stores in memory
-    case instType === "I" && instOpcode === "0000011": // I load: load from memory
+    case instType === "S":
+    case isILoad(instType, instOpcode):
       return true;
   }
   return false;
@@ -106,7 +131,7 @@ export function usesDM(instType, instOpcode) {
 export function storesNextPC(instType, instOpcode) {
   switch (true) {
     case instType === "J":
-    case instType === "I" && instOpcode === "1100111":
+    case isIJump(instType, instOpcode):
       return true;
   }
   return false;
@@ -114,6 +139,15 @@ export function storesNextPC(instType, instOpcode) {
 
 export function usesIMM(instType) {
   return instType !== "R";
+}
+
+/**
+ * Tests if an instruction writes to the data memory
+ * @param {*} instType the instruction type
+ * @param {*} instOpcode the instruction opcode
+ */
+export function writesDM(instType, instOpcode) {
+  return instType === "S";
 }
 /**
  * Tests if an instruction writes to the RU
@@ -123,10 +157,9 @@ export function usesIMM(instType) {
 export function writesRU(instType, instOpcode) {
   switch (true) {
     case instType === "R":
-    case instType === "I" &&
-      (instOpcode === "0010011" ||
-        instOpcode === "0000011" ||
-        instOpcode === "1100111"):
+    case isIArithmetic(instType, instOpcode):
+    case isILoad(instType, instOpcode):
+    case isIJump(instType, instOpcode):
     case instType === "J":
     case instType === "U":
       return true;
@@ -138,14 +171,24 @@ export function branchesOrJumps(instType, instOpcode) {
   switch (true) {
     case instType === "B":
     case instType === "J":
-    case instType === "I" && instOpcode === "1100111":
+    case isIJump(instType, instOpcode):
       return true;
   }
   return false;
 }
 
+export function storesALU(instType, instOpcode) {
+  switch (true) {
+    case instType === "R":
+    case isIArithmetic(instType, instOpcode):
+    case isIJump(instType, instOpcode):
+    case instType === "U":
+      return true;
+  }
+  return false;
+}
 export function storesMemRead(instType, instOpcode) {
-  return instType === "I" && instOpcode === "0000011";
+  return isILoad(instType, instOpcode);
 }
 
 /**
@@ -170,4 +213,49 @@ export function opcodeToType(opcode) {
     case "0010111":
       return "U";
   }
+}
+
+export function getRs1(instruction) {
+  if (!usesRs1(instruction.type)) {
+    throw new Error(
+      "Instruction of type " + instruction.type + " does not have rs1 field."
+    );
+  }
+  return instruction.rs1.regeq;
+}
+
+export function getRs2(instruction) {
+  if (!usesRs2(instruction.type)) {
+    throw new Error(
+      "Instruction of type " + instruction.type + " does not have rs2 field."
+    );
+  }
+  return instruction.rs2.regeq;
+}
+
+export function getRd(instruction) {
+  if (!usesRd(instruction.type)) {
+    throw new Error(
+      "Instruction of type " + instruction.type + " does not have rd field."
+    );
+  }
+  return instruction.rd.regeq;
+}
+
+export function getFunct3(instruction) {
+  if (!usesFunct3(instruction)) {
+    throw new Error(
+      "Instruction of type " + instruction.type + " does not have funct3 field"
+    );
+  }
+  return instruction.encoding.funct3;
+}
+
+export function getFunct7(instruction) {
+  if (!usesFunct3(instruction)) {
+    throw new Error(
+      "Instruction of type " + instruction.type + " does not have funct7 field"
+    );
+  }
+  return instruction.encoding.funct7;
 }

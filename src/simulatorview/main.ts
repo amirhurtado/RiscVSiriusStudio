@@ -11,6 +11,10 @@ import {
   arrow,
   Placement
 } from '@floating-ui/dom';
+import { elementToSVG, inlineResources } from 'dom-to-svg';
+
+import { jsPDF } from 'jspdf';
+import 'svg2pdf.js';
 
 import * as Handlers from './handlers.js';
 import { SimulatorInfo } from './SimulatorInfo.js';
@@ -67,6 +71,11 @@ function main() {
         register: register
       });
     });
+  });
+
+  const exportSVG = document.getElementById('export-svg') as Button;
+  exportSVG.addEventListener('click', (e) => {
+    exportToSVG();
   });
 
   // Install message dispatcher
@@ -290,4 +299,19 @@ function installListeners(cpuData: SimulatorInfo) {
       message: 'val1Mouseleave'
     });
   });
+}
+
+function exportToSVG() {
+  log('info', 'downloading svg');
+  const svgDOM = document.getElementById('main-svg') as HTMLElement;
+  const svgDocument = elementToSVG(svgDOM);
+  inlineResources(svgDocument.documentElement);
+  const svgString = new XMLSerializer().serializeToString(svgDocument);
+  const blob = new Blob([svgString], { type: 'text/obj' });
+  const a = document.createElement('a');
+
+  a.download = 'cpu.svg';
+  a.href = window.URL.createObjectURL(blob);
+  a.dataset.downloadurl = ['text/obj', a.download, a.href].join(':');
+  a.click();
 }

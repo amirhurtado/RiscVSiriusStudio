@@ -172,6 +172,7 @@ export class SimulatorPanel {
           <button id="step-execution" type="button" class="btn btn-outline-primary"><span class="d-flex justify-content-center align-items-center codicon codicon-debug-step-over"></span></button>
           <button id="restart-execution" type="button" class="btn btn-outline-primary"><span class="d-flex justify-content-center align-items-center codicon codicon-debug-restart"></span></button>
           <button id="inspect-registers" type="button" class="btn btn-outline-primary"><span class="d-flex justify-content-center align-items-center codicon codicon-archive"></span></button>
+          <button id="export-svg" type="button" class="btn btn-outline-primary"><span class="d-flex justify-content-center align-items-center codicon codicon-export"></span></button>
         </div>
 
       </div>

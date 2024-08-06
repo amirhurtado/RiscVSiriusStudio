@@ -301,7 +301,7 @@
     const immVal = getInt(offset);
     const immValBin = toBinaryString(immVal,21).substring(1,22);
       
-    const binEncoding = `${immValBin}-${rdBin}-${opcode}`;
+    const binEncoding = `${immValBin}${rdBin}${opcode}`;
 
     const encoding = {
       "rd": rdBin, "imm21": immValBin, "binEncoding": binEncoding

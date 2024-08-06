@@ -12,6 +12,8 @@ import {
   storesNextPC,
   branchesOrJumps,
   storesMemRead,
+  storesALU,
+  isLUI,
 } from "../utilities/instructions.js";
 
 import { computePosition, flip, shift, offset } from "@floating-ui/dom";
@@ -583,7 +585,12 @@ export function ALUA(element, cpuData) {
   // TODO: missing path1
   document.addEventListener("SimulatorUpdate", (e) => {
     const instType = cpuData.instructionType();
-    instType !== "U" ? cpuData.enable("ALUA") : cpuData.disable("ALUA");
+    const instOpcode = cpuData.instructionOpcode();
+    if (isLUI(instType, instOpcode)) {
+      cpuData.disable("ALUA");
+    } else {
+      cpuData.enable("ALUA");
+    }
     if (cpuData.enabled("ALUA")) {
       applyClass(element, "component");
       applyClass(signal, "signal");
@@ -890,10 +897,10 @@ export function WBMUX(element, cpuData) {
     applyClass(x, "connectionDisabled muxPathDisabled");
   });
   const path00Visible = (inst, opcode) => {
-    return inst === "R" || opcode === "0010011";
+    return storesALU(inst, opcode);
   };
   const path01Visible = (inst, opcode) => {
-    return opcode === "0000011";
+    return storesMemRead(inst, opcode);
   };
   const path10Visible = (inst, opcode) => {
     return storesNextPC(inst, opcode);
@@ -1035,7 +1042,8 @@ export function PCALUA(element, cpuData) {
   focus(element);
   document.addEventListener("SimulatorUpdate", (e) => {
     const instType = cpuData.instructionType();
-    if (instType === "J" || instType === "B") {
+    const instOpcode = cpuData.instructionOpcode();
+    if (instType === "U" && !isLUI(instType, instOpcode)) {
       applyClass(element, "connection");
       cpuData.enable("PCALUA");
     } else {
@@ -1545,8 +1553,13 @@ export function ALUAALU(element, cpuData) {
     return paragraph({ text: value });
   });
   document.addEventListener("SimulatorUpdate", (e) => {
-    cpuData.enable("ALUAALU");
-    applyClass(element, "connection");
+    if (cpuData.enabled("ALUA")) {
+      cpuData.enable("ALUAALU");
+      applyClass(element, "connection");
+    } else {
+      cpuData.disable("ALUAALU");
+      applyClass(element, "connectionDisabled");
+    }
   });
 }
 
@@ -1613,7 +1626,7 @@ export function ALUWBMUX(element, cpuData) {
     });
   });
   document.addEventListener("SimulatorUpdate", (e) => {
-    if (usesALU(cpuData.instructionType())) {
+    if (storesALU(cpuData.instructionType(), cpuData.instructionOpcode())) {
       applyClass(element, "connection");
       cpuData.enable("ALUWBMUX");
     } else {

@@ -274,13 +274,13 @@
     const binEncoding = `${imm20}${imm10_1}${imm11}${imm19_12}${rdBin}1101111`;
 
     const encoding = {
-      "imm21":immVal, "rd":rd,  "binEncoding": binEncoding, "imm[20]": imm20,
+      "imm21":immVal, "rd":rdBin,  "binEncoding": binEncoding, "imm[20]": imm20,
       "imm[11]": imm11, "imm[19:12]":imm19_12, "imm[10:1]":imm10_1, 
       "tgtVal": tgtVal
     };
 
     return {
-      "inst":instMem, "type":"J", "instruction": name,
+      "inst":instMem, "type":"J", "instruction": name, rd:rd,
       "imm21": target, "opcode": "1101111", "encoding":encoding,
       "location":location, "pseudo":pseudo
     };
@@ -296,7 +296,7 @@
     const immVal = getInt(offset);
     const immValBin = toBinaryString(immVal,21).substring(1,22);
       
-    const binEncoding = `${immValBin}-${rdBin}-${opcode}`;
+    const binEncoding = `${immValBin}${rdBin}${opcode}`;
 
     const encoding = {
       "rd": rdBin, "imm21": immValBin, "binEncoding": binEncoding

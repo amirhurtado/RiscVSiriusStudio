@@ -9,6 +9,15 @@
  * every component in the simulation.
  */
 
+import {
+  getRs1,
+  getRs2,
+  getRd,
+  writesDM,
+  writesRU,
+  getFunct3,
+  getFunct7
+} from '../utilities/instructions';
 /**
  * The result of the parsing is a representation of the actual program memory.
  * It is the code that will be executed by the simulator.
@@ -16,15 +25,31 @@
 import { logger } from '../utilities/logger';
 
 class RegistersFile {
-  private registers: Array<number>;
+  private registers: Array<string>;
   public constructor() {
-    this.registers = new Array(32).fill(0);
+    this.registers = new Array(32).fill('00000000000000000000000000000000');
   }
 
   public printRegisters() {
     this.registers.forEach((val, idx) => {
       logger().info({ msg: 'PrintRegister', idx: 'x' + idx, val: val });
     });
+  }
+
+  private getIndexFromName(name: string): number {
+    return parseInt(name.substring(1));
+  }
+
+  public readRegisterFromName(name: string): string {
+    return this.registers[this.getIndexFromName(name)];
+  }
+
+  public readRegister(index: number): string {
+    return this.registers[index];
+  }
+
+  public writeRegister(name: string, value: string) {
+    this.registers[this.getIndexFromName(name)] = value;
   }
 
   public getRegisterData() {
@@ -42,9 +67,17 @@ export class SCCPU {
     this.registers = new RegistersFile();
     this.pc = 0;
   }
+
   public currentInstruction() {
     // console.log('called current instruction ', this.program[this.pc]);
     return this.program[this.pc];
+  }
+
+  private currentType(): string {
+    return this.currentInstruction().type;
+  }
+  private currentOpcode(): string {
+    return this.currentInstruction().opcode;
   }
 
   private computeALURes(A: string, B: string, ALUOp: string): string {
@@ -53,8 +86,27 @@ export class SCCPU {
     const selector = {
       '0000': (a: number, b: number) => {
         return a + b;
+      },
+      '1000': (a: number, b: number) => {
+        return a - b;
+      },
+      '0100': (a: number, b: number) => {
+        return a ^ b;
+      },
+      '0110': (a: number, b: number) => {
+        return a | b;
+      },
+      '0111': (a: number, b: number) => {
+        return a & b;
+      },
+      '0001': (a: number, b: number) => {
+        return a << b;
+      },
+      '0101': (a: number, b: number) => {
+        return a >> b;
       }
     };
+
     const ALURes = selector[ALUOp](numA, numB) as number;
     return ALURes.toString(2);
   }
@@ -67,23 +119,49 @@ export class SCCPU {
    */
   public executeInstruction() {
     console.log('execute instruction', this.currentInstruction());
-    const aluRes = this.computeALURes('1010', '1110', '0000');
+    switch (this.currentType()) {
+      case 'R':
+        return this.executeRInstruction();
+      default:
+        throw new Error(
+          'Unknown instruction ' + JSON.stringify(this.currentInstruction())
+        );
+    }
+  }
+
+  private executeRInstruction() {
+    const instruction = this.currentInstruction();
+    const rs1Val = this.registers.readRegisterFromName(getRs1(instruction));
+    const rs2Val = this.registers.readRegisterFromName(getRs2(instruction));
+    const aluOp = getFunct7(instruction)[1] + getFunct3(instruction);
+
+    const aluRes = this.computeALURes(rs1Val, rs2Val, aluOp);
+    const add4Res = parseInt(this.currentInstruction().inst) + 4;
+
+    this.registers.writeRegister(getRd(instruction), aluRes);
+
     return {
-      ALURes: aluRes,
-      A: '1010',
-      B: '1110',
+      RURS1Val: rs1Val,
+      RURS2Val: rs2Val,
+      ALUASrc: '0',
+      ALUBSrc: '0',
+      ALUARes: rs1Val,
+      ALUBRes: rs2Val,
+      A: rs1Val,
+      B: rs2Val,
       ALUOp: '0110',
-      ADD4Res: parseInt(this.currentInstruction().inst) + 4,
+      ALURes: aluRes,
+      BrOp: '00000',
+      ADD4Res: add4Res,
+      BURes: '0',
+      BUMUXRes: add4Res,
       WBMUXRes: aluRes,
-      RUWr: 1,
-      RURS1Val: 42,
-      RURS2Val: 42,
-      ALUARes: 42,
-      ALUBRes: 43,
-      IMM32: 57,
-      BUMUXRes: 36,
-      BURes: false,
-      DMRes: 24
+      RUDataWrSrc: '00',
+      RUWr: writesRU(this.currentType(), this.currentOpcode())
+
+      // IMM32: 57,
+      // DMRes: 24,
+      // DMWr: writesDM(this.currentType(), this.currentOpcode())
     };
   }
 
