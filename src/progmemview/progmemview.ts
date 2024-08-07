@@ -10,11 +10,21 @@ import {
   RowComponent,
   TabulatorFull as Tabulator
 } from 'tabulator-tables';
+import { validAscii } from '../utilities/conversions';
 
 provideVSCodeDesignSystem().register(allComponents);
 
 const vscode = acquireVsCodeApi();
 window.addEventListener('load', main);
+
+/**
+ * Global and ugly way to store the relevant settings for this view. I have to
+ * find the way of passing the object to the view.
+ */
+const settings = {
+  codeSync: false,
+  instFormat: 'binary'
+};
 
 /**
  * Log functionality. The logger that is actually used is in the extension. This
@@ -40,6 +50,7 @@ type MemInstruction = {
 
 function main() {
   log('info', { message: 'Initializing progmem view [STARTED]' });
+  settings.codeSync = false;
 
   // Table setup
   let table = tableSetup();
@@ -79,32 +90,6 @@ function main() {
     reflectInstruction(row, instTable);
   });
 
-  // Code synchronization checkbox
-  const codeSync = document.getElementById('code-sync') as Checkbox;
-  codeSync.addEventListener('click', () => {
-    if (!codeSync.checked) {
-      table.deselectRow();
-    }
-  });
-  // Instruction format visualization
-  const instFormatBinary = document.getElementById(
-    'instruction-as-binary'
-  ) as Checkbox;
-  instFormatBinary.addEventListener('click', () => {
-    if (instFormatBinary.checked) {
-      ['value3', 'value2', 'value1', 'value0'].forEach((name) => {
-        table.getColumn(name).show();
-      });
-      table.getColumn('hex').hide();
-    } else {
-      table.getColumn('hex').show();
-      ['value3', 'value2', 'value1', 'value0'].forEach((name) => {
-        table.getColumn(name).hide();
-      });
-    }
-    table.redraw();
-  });
-
   log('info', { message: 'Initializing progmem view [FINISHED]' });
 }
 /**
@@ -136,19 +121,52 @@ function dispatch(event: MessageEvent, table: Tabulator) {
     case 'clearSelection':
       table.deselectRow();
       break;
+    case 'settingsChanged':
+      settingsChanged(data.settings, table);
+      break;
     default:
       log('info', 'unknown option');
       break;
   }
 }
+
+function settingsChanged(newSettings: any, table: Tabulator) {
+  log('info', {
+    m: 'Reacting to new settings',
+    n: newSettings
+  });
+  const { codeSync, instFormat } = newSettings;
+  settings.codeSync = codeSync;
+
+  if (!settings.codeSync) {
+    table.deselectRow();
+  }
+  settings.instFormat = instFormat;
+  setInstructionFormat(table);
+}
+
+function setInstructionFormat(table: Tabulator) {
+  if (settings.instFormat === 'binary') {
+    ['value3', 'value2', 'value1', 'value0'].forEach((name) => {
+      table.getColumn(name).show();
+    });
+    table.getColumn('hex').hide();
+  } else {
+    table.getColumn('hex').show();
+    ['value3', 'value2', 'value1', 'value0'].forEach((name) => {
+      table.getColumn(name).hide();
+    });
+  }
+  table.redraw();
+}
+
 function getSourceLineForInstruction(row: RowComponent): number {
   const line = row.getData().ir.location.start.line;
   return line - 1;
 }
 
 function selectInstructionInTable(line: number, table: Tabulator) {
-  const codeSync = document.getElementById('code-sync') as Checkbox;
-  if (!codeSync.checked) {
+  if (!settings.codeSync) {
     return;
   }
   const sourceLine = line + 1;

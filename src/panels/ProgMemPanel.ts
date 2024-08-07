@@ -112,21 +112,9 @@ export class ProgMemPanelView implements WebviewViewProvider {
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
         <body>
-        <section>
-        <h4>Program memory</h4>
         <div id="progmem-table" style="margin-top:1rem;"></div>
-        </section>
-        <section>
-        <h4>Instruction detail</h4>
         <span id="instruction-detail"></span><br>
         <div id="progmem-instruction" style="margin-top:1rem;"></div>
-        </section>
-        <section>
-            <h4>Options</h4>
-            <vscode-checkbox id="code-sync" checked>Code synchronization
-            </vscode-checkbox>
-            <vscode-checkbox id="instruction-as-binary" checked>Show instructions in binary</vscode-checkbox>
-        </section>
           <script type="module" nonce="${nonce}" src="${progmemUri}"></script>
         </body>
       </html>`;

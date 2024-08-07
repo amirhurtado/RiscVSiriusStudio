@@ -1,5 +1,6 @@
 import {
   commands,
+  ConfigurationChangeEvent,
   ExtensionContext,
   TextDocument,
   TextEditor,
@@ -7,24 +8,24 @@ import {
   Uri,
   window,
   workspace
-} from "vscode";
+} from 'vscode';
 
-import { SimulatorPanel } from "./panels/SimulatorPanel";
-import { RegisterPanelView } from "./panels/RegisterPanel";
-import { ProgMemPanelView } from "./panels/ProgMemPanel";
-import { compile, ParserResult } from "./utilities/riscvc";
-import { logger } from "./utilities/logger";
-import { RVExtensionContext, RVSimulationContext } from "./support/context";
+import { SimulatorPanel } from './panels/SimulatorPanel';
+import { RegisterPanelView } from './panels/RegisterPanel';
+import { ProgMemPanelView } from './panels/ProgMemPanel';
+import { compile, ParserResult } from './utilities/riscvc';
+import { logger } from './utilities/logger';
+import { RVExtensionContext, RVSimulationContext } from './support/context';
 
 export function activate(context: ExtensionContext) {
-  console.log("Activating extension");
-  logger().info("Activating extension");
+  console.log('Activating extension');
+  logger().info('Activating extension');
   const rvContext = new RVExtensionContext();
   const smContext = new RVSimulationContext();
 
   context.subscriptions.push(
     window.registerWebviewViewProvider(
-      "rv-simulator.registers",
+      'rv-simulator.registers',
       RegisterPanelView.render(context.extensionUri, {}),
       { webviewOptions: { retainContextWhenHidden: true } }
     )
@@ -32,22 +33,22 @@ export function activate(context: ExtensionContext) {
 
   context.subscriptions.push(
     window.registerWebviewViewProvider(
-      "rv-simulator.progmem",
+      'rv-simulator.progmem',
       ProgMemPanelView.render(context.extensionUri, {}),
       { webviewOptions: { retainContextWhenHidden: true } }
     )
   );
 
   context.subscriptions.push(
-    commands.registerCommand("rv-simulator.simulate", () => {
+    commands.registerCommand('rv-simulator.simulate', () => {
       const editor = window.activeTextEditor;
       simulateProgram(editor, context.extensionUri, smContext);
     })
   );
 
   context.subscriptions.push(
-    commands.registerCommand("rv-simulator.enableProgMemSync", () => {
-      console.log("executing progmemsync command");
+    commands.registerCommand('rv-simulator.enableProgMemSync', () => {
+      console.log('executing progmemsync command');
       /**
        * To handle synchronization we need to track changes of the cursor in the
        * text editor to reflect changes on the program code. Due to this bug or
@@ -97,15 +98,29 @@ export function activate(context: ExtensionContext) {
   });
 
   workspace.onDidSaveTextDocument((document) => {
-    console.log("Save editor event");
+    console.log('Save editor event');
     if (RVExtensionContext.isValidfile(document)) {
       const editor = window.activeTextEditor;
       buildAndUploadProgram(editor);
     }
   });
 
+  workspace.onDidChangeConfiguration((e: ConfigurationChangeEvent) => {
+    console.log('Configuration change occurred.');
+    const codeSync = workspace
+      .getConfiguration()
+      .get('rv-simulator.programMemoryView.codeSynchronization');
+    const instFormat = workspace
+      .getConfiguration()
+      .get('rv-simulator.programMemoryView.instructionFormat');
+    sendMessageToProgMemView({
+      operation: 'settingsChanged',
+      settings: { codeSync: codeSync, instFormat: instFormat }
+    });
+  });
+
   // enable synchronization
-  commands.executeCommand("rv-simulator.enableProgMemSync");
+  commands.executeCommand('rv-simulator.enableProgMemSync');
 }
 
 function simulateProgram(
@@ -118,14 +133,14 @@ function simulateProgram(
       editor.document.getText(),
       editor.document.fileName
     );
-    console.log("compile output ", buildResult);
+    console.log('compile output ', buildResult);
     if (!buildResult.sucess) {
-      window.showErrorMessage("Build process failed. Cannot simulate program");
+      window.showErrorMessage('Build process failed. Cannot simulate program');
       return;
     }
     if (buildResult.ir) {
       SimulatorPanel.render(extensionUri);
-      window.showInformationMessage("Starting simulation");
+      window.showInformationMessage('Starting simulation');
       smContext.init(
         buildResult.ir,
         SimulatorPanel.getPanel(extensionUri),
@@ -147,28 +162,28 @@ function buildAndUploadProgram(editor: TextEditor | undefined) {
     const inputsrc = document.getText();
     const result = buildProgram(inputsrc, document.fileName);
     if (!result.sucess) {
-      window.showErrorMessage("Build failure!");
+      window.showErrorMessage('Build failure!');
     } else {
       const progmem = ProgMemPanelView.currentview?.getWebView();
-      progmem?.postMessage({ operation: "updateProgram", program: result.ir });
+      progmem?.postMessage({ operation: 'updateProgram', program: result.ir });
       // console.log(result.ir);
     }
   }
 }
 
 function highlightInstructionInMemory(editor: TextEditor | undefined) {
-  console.log("highlight instruction called");
+  console.log('highlight instruction called');
   if (editor) {
     if (editor.document.isDirty) {
       window.showInformationMessage(
-        "Source is out of sync. Save to synchronize with memory view"
+        'Source is out of sync. Save to synchronize with memory view'
       );
-      sendMessageToProgMemView({ operation: "clearProgMemSelections" });
+      sendMessageToProgMemView({ operation: 'clearProgMemSelections' });
     } else {
       const position = editor.selection.active;
       const line = position.line;
       sendMessageToProgMemView({
-        operation: "selectInstruction",
+        operation: 'selectInstruction',
         sourceLine: line
       });
     }
@@ -176,7 +191,7 @@ function highlightInstructionInMemory(editor: TextEditor | undefined) {
 }
 
 function sendMessageToProgMemView(msg: any) {
-  console.log("sending message", msg);
+  console.log('sending message', msg);
   const progmem = ProgMemPanelView.currentview?.getWebView();
   if (progmem) {
     progmem.postMessage(msg);
