@@ -117,6 +117,14 @@ export function activate(context: ExtensionContext) {
       operation: 'settingsChanged',
       settings: { codeSync: codeSync, instFormat: instFormat }
     });
+    const sort = workspace
+      .getConfiguration()
+      .get('rv-simulator.registersView.sort');
+
+    sendMessageToRegistersView({
+      operation: 'settingsChanged',
+      settings: { sort: sort }
+    });
   });
 
   // enable synchronization
@@ -191,9 +199,17 @@ function highlightInstructionInMemory(editor: TextEditor | undefined) {
 }
 
 function sendMessageToProgMemView(msg: any) {
-  console.log('sending message', msg);
+  console.log('sending message to progmemview', msg);
   const progmem = ProgMemPanelView.currentview?.getWebView();
   if (progmem) {
     progmem.postMessage(msg);
+  }
+}
+
+function sendMessageToRegistersView(msg: any) {
+  console.log('sending message to registersview', msg);
+  const registers = RegisterPanelView.currentview?.getWebView();
+  if (registers) {
+    registers.postMessage(msg);
   }
 }

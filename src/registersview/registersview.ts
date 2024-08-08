@@ -31,6 +31,14 @@ const vscode = acquireVsCodeApi();
 window.addEventListener('load', main);
 
 /**
+ * Global and ugly way to store the relevant settings for this view. I have to
+ * find the way of passing the object to the view.
+ */
+const settings = {
+  sort: 'name'
+};
+
+/**
  * Log functionality. The logger that is actually used is in the extension. This
  * function sends the message to the extension with all the information required
  * to log it.
@@ -67,7 +75,10 @@ type RegisterValue = {
 
 function main() {
   let table = tableSetup();
-  sortCriteria(table);
+  table.on('cellEdited', () => {
+    sortTable(table);
+  });
+
   // Message dispatcher
   window.addEventListener('message', (event) => {
     dispatch(event, table);
@@ -89,6 +100,25 @@ function dispatch(event: MessageEvent, table: Tabulator) {
     case 'watchRegister':
       watchRegister(data.register, table);
       break;
+    case 'settingsChanged':
+      settingsChanged(data.settings, table);
+      break;
+    default:
+      throw new Error('Unknown operation ' + data.operation);
+  }
+}
+
+function settingsChanged(newSettings: any, table: Tabulator) {
+  log('info', {
+    place: 'registersview',
+    m: 'Reacting to new settings',
+    n: newSettings
+  });
+
+  const { sort } = newSettings;
+  if (sort !== settings.sort) {
+    settings.sort = sort;
+    sortTable(table);
   }
 }
 
@@ -141,7 +171,7 @@ function tableSetup(): Tabulator {
   ];
   let tableData = [] as Array<RegisterValue>;
   let table = new Tabulator('#registers-table', {
-    maxHeight: '80vh',
+    // maxHeight: '100%',
     data: tableData,
     layout: 'fitColumns',
     layoutColumnsOnNewData: true,
@@ -492,31 +522,17 @@ function hederGrouping(
  * @param table view to sort
  */
 function sortTable(table: Tabulator) {
-  const lastModifiedCB = document.getElementById(
-    'sort-last-modified'
-  ) as Checkbox;
-  if (lastModifiedCB.checked) {
-    table.setSort('modified', 'desc');
-  } else {
+  log('info', {
+    m: 'sortingTable',
+    sort: settings.sort,
+    place: 'registersview'
+  });
+  if (settings.sort === 'name') {
     table.setSort('id', 'asc');
+  } else {
+    // Assume last modified sort
+    table.setSort('modified', 'desc');
   }
-}
-
-/**
- * Installs the trigger for sorting the table view.
- * @param table table to sort
- */
-function sortCriteria(table: Tabulator) {
-  table.on('cellEdited', () => {
-    sortTable(table);
-  });
-
-  const lastModifiedCB = document.getElementById(
-    'sort-last-modified'
-  ) as Checkbox;
-  lastModifiedCB.addEventListener('change', () => {
-    sortTable(table);
-  });
 }
 
 /**

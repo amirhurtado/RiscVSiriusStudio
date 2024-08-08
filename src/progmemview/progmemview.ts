@@ -132,6 +132,7 @@ function dispatch(event: MessageEvent, table: Tabulator) {
 
 function settingsChanged(newSettings: any, table: Tabulator) {
   log('info', {
+    place: 'progmemview',
     m: 'Reacting to new settings',
     n: newSettings
   });

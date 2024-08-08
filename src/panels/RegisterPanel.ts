@@ -95,9 +95,6 @@ export class RegisterPanelView implements WebviewViewProvider {
         <body>
           <div id="registers-table" style="margin-top:1rem;"></div>
           <div class="search-container">
-            <div class="search-element">
-              <vscode-checkbox id="sort-last-modified">Sort by last modified</vscode-checkbox>
-            </div>
           </div>
           <script type="module" nonce="${nonce}" src="${registerswUri}"></script>
         </body>

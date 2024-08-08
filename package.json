@@ -50,10 +50,15 @@
     "configuration": {
       "title": "RISCV Simulator",
       "properties": {
-        "rv-simulator.registersView.sortByLastModified": {
-          "type": "boolean",
-          "default": false,
-          "description": "Sort registers by last modified in the registers view."
+        "rv-simulator.registersView.sort": {
+          "type": "string",
+          "default": "name",
+          "enum": ["name", "last modified"],
+          "enumDescriptions": [
+            "Sort registers by its name (x0, x1, ...)",
+            "Sort registers by modification (last modified comes first"
+          ],
+          "description": "Sort registers in according to name or modification time."
         },
         "rv-simulator.programMemoryView.instructionFormat": {
           "type": "string",
