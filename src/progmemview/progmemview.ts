@@ -137,13 +137,17 @@ function settingsChanged(newSettings: any, table: Tabulator) {
     n: newSettings
   });
   const { codeSync, instFormat } = newSettings;
-  settings.codeSync = codeSync;
 
-  if (!settings.codeSync) {
-    table.deselectRow();
+  if (settings.codeSync !== codeSync) {
+    settings.codeSync = codeSync;
+    if (!settings.codeSync) {
+      table.deselectRow();
+    }
   }
-  settings.instFormat = instFormat;
-  setInstructionFormat(table);
+  if (settings.instFormat !== instFormat) {
+    settings.instFormat = instFormat;
+    setInstructionFormat(table);
+  }
 }
 
 function setInstructionFormat(table: Tabulator) {
