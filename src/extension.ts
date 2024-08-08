@@ -13,6 +13,7 @@ import {
 import { SimulatorPanel } from './panels/SimulatorPanel';
 import { RegisterPanelView } from './panels/RegisterPanel';
 import { ProgMemPanelView } from './panels/ProgMemPanel';
+import { InstructionPanelView } from './panels/InstructionPanel';
 import { compile, ParserResult } from './utilities/riscvc';
 import { logger } from './utilities/logger';
 import { RVExtensionContext, RVSimulationContext } from './support/context';
@@ -23,6 +24,7 @@ export function activate(context: ExtensionContext) {
   const rvContext = new RVExtensionContext();
   const smContext = new RVSimulationContext();
 
+  // Registers view
   context.subscriptions.push(
     window.registerWebviewViewProvider(
       'rv-simulator.registers',
@@ -31,10 +33,20 @@ export function activate(context: ExtensionContext) {
     )
   );
 
+  // Program memory view
   context.subscriptions.push(
     window.registerWebviewViewProvider(
       'rv-simulator.progmem',
       ProgMemPanelView.render(context.extensionUri, {}),
+      { webviewOptions: { retainContextWhenHidden: true } }
+    )
+  );
+
+  // Instruction view
+  context.subscriptions.push(
+    window.registerWebviewViewProvider(
+      'rv-simulator.instruction',
+      InstructionPanelView.render(context.extensionUri, {}),
       { webviewOptions: { retainContextWhenHidden: true } }
     )
   );

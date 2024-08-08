@@ -90,6 +90,14 @@ const progmemviewConfig = {
   outfile: "./out/progmemview.js",
 };
 
+const instructionviewConfig = {
+  ...baseConfig,
+  target: "es2020",
+  format: "esm",
+  entryPoints: ["./src/instructionview/instructionview.ts"],
+  outfile: "./out/instructionview.js",
+};
+
 // This watch config adheres to the conventions of the esbuild-problem-matchers
 // extension (https://github.com/connor4312/esbuild-problem-matchers#esbuild-via-js)
 /** @type BuildOptions */
@@ -133,6 +141,10 @@ const watchConfig = {
         ...progmemviewConfig,
         ...watchConfig,
       });
+      await build({
+        ...instructionviewConfig,
+        ...watchConfig,
+      });
       console.log("[watch] build finished");
     } else {
       // Build extension and webview code
@@ -140,6 +152,7 @@ const watchConfig = {
       await build(simulatorviewConfig);
       await build(registersviewConfig);
       await build(progmemviewConfig);
+      await build(instructionviewConfig);
       console.log("build complete");
     }
   } catch (err) {

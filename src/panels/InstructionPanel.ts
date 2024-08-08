@@ -11,8 +11,8 @@ import { getNonce } from '../utilities/getNonce';
 import { applyDecoration } from '../utilities/editor-utils';
 import { logger } from '../utilities/logger';
 
-export class ProgMemPanelView implements WebviewViewProvider {
-  public static currentview: ProgMemPanelView | undefined;
+export class InstructionPanelView implements WebviewViewProvider {
+  public static currentview: InstructionPanelView | undefined;
   private constructor(
     private readonly extensionUri: Uri,
     private data: any,
@@ -21,11 +21,14 @@ export class ProgMemPanelView implements WebviewViewProvider {
     this.extensionUri = extensionUri;
   }
 
-  public static render(extensionUri: Uri, data: any): ProgMemPanelView {
-    if (!ProgMemPanelView.currentview) {
-      ProgMemPanelView.currentview = new ProgMemPanelView(extensionUri, data);
+  public static render(extensionUri: Uri, data: any): InstructionPanelView {
+    if (!InstructionPanelView.currentview) {
+      InstructionPanelView.currentview = new InstructionPanelView(
+        extensionUri,
+        data
+      );
     }
-    return ProgMemPanelView.currentview;
+    return InstructionPanelView.currentview;
   }
 
   public getWebView(): Webview {
@@ -85,7 +88,10 @@ export class ProgMemPanelView implements WebviewViewProvider {
   }
 
   private _getHtmlForWebview(webview: Webview, extensionUri: Uri) {
-    const progmemUri = getUri(webview, extensionUri, ['out', 'progmemview.js']);
+    const instructionUri = getUri(webview, extensionUri, [
+      'out',
+      'instructionview.js'
+    ]);
     const nonce = getNonce();
     const tabulatorCSS = getUri(webview, extensionUri, [
       'out',
@@ -112,8 +118,8 @@ export class ProgMemPanelView implements WebviewViewProvider {
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
         <body>
-          <div id="progmem-table" style="margin-top:1rem;"></div>
-          <script type="module" nonce="${nonce}" src="${progmemUri}"></script>
+          <div id="instruction" style="margin-top:1rem;"></div>
+          <script type="module" nonce="${nonce}" src="${instructionUri}"></script>
         </body>
       </html>`;
   }
