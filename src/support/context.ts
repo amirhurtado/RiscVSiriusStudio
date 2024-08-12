@@ -2,12 +2,16 @@ import { TextDocument } from 'vscode';
 import { SCCPU } from '../vcpu/singlecycle';
 import { SimulatorPanel } from '../panels/SimulatorPanel';
 import { ProgMemPanelView } from '../panels/ProgMemPanel';
+import { InstructionPanelView } from '../panels/InstructionPanel';
 import { RegisterPanelView } from '../panels/RegisterPanel';
 import { usesRegister, writesRU } from '../utilities/instructions';
+import { compile } from '../utilities/riscvc';
 
 export class RVExtensionContext {
   private previousLine: number;
+
   private currentFile: string | undefined;
+  private currentIR: any | undefined;
 
   public constructor() {
     this.previousLine = 0;
@@ -18,9 +22,65 @@ export class RVExtensionContext {
     return this.currentFile;
   }
 
-  public setCurrentFile(name: string | undefined) {
+  public build(fileName: string, sourceCode: string) {
+    const result = compile(sourceCode, fileName);
+    if (result.sucess) {
+      this.currentIR = result.ir;
+    } else {
+      this.currentIR = undefined;
+    }
+  }
+
+  public validIR(): boolean {
+    return this.currentIR !== undefined;
+  }
+
+  public setAndBuildCurrentFile(name: string, sourceCode: string) {
     this.currentFile = name;
     this.previousLine = -1;
+    this.build(name, sourceCode);
+  }
+
+  public getIRForInstructionAt(line: number): any {
+    if (this.currentIR === undefined) {
+      throw Error('There is no intermediate representation of code yet.');
+    }
+    // handle difference between vscode line numbers and parser line numbers.
+    const sourceLine = line + 1;
+
+    const instruction = this.currentIR.find((e: any) => {
+      const currentPos = e.location.start.line;
+      return currentPos === sourceLine;
+    });
+
+    if (instruction) {
+      return instruction;
+    } else {
+      // There are cases for which there is no instruction at a particular line.
+      // For instance at code comments.
+      return undefined;
+    }
+  }
+
+  public uploadIR(programMemory: ProgMemPanelView) {
+    if (!this.validIR()) {
+      console.log('No valid IR, skipping');
+    } else {
+      programMemory
+        .getWebView()
+        .postMessage({ operation: 'updateProgram', program: this.currentIR });
+    }
+  }
+  public reflectInstruction(instruction: InstructionPanelView, ir: any) {
+    if (!this.validIR()) {
+      console.log('No valid IR, skipping');
+    } else {
+      console.log('Message to reflect instruction');
+      instruction.getWebView().postMessage({
+        operation: 'updateInstruction',
+        instruction: ir
+      });
+    }
   }
 
   public isCurrentFile(name: string) {
@@ -42,7 +102,7 @@ export class RVExtensionContext {
    * The only check performed is based on the language identifier which in turns
    * depend on the package.json file.
    */
-  public static isValidfile(document?: TextDocument | undefined): boolean {
+  public static isValidFile(document?: TextDocument | undefined): boolean {
     return document
       ? document.languageId === 'riscvasm' && document.uri.scheme === 'file'
       : false;

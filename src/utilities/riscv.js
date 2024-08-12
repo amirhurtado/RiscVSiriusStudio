@@ -873,7 +873,7 @@ function peg$parse(input, options) {
     ret["Type"] = "SrcInstruction";
     const binEncoding = inst["encoding"]["binEncoding"];
     inst["encoding"]["hexEncoding"] = encodingAsHex(binEncoding);
-    console.log("Instruction rule", ret);
+    // console.log("Instruction rule", ret);
     return ret; 
   };
   var peg$f5 = function(id) {

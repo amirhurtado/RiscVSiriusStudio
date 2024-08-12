@@ -1,5 +1,5 @@
-import { parse as preparse } from "./riscv-pre.js";
-import { parse } from "./riscv.js";
+import { parse as preparse } from './riscv-pre.js';
+import { parse } from './riscv.js';
 
 export type ParserResult = {
   sucess: boolean;
@@ -9,9 +9,9 @@ export type ParserResult = {
 };
 
 export function compile(inputSrc: any, inputName: any): ParserResult {
-  console.log("Reading from file: ", inputName);
+  console.log('Reading from file: ', inputName);
   let labelTable = {};
-  console.log("Processing labels:");
+  console.log('Processing labels:');
   try {
     preparse(inputSrc, {
       grammarSource: inputName,
@@ -21,7 +21,7 @@ export function compile(inputSrc: any, inputName: any): ParserResult {
     return {
       sucess: false,
       ir: undefined,
-      info: "First pass failure",
+      info: 'First pass failure',
       extra: obj
     };
   }
@@ -30,7 +30,6 @@ export function compile(inputSrc: any, inputName: any): ParserResult {
   let parserOutput = {};
 
   try {
-    console.log("Parsing file:");
     parserOutput = parse(inputSrc, {
       grammarSource: inputName,
       symbols: labelTable
@@ -39,15 +38,15 @@ export function compile(inputSrc: any, inputName: any): ParserResult {
     return {
       sucess: false,
       ir: undefined,
-      info: "Second pass failure",
+      info: 'Second pass failure',
       extra: obj
     };
   }
-  console.log("Second pass done!");
+  console.log('Second pass done!');
   return {
     sucess: true,
     ir: parserOutput as any[],
-    info: "Sucess",
+    info: 'Sucess',
     extra: undefined
   };
 }

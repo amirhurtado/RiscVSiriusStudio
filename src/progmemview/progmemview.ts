@@ -99,11 +99,6 @@ function dispatch(event: MessageEvent, table: Tabulator) {
   switch (data.operation) {
     case 'updateProgram':
       updateProgram(data.program, table);
-      sendMessageToExtension({
-        command: 'log-info',
-        m: 'program updated new',
-        tblData: table.getData()
-      });
       break;
     case 'selectInstruction':
       // log('info', 'select instruction ' + data.sourceLine);
@@ -188,27 +183,12 @@ function selectInstructionFromAddress(address: string, table: Tabulator) {
 }
 
 function updateProgram(program: Array<any>, table: Tabulator) {
-  const tableData = table.getData();
-  let i = 0;
-  while (i < program.length && i < tableData.length) {
-    const { inst: addr, encoding: enc, location: loc } = program[i];
-    const instruction = parseInstruction(addr, enc, program[i]);
-    if (!_.isEqual(instruction, tableData[i])) {
-      table.updateData([instruction]);
-    }
-    i++;
-  }
-  while (i < program.length) {
-    const { inst: addr, encoding: enc } = program[i];
-    const instruction = parseInstruction(addr, enc, program[i]);
-    table.updateOrAddData([instruction]);
-    i++;
-  }
-  while (tableData.length > i) {
-    tableData.pop();
-    i++;
-  }
-  table.redraw(true);
+  table.clearData();
+  program.forEach((inst) => {
+    const { inst: addr, encoding: enc, location: loc } = inst;
+    const instruction = parseInstruction(addr, enc, inst);
+    table.updateOrAddRow(instruction.address, instruction);
+  });
 }
 
 function parseInstruction(

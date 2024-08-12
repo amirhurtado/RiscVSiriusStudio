@@ -6,7 +6,6 @@ import {
 import {
   ColumnDefinition,
   Options,
-  RowComponent,
   TabulatorFull as Tabulator
 } from 'tabulator-tables';
 
@@ -16,14 +15,6 @@ provideVSCodeDesignSystem().register(allComponents);
 
 const vscode = acquireVsCodeApi();
 window.addEventListener('load', main);
-
-/**
- * Global and ugly way to store the relevant settings for this view. I have to
- * find the way of passing the object to the view.
- */
-// const settings = {
-//   sort: 'name'
-// };
 
 /**
  * Log functionality. The logger that is actually used is in the extension. This
@@ -37,100 +28,24 @@ function log(kind: string, object: any = {}) {
   sendMessageToExtension({ command: 'log-' + kind, obj: { object } });
 }
 
-/**
- * Type definition for the possible views on a binary string.
- *
- * - 2: binary view
- * - "signed": as a signed decimal number
- * - "unsigned": as an unsigned decimal number
- * - 16: as an hexadecimal number
- * - ascii: as a sequence of 8 bits ascii characters (left to right)
- */
-// const possibleViews = [2, 'signed', 'unsigned', 16, 'ascii'];
-// type RegisterView = typeof possibleViews[number];
-
-// type RegisterValue = {
-//   name: string;
-//   rawName: string;
-//   value: string;
-//   rawValue: string;
-//   watched: boolean;
-//   modified: number;
-//   id: number;
-//   viewType: RegisterView;
-// };
-
 function main() {
   let instTable = createInstructionTable();
 
-  // let table = tableSetup();
-  // table.on('cellEdited', () => {
-  //   sortTable(table);
-  // });
-
   // Message dispatcher
   window.addEventListener('message', (event) => {
-    // dispatch(event, table);
+    dispatch(event, instTable);
   });
 }
 
-function dispatch(event: MessageEvent, table: Tabulator) {
+function dispatch(event: MessageEvent, table: InstTable) {
   const data = event.data;
   switch (data.operation) {
-    // case 'selectRegister':
-    //   selectRegister(data.register, table);
-    //   break;
-    // case 'setRegister':
-    //   setRegister(data.register, data.value, table);
-    //   break;
-    // case 'clearSelection':
-    //   table.deselectRow();
-    //   break;
-    // case 'watchRegister':
-    //   watchRegister(data.register, table);
-    //   break;
-    // case 'settingsChanged':
-    //   settingsChanged(data.settings, table);
-    //   break;
+    case 'updateInstruction':
+      reflectInstruction(data.instruction, table);
+      break;
     default:
       throw new Error('Unknown operation ' + data.operation);
   }
-}
-
-function tableSetup() {
-  // let tableData = [] as Array<RegisterValue>;
-  // let table = new Tabulator('#registers-table', {
-  //   // maxHeight: '100%',
-  //   data: tableData,
-  //   layout: 'fitColumns',
-  //   layoutColumnsOnNewData: true,
-  //   index: 'rawName',
-  //   reactiveData: true,
-  //   groupBy: 'watched',
-  //   groupValues: [[true, false]],
-  //   groupHeader: hederGrouping,
-  //   groupUpdateOnCellEdit: true,
-  //   movableRows: true,
-  //   validationMode: 'blocking'
-  // });
-  // registers.forEach((e, idx) => {
-  //   const [xname, abi] = e.split(' ');
-  //   const zeros32 = '0';
-  //   tableData.push({
-  //     name: `${xname} ${abi}`,
-  //     rawName: `${xname}`,
-  //     value: zeros32,
-  //     rawValue: zeros32,
-  //     viewType: 2,
-  //     watched: false,
-  //     modified: 0,
-  //     id: idx
-  //   });
-  // });
-  // table.on('rowDblClick', toggleWatched);
-  // table.on('cellEdited', modifiedCell);
-  // table.on('cellEdited', notifyExtension);
-  // return table;
 }
 
 type TypeInstructionValue = {
@@ -300,17 +215,16 @@ function createInstructionTable(): InstTable {
   return { table: table, handler: tableHandler };
 }
 
-function reflectInstruction(instruction: RowComponent, instTable: InstTable) {
+function reflectInstruction(instruction: any, instTable: InstTable) {
   const {
-    ir: {
-      type,
-      encoding: { binEncoding }
-    }
-  } = instruction.getData();
+    type,
+    encoding: { binEncoding }
+  } = instruction;
+
   const pattern = (type as string).toLocaleUpperCase();
   instTable.handler(pattern);
   updateColumnValues(instTable, binEncoding);
-  updateInstructionInfo(instruction);
+  instTable.table.redraw(true);
 }
 
 function updateColumnValues(instTable: InstTable, binEncoding: string) {
@@ -323,14 +237,6 @@ function updateColumnValues(instTable: InstTable, binEncoding: string) {
     instTable.table.clearData();
     instTable.table.addRow(data);
   }
-}
-
-function updateInstructionInfo(instruction: RowComponent) {
-  // const info = document.getElementById('instruction-detail') as HTMLElement;
-  // const {
-  //   ir: { type }
-  // } = instruction.getData();
-  // info.innerHTML = `${type}`;
 }
 
 /**

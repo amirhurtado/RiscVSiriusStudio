@@ -3,6 +3,7 @@ import {
   ConfigurationChangeEvent,
   ExtensionContext,
   TextDocument,
+  TextDocumentChangeEvent,
   TextEditor,
   TextEditorSelectionChangeEvent,
   Uri,
@@ -59,6 +60,12 @@ export function activate(context: ExtensionContext) {
   );
 
   context.subscriptions.push(
+    commands.registerCommand('rv-simulator.irForCurrentLine', () => {
+      irForCurrentLine(rvContext);
+    })
+  );
+
+  context.subscriptions.push(
     commands.registerCommand('rv-simulator.enableProgMemSync', () => {
       console.log('executing progmemsync command');
       /**
@@ -74,7 +81,7 @@ export function activate(context: ExtensionContext) {
         (event: TextEditorSelectionChangeEvent) => {
           const editor = event.textEditor;
           const fileName = editor.document.fileName;
-          if (RVExtensionContext.isValidfile(editor.document)) {
+          if (RVExtensionContext.isValidFile(editor.document)) {
             if (rvContext.getCurrentFile() !== fileName) {
               rvContext.setCurrentFile(fileName);
               buildAndUploadProgram(editor);
@@ -82,6 +89,13 @@ export function activate(context: ExtensionContext) {
             const currentLine = editor.selection.active.line;
             if (rvContext.lineChanged(currentLine)) {
               highlightInstructionInMemory(editor);
+
+              // other way
+              if (editor) {
+                const ir = buildCurrent(editor);
+                console.log('IMPORTANT!!! ', ir);
+                const inst = getIRForInstructionAt(currentLine, ir);
+              }
             }
           }
         }
@@ -96,26 +110,26 @@ export function activate(context: ExtensionContext) {
   /**
    * When a document is opened change the context current file.
    */
-  workspace.onDidOpenTextDocument((document) => {
-    if (RVExtensionContext.isValidfile(document)) {
-      const name = document.fileName;
-      rvContext.setCurrentFile(name);
-    }
-  });
+  // workspace.onDidOpenTextDocument((document) => {
+  //   if (RVExtensionContext.isValidFile(document)) {
+  //     const name = document.fileName;
+  //     rvContext.setCurrentFile(name);
+  //   }
+  // });
 
-  workspace.onDidCloseTextDocument((document) => {
-    if (RVExtensionContext.isValidfile(document)) {
-      rvContext.setCurrentFile(undefined);
-    }
-  });
+  // workspace.onDidCloseTextDocument((document) => {
+  //   if (RVExtensionContext.isValidFile(document)) {
+  //     rvContext.setAndBuildCurrentFile(undefined);
+  //   }
+  // });
 
-  workspace.onDidSaveTextDocument((document) => {
-    console.log('Save editor event');
-    if (RVExtensionContext.isValidfile(document)) {
-      const editor = window.activeTextEditor;
-      buildAndUploadProgram(editor);
-    }
-  });
+  // workspace.onDidSaveTextDocument((document) => {
+  //   console.log('Save editor event');
+  //   if (RVExtensionContext.isValidFile(document)) {
+  //     const editor = window.activeTextEditor;
+  //     buildAndUploadProgram(editor);
+  //   }
+  // });
 
   workspace.onDidChangeConfiguration((e: ConfigurationChangeEvent) => {
     console.log('Configuration change occurred.');
@@ -140,7 +154,89 @@ export function activate(context: ExtensionContext) {
   });
 
   // enable synchronization
-  commands.executeCommand('rv-simulator.enableProgMemSync');
+  // commands.executeCommand('rv-simulator.enableProgMemSync');
+
+  /**
+   * This will build the program every time the file is saved.
+   */
+  workspace.onDidSaveTextDocument((document) => {
+    console.log('Save editor event');
+    updateContext(context.extensionUri, document, rvContext);
+  });
+
+  /**
+   * This will build the program every time the document changes
+   */
+  workspace.onDidChangeTextDocument((event: TextDocumentChangeEvent) => {
+    console.log('Change text document event');
+    const document = event.document;
+    updateContext(context.extensionUri, document, rvContext);
+  });
+
+  window.onDidChangeTextEditorSelection(
+    (event: TextEditorSelectionChangeEvent) => {
+      const editor = event.textEditor;
+      const document = editor.document;
+      // This event will trigger for any workspace file.
+      if (RVExtensionContext.isValidFile(document)) {
+        if (!rvContext.validIR()) {
+          updateContext(context.extensionUri, document, rvContext);
+        }
+        const ir = irForCurrentLine(rvContext);
+        if (typeof ir !== 'undefined') {
+          rvContext.reflectInstruction(
+            InstructionPanelView.render(context.extensionUri, {}),
+            ir
+          );
+          // console.log('Editor selection ', ir);
+        }
+      }
+    }
+  );
+}
+
+/**
+ *
+ * Computes the internal representation for the current line under the cursor.
+ *
+ * @param rvContext extension context.
+ */
+function irForCurrentLine(rvContext: RVExtensionContext) {
+  const editor = window.activeTextEditor;
+  if (editor) {
+    if (!rvContext.validIR()) {
+      console.log(
+        'Cannot be done as parser has not succeeded to produce a valid ir'
+      );
+      return undefined;
+    }
+    // Assume there is a valid internal representation of the source code.
+    const currentLine = editor.selection.active.line;
+    const ir = rvContext.getIRForInstructionAt(currentLine);
+    return ir;
+  } else {
+    throw Error('No editor open.');
+  }
+}
+
+function updateContext(
+  uri: Uri,
+  document: TextDocument,
+  rvContext: RVExtensionContext
+) {
+  const fileName = document.fileName;
+  if (RVExtensionContext.isValidFile(document)) {
+    rvContext.setAndBuildCurrentFile(fileName, document.getText());
+
+    if (rvContext.validIR()) {
+      window.showInformationMessage('Build process succeeded.');
+      rvContext.uploadIR(ProgMemPanelView.render(uri, {}));
+    } else {
+      window.showErrorMessage('Build process failed.');
+    }
+  } else {
+    console.log('Called on invalid document');
+  }
 }
 
 function simulateProgram(
@@ -174,6 +270,17 @@ function simulateProgram(
 function buildProgram(source: string, sourceName: string): ParserResult {
   const result = compile(source, sourceName);
   return result;
+}
+
+function buildCurrent(editor: TextEditor): any {
+  const source = editor.document.getText();
+  const fileName = editor.document.fileName;
+  const result = compile(source, fileName);
+  if (!result.sucess) {
+    window.showErrorMessage('Build failure!');
+  } else {
+    return result.ir;
+  }
 }
 
 function buildAndUploadProgram(editor: TextEditor | undefined) {
