@@ -357,14 +357,14 @@
   = lbl:LabelDeclaration EOS 
   { 
     let ret = lbl;
-    ret["Type"] = "SrcLabel";
+    ret["kind"] = "SrcLabel";
     ret["location"] = location();
     return ret;
   }
   / dir:Directive EOS 
   {
     let ret = dir;
-    ret["Type"] = "SrcDirective"; 
+    ret["kind"] = "SrcDirective"; 
     ret["location"] = location();
     return dir; 
   }
@@ -372,10 +372,10 @@
   {
 
     let ret = inst;
-    ret["Type"] = "SrcInstruction";
+    ret["kind"] = "SrcInstruction";
     const binEncoding = inst["encoding"]["binEncoding"];
     inst["encoding"]["hexEncoding"] = encodingAsHex(binEncoding);
-    console.log("Instruction rule", ret);
+    // console.log("Instruction rule", ret);
     return ret; 
   }
 
@@ -390,7 +390,7 @@
       console.error("Label not found!");
     }
 
-    return {identifier:id, instruction:instcounter};
+    return {identifier:id, targetInstruction:instcounter*4};
   }
 
   Directive

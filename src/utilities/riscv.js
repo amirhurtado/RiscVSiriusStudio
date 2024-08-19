@@ -857,20 +857,20 @@ function peg$parse(input, options) {
   };
   var peg$f2 = function(lbl) { 
     let ret = lbl;
-    ret["Type"] = "SrcLabel";
+    ret["kind"] = "SrcLabel";
     ret["location"] = location();
     return ret;
   };
   var peg$f3 = function(dir) {
     let ret = dir;
-    ret["Type"] = "SrcDirective"; 
+    ret["kind"] = "SrcDirective"; 
     ret["location"] = location();
     return dir; 
   };
   var peg$f4 = function(inst) {
 
     let ret = inst;
-    ret["Type"] = "SrcInstruction";
+    ret["kind"] = "SrcInstruction";
     const binEncoding = inst["encoding"]["binEncoding"];
     inst["encoding"]["hexEncoding"] = encodingAsHex(binEncoding);
     // console.log("Instruction rule", ret);
@@ -885,7 +885,7 @@ function peg$parse(input, options) {
       console.error("Label not found!");
     }
 
-    return {identifier:id, instruction:instcounter};
+    return {identifier:id, targetInstruction:instcounter*4};
   };
   var peg$f6 = function(id, val) {
     return {"name":id, "value":{val}};

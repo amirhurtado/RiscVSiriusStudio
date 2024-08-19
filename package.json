@@ -20,6 +20,10 @@
         }
       },
       {
+        "command": "rv-simulator.irForCurrentLine",
+        "title": "RISCV simulator: compute internal representation for current line"
+      },
+      {
         "command": "rv-simulator.enableProgMemSync",
         "title": "RISCV simuator: synchronize code with program memory"
       }

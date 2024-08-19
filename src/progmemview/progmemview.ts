@@ -39,6 +39,7 @@ type MemInstruction = {
   value1: string;
   value2: string;
   value3: string;
+  jumpOrTarget: string;
   hex: string;
   ir: any;
 };
@@ -184,21 +185,50 @@ function selectInstructionFromAddress(address: string, table: Tabulator) {
 
 function updateProgram(program: Array<any>, table: Tabulator) {
   table.clearData();
-  program.forEach((inst) => {
-    const { inst: addr, encoding: enc, location: loc } = inst;
-    const instruction = parseInstruction(addr, enc, inst);
-    table.updateOrAddRow(instruction.address, instruction);
+  program.forEach((statement) => {
+    if (statement.kind === 'SrcInstruction') {
+      const { inst: addr, encoding: enc, location: loc } = statement;
+      const instruction = parseInstruction(addr, enc, statement);
+      table.updateOrAddRow(instruction.address, instruction);
+    }
+  });
+  // At this point all the instructions are in place. It si safe to update them
+  // with target and jump information
+  program.forEach((statement) => {
+    if (statement.kind === 'SrcLabel') {
+      log('info', { m: 'labelStatement', obj: statement });
+      const {
+        identifier: { name },
+        targetInstruction
+      } = statement;
+      table.updateOrAddRow(targetInstruction, { jumpOrTarget: name });
+    }
   });
 }
 
 function parseInstruction(
   address: string,
   instEncoding: any,
-  repr: any
+  internalRepresentation: any
 ): MemInstruction {
   const { binEncoding, hexEncoding } = instEncoding;
   const hexAddr = Number(address).toString(16);
   const [v3, v2, v1, v0] = binEncoding.match(/.{1,8}/g) as Array<string>;
+
+  let jumpOrTarget;
+  switch (internalRepresentation.type) {
+    case 'B':
+      const targetAddress = internalRepresentation.imm13;
+      const asm = internalRepresentation.asm as string;
+      const labelStartIndex = asm.lastIndexOf(',');
+      const label = asm.substring(labelStartIndex + 1).trim();
+      jumpOrTarget = '↶:' + label;
+      break;
+    default:
+      jumpOrTarget = '';
+      break;
+  }
+
   return {
     address: hexAddr,
     value0: v0,
@@ -206,7 +236,8 @@ function parseInstruction(
     value2: v2,
     value3: v3,
     hex: hexEncoding,
-    ir: repr
+    jumpOrTarget: jumpOrTarget,
+    ir: internalRepresentation
   };
 }
 
@@ -284,6 +315,20 @@ function tableSetup(): Tabulator {
             headerHozAlign: 'center',
             // minWidth: minWidth,
             // maxWidth: maxWidth,
+            visible: true,
+            headerSort: false
+          },
+          {
+            title: 'J/T',
+            field: 'jumpOrTarget',
+            // formatter: (cell, formatterParams) => {
+            //   if (cell.getRow().getData().jumpOrTarget) {
+            //     return '↶';
+            //   } else {
+            //     return '';
+            //   }
+            // },
+            headerHozAlign: 'center',
             visible: true,
             headerSort: false
           }

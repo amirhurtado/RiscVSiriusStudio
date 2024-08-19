@@ -189,7 +189,7 @@ function createInstructionTable(): InstTable {
 
   const columns = definitions.R;
   const generalSettings = {
-    layout: 'fitDataTable',
+    layout: 'fitColumns',
     layoutColumnsOnNewData: true,
     data: tableData,
     reactiveData: true,

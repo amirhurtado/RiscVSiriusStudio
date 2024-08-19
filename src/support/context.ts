@@ -8,13 +8,10 @@ import { usesRegister, writesRU } from '../utilities/instructions';
 import { compile } from '../utilities/riscvc';
 
 export class RVExtensionContext {
-  private previousLine: number;
-
   private currentFile: string | undefined;
   private currentIR: any | undefined;
 
   public constructor() {
-    this.previousLine = 0;
     this.currentFile = '';
   }
 
@@ -37,7 +34,6 @@ export class RVExtensionContext {
 
   public setAndBuildCurrentFile(name: string, sourceCode: string) {
     this.currentFile = name;
-    this.previousLine = -1;
     this.build(name, sourceCode);
   }
 
@@ -66,6 +62,7 @@ export class RVExtensionContext {
     if (!this.validIR()) {
       console.log('No valid IR, skipping');
     } else {
+      console.log('updateProgram from context', this.currentIR);
       programMemory
         .getWebView()
         .postMessage({ operation: 'updateProgram', program: this.currentIR });
@@ -86,14 +83,7 @@ export class RVExtensionContext {
   public isCurrentFile(name: string) {
     return this.currentFile ? name === this.currentFile : false;
   }
-  public lineChanged(currentLine: number) {
-    if (this.currentFile && currentLine !== this.previousLine) {
-      this.previousLine = currentLine;
-      return true;
-    } else {
-      return false;
-    }
-  }
+
   /**
    *
    * @param document Checks if the document is a valid riscv assembly file that
