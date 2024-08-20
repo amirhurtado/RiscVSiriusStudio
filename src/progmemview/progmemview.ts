@@ -82,7 +82,6 @@ function main() {
   });
 
   table.on('rowSelected', (row) => {
-    log('info', { m: 'rowSelected' });
     row.getElement().scrollIntoView({ behavior: 'smooth' });
   });
 
@@ -199,13 +198,11 @@ function updateProgram(
   // with target and jump information
   ir.instructions.forEach((statement) => {
     if (statement.kind === 'SrcLabel') {
-      log('info', { m: 'labelStatement', obj: statement });
       const {
         identifier: { name }
       } = statement;
       const symbol = ir.symbols[name];
       const definitionAddress = Number(symbol.memdef).toString(16);
-      log('info', { m: 'labelStatement-symbols', obj: ir.symbols[name] });
       table.updateRow(definitionAddress, { jumpOrTarget: name });
     }
   });

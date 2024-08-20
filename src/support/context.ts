@@ -44,7 +44,7 @@ export class RVExtensionContext {
     // handle difference between vscode line numbers and parser line numbers.
     const sourceLine = line + 1;
 
-    const instruction = this.currentIR.find((e: any) => {
+    const instruction = this.currentIR.instructions.find((e: any) => {
       const currentPos = e.location.start.line;
       return currentPos === sourceLine;
     });
