@@ -250,8 +250,6 @@ function sendMessageToExtension(messageObject: any) {
  */
 function tableSetup(): Tabulator {
   const tableData = [] as Array<MemInstruction>;
-  const minWidth = 60;
-  const maxWidth = 60;
   let table = new Tabulator('#progmem-table', {
     height: '100%',
     maxHeight: '100%',
@@ -261,7 +259,6 @@ function tableSetup(): Tabulator {
     layout: 'fitColumns',
     // layout: "fitDataStretch",
     // layout: "fitData",
-
     reactiveData: true,
     columnHeaderVertAlign: 'bottom',
     index: 'address',
@@ -269,9 +266,6 @@ function tableSetup(): Tabulator {
       {
         title: 'PC',
         field: 'address',
-        minWidth: 30,
-        maxWidth: 40,
-
         headerHozAlign: 'center',
         cssClass: 'address-column',
         visible: true,
@@ -286,8 +280,6 @@ function tableSetup(): Tabulator {
             title: '0x3',
             field: 'value3',
             headerHozAlign: 'center',
-            // minWidth: minWidth,
-            // maxWidth: maxWidth,
             visible: true,
             headerSort: false
           },
@@ -295,8 +287,6 @@ function tableSetup(): Tabulator {
             title: '0x2',
             field: 'value2',
             headerHozAlign: 'center',
-            // minWidth: minWidth,
-            // maxWidth: maxWidth,
             visible: true,
             headerSort: false
           },
@@ -304,30 +294,12 @@ function tableSetup(): Tabulator {
             title: '0x1',
             field: 'value1',
             headerHozAlign: 'center',
-            // minWidth: minWidth,
-            // maxWidth: maxWidth,
             visible: true,
             headerSort: false
           },
           {
             title: '0x0',
             field: 'value0',
-            headerHozAlign: 'center',
-            // minWidth: minWidth,
-            // maxWidth: maxWidth,
-            visible: true,
-            headerSort: false
-          },
-          {
-            title: 'J/T',
-            field: 'jumpOrTarget',
-            // formatter: (cell, formatterParams) => {
-            //   if (cell.getRow().getData().jumpOrTarget) {
-            //     return '↶';
-            //   } else {
-            //     return '';
-            //   }
-            // },
             headerHozAlign: 'center',
             visible: true,
             headerSort: false
@@ -342,12 +314,24 @@ function tableSetup(): Tabulator {
             title: '',
             field: 'hex',
             headerHozAlign: 'center',
-            minWidth: 130,
-            // maxWidth: maxWidth,
             visible: false,
             headerSort: false
           }
         ]
+      },
+      {
+        title: 'J/T',
+        field: 'jumpOrTarget',
+        // formatter: (cell, formatterParams) => {
+        //   if (cell.getRow().getData().jumpOrTarget) {
+        //     return '↶';
+        //   } else {
+        //     return '';
+        //   }
+        // },
+        headerHozAlign: 'center',
+        visible: true,
+        headerSort: false
       }
     ]
   });
