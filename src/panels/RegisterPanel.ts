@@ -84,19 +84,33 @@ export class RegisterPanelView implements WebviewViewProvider {
     ]);
     const panelsCSS = getUri(webview, extensionUri, ['out', 'panels.css']);
 
+    const bootstrapCSS = webview.asWebviewUri(
+      Uri.joinPath(
+        extensionUri,
+        'node_modules',
+        'bootstrap',
+        'dist',
+        'css',
+        'bootstrap.min.css'
+      )
+    );
+
     return `
       <html>
         <head>
+          <link rel="stylesheet", href="${bootstrapCSS}">
           <link rel="stylesheet", href="${tabulatorCSS}">
           <link rel="stylesheet", href="${panelsCSS}">
           <meta charSet="utf-8"/>
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
         <body>
-          <div id="registers-table" style="margin-top:1rem;"></div>
-          <div class="search-container">
-          </div>
-          <script type="module" nonce="${nonce}" src="${registerswUri}"></script>
+        <div class="mt-4 p-5 bg-primary text-white rounded" id="registers-cover">
+        <h1>Registers Unit view</h1>
+        <p> This will be available only during simulation.</p>
+        </div>
+        <script type="module" nonce="${nonce}" src="${registerswUri}"></script>
+        <div class="invisible" id="registers-table" style="margin-top:1rem;"></div>
         </body>
       </html>`;
   }

@@ -78,16 +78,19 @@ function main() {
   table.on('cellEdited', () => {
     sortTable(table);
   });
-
   // Message dispatcher
   window.addEventListener('message', (event) => {
     dispatch(event, table);
   });
+  hideRegistersView();
 }
 
 function dispatch(event: MessageEvent, table: Tabulator) {
   const data = event.data;
   switch (data.operation) {
+    case 'hideRegistersView':
+      hideRegistersView();
+      break;
     case 'selectRegister':
       selectRegister(data.register, table);
       break;
@@ -106,6 +109,20 @@ function dispatch(event: MessageEvent, table: Tabulator) {
     default:
       throw new Error('Unknown operation ' + data.operation);
   }
+}
+
+function hideRegistersView() {
+  const table = document.getElementById('registers-table') as HTMLElement;
+  table.className = 'invisible';
+  const cover = document.getElementById('registers-cover') as HTMLElement;
+  cover.className = 'visible mt-4 p-5 bg-primary text-white rounded';
+}
+
+function showRegistersView() {
+  const table = document.getElementById('registers-table') as HTMLElement;
+  table.className = 'visible';
+  const cover = document.getElementById('registers-cover') as HTMLElement;
+  cover.className = 'invisible';
 }
 
 function settingsChanged(newSettings: any, table: Tabulator) {
