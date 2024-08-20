@@ -47,6 +47,31 @@
         <key>name</key>
         <string>keyword.32i.primitive</string>
       </dict>
+      <dict>
+        <key>Comment</key>
+        <string>Matches labels</string>
+        <key>match</key>
+        <string>\.?[A-Za-z0-9_]+:</string>
+        <key>name</key>
+        <string>statement.label</string>
+      </dict>
+      <dict>
+        <key>Comment</key>
+        <string>Matches numbers</string>
+        <key>match</key>
+        <string>[+-]?[0-9]+</string>
+        <key>name</key>
+        <string>statement.instruction.integer</string>
+      </dict>
+      <dict>
+        <key>Comment</key>
+        <string>Matches targets</string>
+        <key>match</key>
+        <string>\.?[A-Za-z0-9_]+</string>
+        <key>name</key>
+        <string>statement.instruction.target</string>
+      </dict>
+
     </array>
     <key>scopeName</key>
     <string>source.riscv</string>
