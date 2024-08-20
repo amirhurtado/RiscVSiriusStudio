@@ -102,9 +102,22 @@ export class ProgMemPanelView implements WebviewViewProvider {
         'codicon.css'
       )
     );
+
+    const bootstrapCSS = webview.asWebviewUri(
+      Uri.joinPath(
+        extensionUri,
+        'node_modules',
+        'bootstrap',
+        'dist',
+        'css',
+        'bootstrap.min.css'
+      )
+    );
+
     return `
       <html>
         <head>
+          <link rel="stylesheet", href="${bootstrapCSS}">
           <link rel="stylesheet", href="${codiconsUri}">
           <link rel="stylesheet", href="${tabulatorCSS}">
           <link rel="stylesheet", href="${panelsCSS}">

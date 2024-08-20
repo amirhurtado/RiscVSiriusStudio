@@ -82,6 +82,7 @@ function main() {
   });
 
   table.on('rowSelected', (row) => {
+    // row.getTable().scrollToRow(row, 'nearest', false);
     row.getElement().scrollIntoView({ behavior: 'smooth' });
   });
 
@@ -102,14 +103,6 @@ function dispatch(event: MessageEvent, table: Tabulator) {
       break;
     case 'reflectInstruction':
       reflectInstruction(data.instruction, table);
-      break;
-    case 'selectInstruction':
-      // log('info', 'select instruction ' + data.sourceLine);
-      selectInstructionInTable(data.sourceLine, table);
-      break;
-    case 'selectInstructionFromAddress':
-      // log('info', 'select instruction from address' + data.address);
-      selectInstructionFromAddress(data.address, table);
       break;
     case 'clearSelection':
       table.deselectRow();
@@ -168,28 +161,6 @@ function getSourceLineForInstruction(row: RowComponent): number {
   return line - 1;
 }
 
-function selectInstructionInTable(line: number, table: Tabulator) {
-  if (!settings.codeSync) {
-    return;
-  }
-  const sourceLine = line + 1;
-  table.deselectRow();
-  const data = table.getData() as Array<MemInstruction>;
-  const instruction = data.find((e) => {
-    const currentPos = e.ir.location.start.line;
-    return currentPos === sourceLine;
-  });
-  if (instruction) {
-    table.selectRow(instruction.address);
-  } else {
-    log('info', 'line not found');
-  }
-}
-
-function selectInstructionFromAddress(address: string, table: Tabulator) {
-  table.selectRow(address);
-}
-
 function updateProgram(
   ir: { instructions: Array<any>; symbols: Array<any> },
   table: Tabulator
@@ -211,7 +182,9 @@ function updateProgram(
       } = statement;
       const symbol = ir.symbols[name];
       const definitionAddress = Number(symbol.memdef).toString(16);
-      table.updateRow(definitionAddress, { jumpOrTarget: name });
+      table.updateRow(definitionAddress, {
+        jumpOrTarget: `<span class="badge bg-primary">${name}</span>`
+      });
     }
   });
 }
@@ -232,7 +205,8 @@ function parseInstruction(
       const asm = internalRepresentation.asm as string;
       const labelStartIndex = asm.lastIndexOf(',');
       const label = asm.substring(labelStartIndex + 1).trim();
-      jumpOrTarget = '↶:' + label;
+      // jumpOrTarget = `↶ ${label}`;
+      jumpOrTarget = `<span class="codicon codicon-arrow-right"></span> <span class="badge bg-secondary">${label}</span>`;
       break;
     default:
       jumpOrTarget = '';
@@ -336,6 +310,7 @@ function tableSetup(): Tabulator {
       {
         title: 'J/T',
         field: 'jumpOrTarget',
+        formatter: 'html',
         // formatter: (cell, formatterParams) => {
         //   if (cell.getRow().getData().jumpOrTarget) {
         //     return '↶';
