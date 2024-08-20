@@ -122,6 +122,7 @@ export function activate(context: ExtensionContext) {
         if (typeof ir !== 'undefined') {
           rvContext.reflectInstruction(
             InstructionPanelView.render(context.extensionUri, {}),
+            ProgMemPanelView.render(context.extensionUri, {}),
             ir
           );
           // console.log('Editor selection ', ir);

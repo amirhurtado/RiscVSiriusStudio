@@ -68,13 +68,23 @@ export class RVExtensionContext {
         .postMessage({ operation: 'updateProgram', program: this.currentIR });
     }
   }
-  public reflectInstruction(instruction: InstructionPanelView, ir: any) {
+  public reflectInstruction(
+    instruction: InstructionPanelView,
+    program: ProgMemPanelView,
+    ir: any
+  ) {
     if (!this.validIR()) {
       console.log('No valid IR, skipping');
     } else {
       console.log('Message to reflect instruction', ir);
       if (ir.kind === 'SrcInstruction') {
+        // Reflect on the instruction view
         instruction.getWebView().postMessage({
+          operation: 'reflectInstruction',
+          instruction: ir
+        });
+        // Reflect on the instruction memory view
+        program.getWebView().postMessage({
           operation: 'reflectInstruction',
           instruction: ir
         });

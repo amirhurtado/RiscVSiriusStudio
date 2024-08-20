@@ -100,6 +100,9 @@ function dispatch(event: MessageEvent, table: Tabulator) {
     case 'updateProgram':
       updateProgram(data.program, table);
       break;
+    case 'reflectInstruction':
+      reflectInstruction(data.instruction, table);
+      break;
     case 'selectInstruction':
       // log('info', 'select instruction ' + data.sourceLine);
       selectInstructionInTable(data.sourceLine, table);
@@ -118,6 +121,11 @@ function dispatch(event: MessageEvent, table: Tabulator) {
       log('info', 'unknown operation ' + data.operation);
       break;
   }
+}
+
+function reflectInstruction(ir: any, table: Tabulator) {
+  table.deselectRow();
+  table.selectRow(Number(ir.inst).toString(16));
 }
 
 function settingsChanged(newSettings: any, table: Tabulator) {

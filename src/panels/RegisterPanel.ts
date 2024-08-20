@@ -106,7 +106,7 @@ export class RegisterPanelView implements WebviewViewProvider {
         </head>
         <body>
         <div class="mt-4 p-5 bg-primary text-white rounded" id="registers-cover">
-        <h1>Registers Unit view</h1>
+        <h1>Registers Unit</h1>
         <p> This will be available only during simulation.</p>
         </div>
         <script type="module" nonce="${nonce}" src="${registerswUri}"></script>
