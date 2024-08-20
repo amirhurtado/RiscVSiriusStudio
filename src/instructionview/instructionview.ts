@@ -40,7 +40,7 @@ function main() {
 function dispatch(event: MessageEvent, table: InstTable) {
   const data = event.data;
   switch (data.operation) {
-    case 'updateInstruction':
+    case 'reflectInstruction':
       reflectInstruction(data.instruction, table);
       break;
     default:

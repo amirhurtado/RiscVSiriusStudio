@@ -72,11 +72,13 @@ export class RVExtensionContext {
     if (!this.validIR()) {
       console.log('No valid IR, skipping');
     } else {
-      console.log('Message to reflect instruction');
-      instruction.getWebView().postMessage({
-        operation: 'updateInstruction',
-        instruction: ir
-      });
+      console.log('Message to reflect instruction', ir);
+      if (ir.kind === 'SrcInstruction') {
+        instruction.getWebView().postMessage({
+          operation: 'reflectInstruction',
+          instruction: ir
+        });
+      }
     }
   }
 
