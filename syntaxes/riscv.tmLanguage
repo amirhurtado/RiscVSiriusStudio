@@ -43,7 +43,7 @@
         <key>Comment</key>
         <string>Matches riscv primitive operations</string>
         <key>match</key>
-        <string>\b(add|sub|xor|or|and|sll|srl|sra|slt|sltu|addi|xori|ori|andi|slli|srli|srai|slti|sltiu|lb|lh|lw|lbu|lhu|sb|sh|sw|beq|bne"|blt|bge|bltu|bgeu|jalr|jal|lui|auipc|ecall|ebreak)\b</string>
+        <string>\b(add|sub|xor|or|and|sll|srl|sra|slt|sltu|addi|xori|ori|andi|slli|srli|srai|slti|sltiu|lb|lh|lw|lbu|lhu|sb|sh|sw|beq|bne|blt|bge|bltu|bgeu|jalr|jal|lui|auipc|ecall|ebreak)\b</string>
         <key>name</key>
         <string>keyword.32i.primitive</string>
       </dict>
