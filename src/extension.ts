@@ -186,7 +186,7 @@ function simulateProgram(
       editor.document.fileName
     );
     console.log('compile output ', buildResult);
-    if (!buildResult.sucess) {
+    if (!buildResult.success) {
       window.showErrorMessage('Build process failed. Cannot simulate program');
       return;
     }

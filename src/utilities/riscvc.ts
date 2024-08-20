@@ -2,8 +2,8 @@ import { parse as preparse } from './riscv-pre.js';
 import { parse } from './riscv.js';
 
 export type ParserResult = {
-  sucess: boolean;
-  ir: Array<any> | undefined;
+  success: boolean;
+  ir: { instructions: Array<any> | undefined; symbols: Array<any> | undefined };
   info: string;
   extra: any | undefined;
 };
@@ -19,8 +19,8 @@ export function compile(inputSrc: any, inputName: any): ParserResult {
     });
   } catch (obj) {
     return {
-      sucess: false,
-      ir: undefined,
+      success: false,
+      ir: { instructions: undefined, symbols: undefined },
       info: 'First pass failure',
       extra: obj
     };
@@ -36,17 +36,17 @@ export function compile(inputSrc: any, inputName: any): ParserResult {
     });
   } catch (obj) {
     return {
-      sucess: false,
-      ir: undefined,
+      success: false,
+      ir: { instructions: undefined, symbols: undefined },
       info: 'Second pass failure',
       extra: obj
     };
   }
   console.log('Second pass done!');
   return {
-    sucess: true,
-    ir: parserOutput as any[],
-    info: 'Sucess',
+    success: true,
+    ir: { instructions: parserOutput as any[], symbols: labelTable as any[] },
+    info: 'Success',
     extra: undefined
   };
 }

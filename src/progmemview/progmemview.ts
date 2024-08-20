@@ -183,9 +183,12 @@ function selectInstructionFromAddress(address: string, table: Tabulator) {
   table.selectRow(address);
 }
 
-function updateProgram(program: Array<any>, table: Tabulator) {
+function updateProgram(
+  ir: { instructions: Array<any>; symbols: Array<any> },
+  table: Tabulator
+) {
   table.clearData();
-  program.forEach((statement) => {
+  ir.instructions.forEach((statement) => {
     if (statement.kind === 'SrcInstruction') {
       const { inst: addr, encoding: enc, location: loc } = statement;
       const instruction = parseInstruction(addr, enc, statement);
@@ -194,14 +197,16 @@ function updateProgram(program: Array<any>, table: Tabulator) {
   });
   // At this point all the instructions are in place. It si safe to update them
   // with target and jump information
-  program.forEach((statement) => {
+  ir.instructions.forEach((statement) => {
     if (statement.kind === 'SrcLabel') {
       log('info', { m: 'labelStatement', obj: statement });
       const {
-        identifier: { name },
-        targetInstruction
+        identifier: { name }
       } = statement;
-      table.updateOrAddRow(targetInstruction, { jumpOrTarget: name });
+      const symbol = ir.symbols[name];
+      const definitionAddress = Number(symbol.memdef).toString(16);
+      log('info', { m: 'labelStatement-symbols', obj: ir.symbols[name] });
+      table.updateRow(definitionAddress, { jumpOrTarget: name });
     }
   });
 }
@@ -257,6 +262,8 @@ function tableSetup(): Tabulator {
     // layout: 'fitDataTable',
     // layout: "fitDataFill",
     layout: 'fitColumns',
+    layoutColumnsOnNewData: true,
+    autoColumns: true,
     // layout: "fitDataStretch",
     // layout: "fitData",
     reactiveData: true,
@@ -269,7 +276,8 @@ function tableSetup(): Tabulator {
         headerHozAlign: 'center',
         cssClass: 'address-column',
         visible: true,
-        headerSort: false
+        headerSort: false,
+        maxWidth: 20
       },
       {
         title: 'Instruction',
@@ -315,7 +323,8 @@ function tableSetup(): Tabulator {
             field: 'hex',
             headerHozAlign: 'center',
             visible: false,
-            headerSort: false
+            headerSort: false,
+            maxWidth: 120
           }
         ]
       },

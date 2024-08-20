@@ -21,7 +21,7 @@ export class RVExtensionContext {
 
   public build(fileName: string, sourceCode: string) {
     const result = compile(sourceCode, fileName);
-    if (result.sucess) {
+    if (result.success) {
       this.currentIR = result.ir;
     } else {
       this.currentIR = undefined;
