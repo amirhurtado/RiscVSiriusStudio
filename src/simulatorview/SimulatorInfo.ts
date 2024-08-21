@@ -3,6 +3,8 @@ import {
   flip,
   shift,
   offset,
+  inline,
+  autoPlacement,
   Placement
 } from '@floating-ui/dom';
 import * as bootstrap from 'bootstrap';
@@ -69,13 +71,14 @@ export class SimulatorInfo {
     const logger = this.logger;
     const cpuData = this;
 
-    function update(evt: Event) {
-      logger('info', { m: 'Update function called' });
+    function update({ clientX: x, clientY: y }) {
+      logger('info', { m: 'Update function called', x: x, y: y });
       /**
        * If the element has a g tag then it is probably an svg element from
        * draw.io. In that case we go deep in the hierarchy to position the tooltip
        * properly.
        */
+
       if (element.tagName === 'g') {
         // could be an svg element from draw.io
 
@@ -90,12 +93,27 @@ export class SimulatorInfo {
           if (elements.length > 0) {
             element = elements[0];
           }
+          element = {
+            getBoundingClientRect() {
+              return {
+                width: 0,
+                height: 0,
+                x: x,
+                y: y,
+                top: y,
+                left: x,
+                right: x,
+                bottom: y
+              };
+            }
+          };
         }
       }
+
       computePosition(element, tooltip, {
         placement: place,
         // middleware: [arrow({ element: arrowElement })]
-        middleware: [offset(6), flip(), shift({ padding: 5 })]
+        middleware: [offset(8), flip(), shift({ padding: 5 })]
       }).then(({ x, y, placement, middlewareData }) => {
         Object.assign(tooltip.style, { left: `${x}px`, top: `${y}px` });
       });
@@ -118,8 +136,8 @@ export class SimulatorInfo {
         logger('info', { m: 'tooltip depends on', k: dependsOn });
         return;
       }
-      update(evt);
       tooltip.style.display = 'block';
+      update(evt);
     }
 
     function hideTooltip() {
