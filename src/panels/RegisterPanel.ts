@@ -110,7 +110,7 @@ export class RegisterPanelView implements WebviewViewProvider {
         <p> This will be available only during simulation.</p>
         </div>
         <script type="module" nonce="${nonce}" src="${registerswUri}"></script>
-        <div class="invisible" id="registers-table" style="margin-top:1rem;"></div>
+        <div id="registers-table" style="margin-top:1rem;"></div>
         </body>
       </html>`;
   }

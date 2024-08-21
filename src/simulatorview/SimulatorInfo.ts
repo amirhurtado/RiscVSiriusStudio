@@ -206,7 +206,7 @@ export class SimulatorInfo {
       if (name in handlers) {
         this.initializeSVGElement(name, handlers[name]);
       } else {
-        this.log('error', { message: 'Handler not found for ' + name });
+        //this.log('error', { message: 'Handler not found for ' + name });
       }
     });
     this.log('info', {

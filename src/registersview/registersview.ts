@@ -91,6 +91,9 @@ function dispatch(event: MessageEvent, table: Tabulator) {
     case 'hideRegistersView':
       hideRegistersView();
       break;
+    case 'showRegistersView':
+      showRegistersView();
+      break;
     case 'selectRegister':
       selectRegister(data.register, table);
       break;
@@ -113,16 +116,16 @@ function dispatch(event: MessageEvent, table: Tabulator) {
 
 function hideRegistersView() {
   const table = document.getElementById('registers-table') as HTMLElement;
-  table.className = 'invisible';
   const cover = document.getElementById('registers-cover') as HTMLElement;
-  cover.className = 'visible mt-4 p-5 bg-primary text-white rounded';
+  cover.style.display = 'block';
+  table.style.display = 'none';
 }
 
 function showRegistersView() {
   const table = document.getElementById('registers-table') as HTMLElement;
-  table.className = 'visible';
   const cover = document.getElementById('registers-cover') as HTMLElement;
-  cover.className = 'invisible';
+  cover.style.display = 'none';
+  table.style.display = 'block';
 }
 
 function settingsChanged(newSettings: any, table: Tabulator) {

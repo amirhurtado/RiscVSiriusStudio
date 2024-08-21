@@ -10,7 +10,7 @@ import { compile } from '../utilities/riscvc';
 export class RVExtensionContext {
   private currentFile: string | undefined;
   private currentIR: any | undefined;
-
+  private simulator: RVSimulationContext | undefined;
   public constructor() {
     this.currentFile = '';
   }
@@ -76,7 +76,7 @@ export class RVExtensionContext {
     if (!this.validIR()) {
       console.log('No valid IR, skipping');
     } else {
-      console.log('Message to reflect instruction', ir);
+      // console.log('Message to reflect instruction', ir);
       if (ir.kind === 'SrcInstruction') {
         // Reflect on the instruction view
         instruction.getWebView().postMessage({
@@ -90,6 +90,23 @@ export class RVExtensionContext {
         });
       }
     }
+  }
+
+  public startSimulation(
+    simulator: SimulatorPanel,
+    programMemory: ProgMemPanelView,
+    registers: RegisterPanelView,
+    instruction: InstructionPanelView
+  ) {
+    console.log('start simulation at rvContext');
+    // After this call the simulator instance will intercept the messages of the
+    // views and will respond to them
+    this.simulator = new RVSimulationContext(
+      this.currentIR.instructions,
+      simulator,
+      programMemory,
+      registers
+    );
   }
 
   public isCurrentFile(name: string) {
@@ -112,29 +129,21 @@ export class RVExtensionContext {
 }
 
 export class RVSimulationContext {
-  private cpu: SCCPU | undefined;
-  private program: any[];
-  private simPanel: SimulatorPanel | undefined;
-  private memPanel: ProgMemPanelView | undefined;
-  private regPanel: RegisterPanelView | undefined;
+  private cpu: SCCPU;
+  private simPanel: SimulatorPanel;
+  private memPanel: ProgMemPanelView;
+  private regPanel: RegisterPanelView;
 
-  constructor() {
-    this.program = [];
-    console.log('Created simulation context');
-  }
-
-  public init(
+  constructor(
     program: any[],
-    simultaor: SimulatorPanel,
+    simulator: SimulatorPanel,
     progmem: ProgMemPanelView,
     registers: RegisterPanelView
   ) {
-    this.program = program;
     this.cpu = new SCCPU(program);
-    this.simPanel = simultaor;
+    this.simPanel = simulator;
     this.memPanel = progmem;
     this.regPanel = registers;
-
     this.memPanel.getWebView().onDidReceiveMessage((message: any) => {
       this.dispatch(message);
     });
@@ -148,7 +157,7 @@ export class RVSimulationContext {
     // Ensure nothing is selected in the program memory and the registers views
     this.sendToMemory({ operation: 'clearSelection' });
     this.sendToRegisters({ operation: 'clearSelection' });
-    // console.log('Simulation context', 'program initialized', program);
+    this.sendToRegisters({ operation: 'showRegistersView' });
   }
 
   private sendToSimulator(message: any) {
@@ -189,6 +198,7 @@ export class RVSimulationContext {
   }
 
   private dispatch(message: any) {
+    console.log('RVSimulationContext dispatch', message);
     switch (message.command) {
       case 'event':
         {

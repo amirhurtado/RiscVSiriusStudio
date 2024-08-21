@@ -15,15 +15,13 @@ import { SimulatorPanel } from './panels/SimulatorPanel';
 import { RegisterPanelView } from './panels/RegisterPanel';
 import { ProgMemPanelView } from './panels/ProgMemPanel';
 import { InstructionPanelView } from './panels/InstructionPanel';
-import { compile, ParserResult } from './utilities/riscvc';
 import { logger } from './utilities/logger';
-import { RVExtensionContext, RVSimulationContext } from './support/context';
+import { RVExtensionContext } from './support/context';
 
 export function activate(context: ExtensionContext) {
   console.log('Activating extension');
   logger().info('Activating extension');
   const rvContext = new RVExtensionContext();
-  const smContext = new RVSimulationContext();
 
   // Registers view
   context.subscriptions.push(
@@ -55,7 +53,7 @@ export function activate(context: ExtensionContext) {
   context.subscriptions.push(
     commands.registerCommand('rv-simulator.simulate', () => {
       const editor = window.activeTextEditor;
-      simulateProgram(editor, context.extensionUri, smContext);
+      simulateProgram(editor, context.extensionUri, rvContext);
     })
   );
 
@@ -96,7 +94,7 @@ export function activate(context: ExtensionContext) {
    * This will build the program every time the file is saved.
    */
   workspace.onDidSaveTextDocument((document) => {
-    console.log('Save editor event');
+    // console.log('Save editor event');
     updateContext(context.extensionUri, document, rvContext);
   });
 
@@ -104,7 +102,7 @@ export function activate(context: ExtensionContext) {
    * This will build the program every time the document changes
    */
   workspace.onDidChangeTextDocument((event: TextDocumentChangeEvent) => {
-    console.log('Change text document event');
+    // console.log('Change text document event');
     const document = event.document;
     updateContext(context.extensionUri, document, rvContext);
   });
@@ -172,41 +170,35 @@ function updateContext(
       window.showErrorMessage('Build process failed.');
     }
   } else {
-    console.log('Called on invalid document');
+    // Skip as the document is not a riscv file.
+    // console.log('Called on invalid document');
   }
 }
 
 function simulateProgram(
   editor: TextEditor | undefined,
   extensionUri: Uri,
-  smContext: RVSimulationContext
+  rvContext: RVExtensionContext
 ) {
   if (editor) {
-    const buildResult = buildProgram(
-      editor.document.getText(),
-      editor.document.fileName
-    );
-    console.log('compile output ', buildResult);
-    if (!buildResult.success) {
+    const document = editor.document;
+    const fileName = document.fileName;
+    rvContext.setAndBuildCurrentFile(fileName, document.getText());
+    if (!rvContext.validIR()) {
       window.showErrorMessage('Build process failed. Cannot simulate program');
       return;
     }
-    if (buildResult.ir) {
-      SimulatorPanel.render(extensionUri);
+    const simulator = SimulatorPanel.getPanel(extensionUri);
+    if (simulator) {
       window.showInformationMessage('Starting simulation');
-      smContext.init(
-        buildResult.ir,
-        SimulatorPanel.getPanel(extensionUri),
+      rvContext.startSimulation(
+        simulator,
         ProgMemPanelView.render(extensionUri, {}),
-        RegisterPanelView.render(extensionUri, {})
+        RegisterPanelView.render(extensionUri, {}),
+        InstructionPanelView.render(extensionUri, {})
       );
     }
   }
-}
-
-function buildProgram(source: string, sourceName: string): ParserResult {
-  const result = compile(source, sourceName);
-  return result;
 }
 
 function sendMessageToProgMemView(msg: any) {
