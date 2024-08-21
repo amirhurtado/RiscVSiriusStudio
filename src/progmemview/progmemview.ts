@@ -206,7 +206,7 @@ function parseInstruction(
       const labelStartIndex = asm.lastIndexOf(',');
       const label = asm.substring(labelStartIndex + 1).trim();
       // jumpOrTarget = `↶ ${label}`;
-      jumpOrTarget = `<span class="codicon codicon-arrow-right"></span> <span class="badge bg-secondary">${label}</span>`;
+      jumpOrTarget = `<span class="badge bg-secondary">↪${label}</span>`;
       break;
     default:
       jumpOrTarget = '';
