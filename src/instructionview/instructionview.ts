@@ -35,17 +35,38 @@ function main() {
   window.addEventListener('message', (event) => {
     dispatch(event, instTable);
   });
+  hideInstructionView();
 }
 
 function dispatch(event: MessageEvent, table: InstTable) {
   const data = event.data;
   switch (data.operation) {
+    case 'showInstructionView':
+      showInstructionView();
+      break;
+    case 'hideInstructionView':
+      hideInstructionView();
+      break;
     case 'reflectInstruction':
       reflectInstruction(data.instruction, table);
       break;
     default:
       throw new Error('Unknown operation ' + data.operation);
   }
+}
+
+function hideInstructionView() {
+  const table = document.getElementById('instruction') as HTMLElement;
+  const cover = document.getElementById('instruction-cover') as HTMLElement;
+  cover.style.display = 'block';
+  table.style.display = 'none';
+}
+
+function showInstructionView() {
+  const table = document.getElementById('instruction') as HTMLElement;
+  const cover = document.getElementById('instruction-cover') as HTMLElement;
+  cover.style.display = 'none';
+  table.style.display = 'block';
 }
 
 type TypeInstructionValue = {

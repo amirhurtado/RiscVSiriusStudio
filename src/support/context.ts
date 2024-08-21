@@ -80,6 +80,9 @@ export class RVExtensionContext {
       if (ir.kind === 'SrcInstruction') {
         // Reflect on the instruction view
         instruction.getWebView().postMessage({
+          operation: 'showInstructionView'
+        });
+        instruction.getWebView().postMessage({
           operation: 'reflectInstruction',
           instruction: ir
         });
@@ -87,6 +90,14 @@ export class RVExtensionContext {
         program.getWebView().postMessage({
           operation: 'reflectInstruction',
           instruction: ir
+        });
+      } else {
+        // It can be a directive or a label definition.
+        program.getWebView().postMessage({
+          operation: 'clearSelection'
+        });
+        instruction.getWebView().postMessage({
+          operation: 'hideInstructionView'
         });
       }
     }

@@ -108,9 +108,22 @@ export class InstructionPanelView implements WebviewViewProvider {
         'codicon.css'
       )
     );
+
+    const bootstrapCSS = webview.asWebviewUri(
+      Uri.joinPath(
+        extensionUri,
+        'node_modules',
+        'bootstrap',
+        'dist',
+        'css',
+        'bootstrap.min.css'
+      )
+    );
+
     return `
       <html>
         <head>
+          <link rel="stylesheet", href="${bootstrapCSS}">
           <link rel="stylesheet", href="${codiconsUri}">
           <link rel="stylesheet", href="${tabulatorCSS}">
           <link rel="stylesheet", href="${panelsCSS}">
@@ -118,6 +131,14 @@ export class InstructionPanelView implements WebviewViewProvider {
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
         <body>
+          <div class="alert alert-secondary" id="instruction-cover">
+          <h4>Instruction unavailable</h4>
+          <p>This can be for several reasons:</p>
+          <ul>
+          <li> Cursor is not under a valid instruction.</li>
+          <li> Current file is not valid or has not been saved.</li>
+          </ul>
+          </div>
           <div id="instruction" style="margin-top:1rem;"></div>
           <script type="module" nonce="${nonce}" src="${instructionUri}"></script>
         </body>
