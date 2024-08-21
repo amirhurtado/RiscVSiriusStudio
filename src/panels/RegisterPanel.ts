@@ -105,8 +105,8 @@ export class RegisterPanelView implements WebviewViewProvider {
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
         <body>
-        <div class="mt-4 p-5 bg-primary text-white rounded" id="registers-cover">
-        <h1>Registers Unit</h1>
+        <div class="alert alert-secondary" id="registers-cover">
+        <h4>Registers Unit</h4>
         <p> This will be available only during simulation.</p>
         </div>
         <script type="module" nonce="${nonce}" src="${registerswUri}"></script>
