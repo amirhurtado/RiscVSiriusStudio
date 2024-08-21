@@ -1,4 +1,10 @@
-import { computePosition, flip, shift, Placement } from '@floating-ui/dom';
+import {
+  computePosition,
+  flip,
+  shift,
+  offset,
+  Placement
+} from '@floating-ui/dom';
 import * as bootstrap from 'bootstrap';
 import { InstructionView } from './InstructionView';
 
@@ -89,7 +95,7 @@ export class SimulatorInfo {
       computePosition(element, tooltip, {
         placement: place,
         // middleware: [arrow({ element: arrowElement })]
-        middleware: [flip(), shift({ padding: 5 })]
+        middleware: [offset(6), flip(), shift({ padding: 5 })]
       }).then(({ x, y, placement, middlewareData }) => {
         Object.assign(tooltip.style, { left: `${x}px`, top: `${y}px` });
       });
