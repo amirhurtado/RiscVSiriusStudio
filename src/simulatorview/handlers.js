@@ -496,7 +496,14 @@ export function RU(element, cpuData) {
     () => {
       if (writesRU(cpuData.instructionType())) {
         const value = shortBinary(cpuData.instructionResult().WBMUXRes);
-        return tabular({ pairs: [["Value", value]] });
+        const value10 = parseInt(cpuData.instructionResult().WBMUXRes, 2);
+
+        return tabular({
+          pairs: [
+            ["Value", value],
+            ["Value10", value10],
+          ],
+        });
       } else {
         return paragraph({ text: "Unused for this instruction" });
       }
@@ -717,11 +724,30 @@ function aluTooltipText(name, cpuData) {
   const { A: valA, B: valB, ALURes: valALURes } = cpuData.instructionResult();
   const shortValALURes = shortBinary(valALURes);
   const shortValA = shortBinary(valA);
+  const valA10 = parseInt(valA, 2);
+  const valB10 = parseInt(valB, 2);
+  const valALURes10 = parseInt(valALURes, 2);
+
   const shortValB = shortBinary(valB);
   const data = {
-    A: tabular({ pairs: [["Value", shortValA]] }),
-    B: tabular({ pairs: [["Value", shortValB]] }),
-    ALURes: tabular({ pairs: [["Value", shortValALURes]] }),
+    A: tabular({
+      pairs: [
+        ["Value", shortValA],
+        ["Value10", valA10],
+      ],
+    }),
+    B: tabular({
+      pairs: [
+        ["Value", shortValB],
+        ["Value10", valB10],
+      ],
+    }),
+    ALURes: tabular({
+      pairs: [
+        ["Value", shortValALURes],
+        ["Value10", valALURes10],
+      ],
+    }),
   };
 
   // !TODO if the object is to functions we can save some time by lazily
@@ -1433,10 +1459,12 @@ export function WBMUXRU(element, cpuData) {
   focus(element);
   cpuData.installTooltip(element, "bottom", () => {
     const value = shortBinary(cpuData.instructionResult().WBMUXRes);
+    const value10 = parseInt(cpuData.instructionResult().WBMUXRes, 2);
     return tabular({
       pairs: [
         ["WBMUX ⇔ RU", ""],
         ["Value", value],
+        ["Value10", value10],
       ],
     });
   });
@@ -1459,7 +1487,7 @@ export function IMMALUB(element, cpuData) {
   applyClass(element, "connectionDisabled");
   focus(element);
   cpuData.installTooltip(element, "right", () => {
-    const value = shortBinary(cpuData.instructionResult().WBMUXRes);
+    const value = shortBinary(cpuData.instructionResult().WBMUXRes); //Not sure!
     return tabular({
       pairs: [
         ["IMM ⇔ ALUB", ""],
@@ -1486,10 +1514,13 @@ export function RUALUA(element, cpuData) {
   focus(element);
   cpuData.installTooltip(element, "bottom", () => {
     const value = shortBinary(cpuData.instructionResult().RURS1Val);
+    const value10 = parseInt(cpuData.instructionResult().RURS1Val, 2);
+
     return tabular({
       pairs: [
         ["RU ⇔ ALUA", ""],
         ["Value", value],
+        ["Value10", value10],
       ],
     });
   });
@@ -1517,10 +1548,13 @@ export function RUALUB(element, cpuData) {
   focus(element);
   cpuData.installTooltip(element, "bottom", () => {
     const value = shortBinary(cpuData.instructionResult().RURS2Val);
+    const value10 = parseInt(cpuData.instructionResult().RURS2Val, 2);
+
     return tabular({
       pairs: [
         ["RU ⇔ ALUB", ""],
         ["Value", value],
+        ["Value10", value10],
       ],
     });
   });
@@ -1682,10 +1716,13 @@ export function ALUWBMUX(element, cpuData) {
   focus(element);
   cpuData.installTooltip(element, "bottom", () => {
     const value = shortBinary(cpuData.instructionResult().ALURes);
+    const value10 = parseInt(cpuData.instructionResult().ALURes, 2);
+
     return tabular({
       pairs: [
         ["ALU ⇔ WBMUX", ""],
         ["Value", value],
+        ["Value10", value10],
       ],
     });
   });
@@ -1791,10 +1828,13 @@ export function ALUBUMUX(element, cpuData) {
   focus(element);
   cpuData.installTooltip(element, "bottom", () => {
     const value = shortBinary(cpuData.instructionResult().ALURes);
+    const value10 = parseInt(cpuData.instructionResult().ALURes, 2);
+
     return tabular({
       pairs: [
         ["ALU ⇔ BUMux", ""],
         ["Value", value],
+        ["Value10", value10],
       ],
     });
   });
@@ -1847,7 +1887,7 @@ export function BUMUXPC(element, cpuData) {
     return tabular({
       pairs: [
         ["NextPC ⇔ PC", ""],
-        ["Instruction", BUMUXRes],
+        ["Address", BUMUXRes],
       ],
     });
   });

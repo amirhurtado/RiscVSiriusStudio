@@ -134,7 +134,7 @@ export class SCCPU {
     const aluOp = getFunct7(instruction)[1] + getFunct3(instruction);
     const aluRes = this.computeALURes(rs1Val, rs2Val, aluOp);
     const add4Res = parseInt(this.currentInstruction().inst) + 4;
-
+    const add4Res16 = Number(add4Res).toString(16);
     this.registers.writeRegister(getRd(instruction), aluRes);
 
     return {
@@ -151,7 +151,7 @@ export class SCCPU {
       BrOp: '00XXX',
       ADD4Res: add4Res,
       BURes: '0',
-      BUMUXRes: add4Res,
+      BUMUXRes: add4Res16,
       WBMUXRes: aluRes,
       RUDataWrSrc: '00',
       RUWr: writesRU(this.currentType(), this.currentOpcode()) ? '1' : '0'
