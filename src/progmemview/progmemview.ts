@@ -298,12 +298,12 @@ function tableSetup(): Tabulator {
         headerHozAlign: 'center',
         columns: [
           {
-            title: '',
+            title: '0x3-0x2-0x1-0x0',
             field: 'hex',
             headerHozAlign: 'center',
             visible: false,
-            headerSort: false,
-            maxWidth: 120
+            headerSort: false
+            //maxWidth: 130
           }
         ]
       },
