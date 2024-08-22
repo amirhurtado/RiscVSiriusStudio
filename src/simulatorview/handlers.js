@@ -126,23 +126,6 @@ function currentBinInst(cpuData) {
   return `<span class="instruction">${bin}</span>`;
 }
 
-function tooltipEvt(name, cpuData, element, htmlGen, htmlDet) {
-  element.addEventListener("mousemove", (e) => {
-    const state = cpuData.getInfo().cpuElemStates[name];
-    if (cpuData.enabled(name)) {
-      const tooltipText = htmlGen();
-      const tooltipTextDetail = htmlDet !== undefinedFunc0 ? htmlDet() : null;
-      showTooltip(e, element, tooltipText, tooltipTextDetail);
-    }
-  });
-  element.addEventListener("mouseout", () => {
-    const state = cpuData.getInfo().cpuElemStates[name];
-    if (cpuData.enabled(name)) {
-      hideTooltip();
-    }
-  });
-}
-
 /**
  * Redraws element to be on top of all the other svg elements it overlaps with.
  * @param {*} element to be moved to the top of the svg
@@ -512,7 +495,7 @@ export function RU(element, cpuData) {
     "left",
     () => {
       if (writesRU(cpuData.instructionType())) {
-        const value = cpuData.instructionResult().WBMUXRes;
+        const value = shortBinary(cpuData.instructionResult().WBMUXRes);
         return tabular({ pairs: [["Value", value]] });
       } else {
         return paragraph({ text: "Unused for this instruction" });
@@ -644,7 +627,7 @@ export function ALUA(element, cpuData) {
     path0,
     "bottom-start",
     () => {
-      const value = cpuData.instructionResult().RURS1Val;
+      const value = shortBinary(cpuData.instructionResult().RURS1Val);
       return paragraph({ text: value });
     },
     "ALUA"
@@ -700,7 +683,7 @@ export function ALUB(element, cpuData) {
     path0,
     "top-start",
     () => {
-      const value = cpuData.instructionResult().RURS2Val;
+      const value = shortBinary(cpuData.instructionResult().RURS2Val);
       return paragraph({ text: value });
     },
     "ALUA"
@@ -732,11 +715,13 @@ export function ALUB(element, cpuData) {
 
 function aluTooltipText(name, cpuData) {
   const { A: valA, B: valB, ALURes: valALURes } = cpuData.instructionResult();
-
+  const shortValALURes = shortBinary(valALURes);
+  const shortValA = shortBinary(valA);
+  const shortValB = shortBinary(valB);
   const data = {
-    A: tabular({ pairs: [["Value", valA]] }),
-    B: tabular({ pairs: [["Value", valB]] }),
-    ALURes: tabular({ pairs: [["Value", valALURes]] }),
+    A: tabular({ pairs: [["Value", shortValA]] }),
+    B: tabular({ pairs: [["Value", shortValB]] }),
+    ALURes: tabular({ pairs: [["Value", shortValALURes]] }),
   };
 
   // !TODO if the object is to functions we can save some time by lazily
@@ -987,7 +972,7 @@ export function WBMUX(element, cpuData) {
     return storesNextPC(inst, opcode);
   };
   cpuData.installTooltip(path00, "bottom", () => {
-    const value = cpuData.instructionResult().ALURes;
+    const value = shortBinary(cpuData.instructionResult().ALURes);
     return paragraph({ text: value });
   });
   document.addEventListener("SimulatorUpdate", (e) => {
@@ -1474,7 +1459,7 @@ export function IMMALUB(element, cpuData) {
   applyClass(element, "connectionDisabled");
   focus(element);
   cpuData.installTooltip(element, "right", () => {
-    const value = cpuData.instructionResult().WBMUXRes;
+    const value = shortBinary(cpuData.instructionResult().WBMUXRes);
     return tabular({
       pairs: [
         ["IMM ⇔ ALUB", ""],
@@ -1499,16 +1484,15 @@ export function RUALUA(element, cpuData) {
   } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
-  tooltipEvt(
-    "RUALUA",
-    cpuData,
-    element,
-    () => {
-      const value = cpuData.instructionResult().RURS1Val;
-      return paragraph({ text: value });
-    },
-    undefinedFunc0
-  );
+  cpuData.installTooltip(element, "bottom", () => {
+    const value = shortBinary(cpuData.instructionResult().RURS1Val);
+    return tabular({
+      pairs: [
+        ["RU ⇔ ALUA", ""],
+        ["Value", value],
+      ],
+    });
+  });
   document.addEventListener("SimulatorUpdate", (e) => {
     const instType = cpuData.instructionType();
     // if (instType !== "J" && instType !== "B") {
@@ -1531,16 +1515,15 @@ export function RUALUB(element, cpuData) {
 
   applyClass(element, "connectionDisabled");
   focus(element);
-  tooltipEvt(
-    "RUALUB",
-    cpuData,
-    element,
-    () => {
-      const value = cpuData.instructionResult().RURS2Val;
-      return paragraph({ text: value });
-    },
-    undefinedFunc0
-  );
+  cpuData.installTooltip(element, "bottom", () => {
+    const value = shortBinary(cpuData.instructionResult().RURS2Val);
+    return tabular({
+      pairs: [
+        ["RU ⇔ ALUB", ""],
+        ["Value", value],
+      ],
+    });
+  });
   document.addEventListener("SimulatorUpdate", (e) => {
     const instType = cpuData.instructionType();
     if (usesRegister("rs2", instType) && !usesIMM(instType)) {
@@ -1807,7 +1790,7 @@ export function ALUBUMUX(element, cpuData) {
   applyClass(element, "connectionDisabled");
   focus(element);
   cpuData.installTooltip(element, "bottom", () => {
-    const value = cpuData.instructionResult().ALURes;
+    const value = shortBinary(cpuData.instructionResult().ALURes);
     return tabular({
       pairs: [
         ["ALU ⇔ BUMux", ""],
