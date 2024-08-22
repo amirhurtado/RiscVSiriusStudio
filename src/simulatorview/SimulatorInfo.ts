@@ -137,7 +137,7 @@ export class SimulatorInfo {
         return;
       }
       tooltip.style.display = 'block';
-      update(evt);
+      update(evt as MouseEvent);
     }
 
     function hideTooltip() {

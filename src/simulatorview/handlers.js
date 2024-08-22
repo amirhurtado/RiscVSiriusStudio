@@ -32,6 +32,15 @@ var tabular = _.template(
    %>`
 );
 
+function shortBinary(bin) {
+  const firstOne = bin.indexOf("1");
+  if (firstOne !== -1) {
+    return "32'b" + bin.substring(firstOne);
+  } else {
+    return "32'b0";
+  }
+}
+
 function undefinedFunc0() {}
 
 const showTooltip = (evt, element, text, extendedText) => {
@@ -1438,7 +1447,7 @@ export function WBMUXRU(element, cpuData) {
   applyClass(element, "connectionDisabled");
   focus(element);
   cpuData.installTooltip(element, "bottom", () => {
-    const value = cpuData.instructionResult().WBMUXRes;
+    const value = shortBinary(cpuData.instructionResult().WBMUXRes);
     return tabular({
       pairs: [
         ["WBMUX ⇔ RU", ""],
@@ -1621,7 +1630,7 @@ export function ALUAALU(element, cpuData) {
   applyClass(element, "connectionDisabled");
   focus(element);
   cpuData.installTooltip(element, "top", () => {
-    const value = cpuData.instructionResult().ALUARes;
+    const value = shortBinary(cpuData.instructionResult().ALUARes);
     return paragraph({ text: value });
   });
   document.addEventListener("SimulatorUpdate", (e) => {
@@ -1642,7 +1651,7 @@ export function ALUBALU(element, cpuData) {
   applyClass(element, "connectionDisabled");
   focus(element);
   cpuData.installTooltip(element, "top", () => {
-    const value = cpuData.instructionResult().ALUBRes;
+    const value = shortBinary(cpuData.instructionResult().ALUBRes);
     return paragraph({ text: value });
   });
   document.addEventListener("SimulatorUpdate", (e) => {
@@ -1689,7 +1698,7 @@ export function ALUWBMUX(element, cpuData) {
   applyClass(element, "connectionDisabled");
   focus(element);
   cpuData.installTooltip(element, "bottom", () => {
-    const value = cpuData.instructionResult().ALURes;
+    const value = shortBinary(cpuData.instructionResult().ALURes);
     return tabular({
       pairs: [
         ["ALU ⇔ WBMUX", ""],
