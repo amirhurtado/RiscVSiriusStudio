@@ -110,6 +110,7 @@ export class RVExtensionContext {
     instruction: InstructionPanelView
   ) {
     console.log('start simulation at rvContext');
+    this.uploadIR(programMemory);
     // After this call the simulator instance will intercept the messages of the
     // views and will respond to them
     this.simulator = new RVSimulationContext(
