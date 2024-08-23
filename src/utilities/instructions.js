@@ -79,6 +79,7 @@ export function usesFunct3(instType) {
  * @param {*} instType the instruction type
  */
 export function usesFunct7(instType) {
+  // TODO: some I type arithmetic operations use funct7
   return instType === "R";
 }
 
@@ -252,7 +253,7 @@ export function getFunct3(instruction) {
 }
 
 export function getFunct7(instruction) {
-  if (!usesFunct3(instruction)) {
+  if (!usesFunct7(instruction)) {
     throw new Error(
       "Instruction of type " + instruction.type + " does not have funct7 field"
     );

@@ -16,7 +16,10 @@ import {
   writesDM,
   writesRU,
   getFunct3,
-  getFunct7
+  getFunct7,
+  isIArithmetic,
+  isILoad,
+  isIJump
 } from '../utilities/instructions';
 
 import _ from 'lodash';
@@ -120,6 +123,9 @@ export class SCCPU {
     switch (this.currentType()) {
       case 'R':
         return this.executeRInstruction();
+      case 'I':
+        return this.executeIInstruction();
+
       default:
         throw new Error(
           'Unknown instruction ' + JSON.stringify(this.currentInstruction())
@@ -146,7 +152,7 @@ export class SCCPU {
       ALUBRes: rs2Val,
       A: rs1Val,
       B: rs2Val,
-      ALUOp: '0110',
+      ALUOp: aluOp,
       ALURes: aluRes,
       BrOp: '00XXX',
       ADD4Res: add4Res,
@@ -154,11 +160,84 @@ export class SCCPU {
       BUMUXRes: add4Res16,
       WBMUXRes: aluRes,
       RUDataWrSrc: '00',
-      RUWr: writesRU(this.currentType(), this.currentOpcode()) ? '1' : '0'
+      RUWr: '1'
+    };
+  }
 
-      // IMM32: 57,
-      // DMRes: 24,
-      // DMWr: writesDM(this.currentType(), this.currentOpcode())
+  private executeIInstruction() {
+    // debugger;
+    const instruction = this.currentInstruction();
+    const rs1Val = this.registers.readRegisterFromName(getRs1(instruction));
+    const imm12Val = this.currentInstruction().encoding.imm12;
+    const imm32Val = imm12Val.padStart(32, imm12Val.at(0));
+    const add4Res = parseInt(this.currentInstruction().inst) + 4;
+    const add4Res16 = Number(add4Res).toString(16);
+
+    let aluOp = undefined;
+    switch (true) {
+      case isIArithmetic(instruction.type, instruction.opcode):
+        aluOp = instruction.encoding.binEncoding[1] + getFunct3(instruction);
+        break;
+      case isILoad(this.currentType(), this.currentOpcode()):
+        aluOp = '0000';
+        break;
+      case isIJump(this.currentType(), this.currentOpcode()):
+        aluOp = '0000';
+        break;
+    }
+
+    const aluRes = this.computeALURes(rs1Val, imm32Val, aluOp);
+
+    let brOp = undefined;
+    let ruDataWrSrc = undefined;
+    let wbMUXRes = undefined;
+    let buRes = undefined;
+    let buMUXRes = undefined;
+
+    switch (true) {
+      case isIArithmetic(instruction.type, instruction.opcode):
+        // TODO: I have to update the parser to look for shift operations that use shamt and funct7
+        brOp = '00XXX';
+        ruDataWrSrc = '00';
+        wbMUXRes = aluRes;
+        buRes = '0';
+        buMUXRes = add4Res16;
+        break;
+      case isILoad(this.currentType(), this.currentOpcode()):
+        brOp = '00XXX';
+        ruDataWrSrc = '01';
+        // TODO: read from memory
+        wbMUXRes = undefined;
+        buRes = '0';
+        buMUXRes = add4Res16;
+        break;
+      case isIJump(this.currentType(), this.currentOpcode()):
+        brOp = '1XXXX';
+        ruDataWrSrc = '10';
+        wbMUXRes = add4Res;
+        buRes = '1';
+        buMUXRes = aluRes;
+        break;
+    }
+
+    return {
+      RURS1Val: rs1Val,
+      IMMALUBVal: imm32Val,
+      ALUASrc: '0',
+      ALUBSrc: '1',
+      ALUARes: rs1Val,
+      ALUBRes: imm32Val,
+      A: rs1Val,
+      B: imm32Val,
+      ALUOp: aluOp,
+      ALURes: aluRes,
+      BrOp: brOp,
+      ADD4Res: add4Res,
+      BURes: buRes,
+      BUMUXRes: buMUXRes,
+      WBMUXRes: wbMUXRes,
+      RUDataWrSrc: ruDataWrSrc,
+      RUWr: '1'
     };
   }
 

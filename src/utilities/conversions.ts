@@ -20,7 +20,7 @@ export function binaryToInt(binary: string): string {
  * Converts the binary representation of a number to an hexadecimal
  * representation.
  * @param binary number representation
- * @returns hexdecimal representation
+ * @returns hexadecimal representation
  */
 export function binaryToHex(binary: string): string {
   return parseInt(binary, 2).toString(16);
@@ -34,14 +34,14 @@ export function binaryToHex(binary: string): string {
 export function binaryToAscii(binary: string): string {
   const wordCodes = binary.match(/.{1,8}/g);
   if (!wordCodes) {
-    return "fix me!!";
+    return 'fix me!!';
   }
   const word = wordCodes.map((code) => {
     const asc = parseInt(code, 2);
     return String.fromCharCode(asc);
   });
 
-  return word.join("");
+  return word.join('');
 }
 
 /**
@@ -60,7 +60,7 @@ export function validUInt32(input: string): boolean {
 /**
  * Checks if a binary is valid
  * @param input binary representation
- * @returns whther input is a valid 32 bits binary.
+ * @returns whether input is a valid 32 bits binary.
  */
 export function validBinary(input: string): boolean {
   const binary = /^[01]+$/g;
@@ -70,7 +70,7 @@ export function validBinary(input: string): boolean {
 /**
  * Checks if a signed integer is valid
  * @param input possibly signed decimal representation
- * @returns whther input is a valid signed integer that fits in 32 bits.
+ * @returns whether input is a valid signed integer that fits in 32 bits.
  */
 export function validInt32(input: string): boolean {
   const signed = /^[-+]?\d+$/g;
@@ -84,7 +84,7 @@ export function validInt32(input: string): boolean {
 /**
  * Checks if a hexadecimal value is valid
  * @param input hexadecimal representation
- * @returns whther input is a valid hexadecimal that fits in 32 bits.
+ * @returns whether input is a valid hexadecimal that fits in 32 bits.
  */
 export function validHex(input: string): boolean {
   const hex = /^[A-Fa-f0-9]{1,8}$/g;
@@ -101,7 +101,7 @@ export function validAscii(input: string): boolean {
 }
 
 /**
- * Computes the representation of a binary value in the view.This is used to
+ * Computes the representation of a binary value in the view. This is used to
  * short the way binary numbers are presented to the user. I (Gustavo) chose a
  * verilog style representation but it has to be discussed.
  * @param value to represent
@@ -112,7 +112,7 @@ export function binaryRepresentation(value: string) {
   let repr = "32'b";
   if (out) {
     if (out.y?.length === 0) {
-      repr = repr + "0";
+      repr = repr + '0';
     } else {
       repr = repr + out.y;
     }
@@ -122,7 +122,7 @@ export function binaryRepresentation(value: string) {
 /**
  * Splits a binary number in two parts:
  *
- * y: the meaninful part of the number
+ * y: the meaningful part of the number
  * x: the meaningless part which consists of all zeroes.
  * @param str a binary number representation
  * @returns {x: val, y: val}
@@ -149,9 +149,9 @@ export function toBinary(value: string, vtype: RegisterView) {
   switch (vtype) {
     case 2:
       return value;
-    case "unsigned":
+    case 'unsigned':
       return parseInt(value).toString(2);
-    case "signed": {
+    case 'signed': {
       const num = parseInt(value);
       return (num >>> 0).toString(2);
     }
@@ -159,15 +159,15 @@ export function toBinary(value: string, vtype: RegisterView) {
       const num = parseInt(value, 16);
       return num.toString(2);
     }
-    case "ascii": {
+    case 'ascii': {
       const array = Array.from(value);
       const result = array.reduce((acc, char) => {
         const charAscii = char.charCodeAt(0);
-        const charBin = charAscii.toString(2).padStart(8, "0");
+        const charBin = charAscii.toString(2).padStart(8, '0');
         return acc + charBin;
-      }, "");
+      }, '');
       return result;
     }
   }
-  return "";
+  return '';
 }

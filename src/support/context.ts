@@ -219,14 +219,15 @@ export class RVSimulationContext {
           switch (msg) {
             case 'stepClicked':
               {
-                const instruction = this.cpu?.currentInstruction();
-                const result = this.cpu?.executeInstruction();
+                const instruction = this.cpu.currentInstruction();
+                const result = this.cpu.executeInstruction();
                 // Send messages to update the registers view.
                 if (writesRU(instruction.type, instruction.opcode)) {
+                  console.log('Writing result ', result.WBMUXRes);
                   this.sendToRegisters({
                     operation: 'setRegister',
                     register: instruction.rd.regeq,
-                    value: result?.WBMUXRes
+                    value: result.WBMUXRes
                   });
                 }
                 // Send message to update the simulator components.

@@ -494,7 +494,7 @@ export function RU(element, cpuData) {
     datawrText,
     "left",
     () => {
-      if (writesRU(cpuData.instructionType())) {
+      if (writesRU(cpuData.instructionType(), cpuData.instructionOpcode())) {
         const value = shortBinary(cpuData.instructionResult().WBMUXRes);
         const value10 = parseInt(cpuData.instructionResult().WBMUXRes, 2);
 
@@ -549,7 +549,8 @@ function immTooltipText(type, cpuData) {
       bits: 12,
       value2: instruction.encoding.imm12,
       value10: instruction.imm12,
-      instrcution: "[31:20]",
+      value16: parseInt(instruction.encoding.imm12, 2).toString(16),
+      instruction: "[31:20]",
       imm: "[11:0]",
     },
     S: 12,
@@ -561,13 +562,14 @@ function immTooltipText(type, cpuData) {
   const immLength = `${info.bits} bits.`;
   const immValue2 = `${info.value2}.`;
   const immValue10 = `${info.value10}.`;
-  const instPosition = `${info.instrcution} bits in instruction.`;
+  const immValue16 = `${info.value16}.`;
+  const instPosition = `${info.instruction} bits in instruction.`;
   const immPosition = `${info.imm} bits in immediate.`;
 
   return tabular({
     pairs: [
-      ["Value(10)", immValue10],
       ["Value(2)", immValue2],
+      ["Value(10)", immValue10],
       ["Length", immLength],
       ["Position", instPosition],
       ["Position", immPosition],
@@ -699,7 +701,7 @@ export function ALUB(element, cpuData) {
     path1,
     "bottom-start",
     () => {
-      const value = cpuData.instructionResult().IMM32;
+      const value = shortBinary(cpuData.instructionResult().IMMALUBVal);
       return paragraph({ text: value });
     },
     "ALUA"
@@ -1156,12 +1158,17 @@ export function PCALUA(element, cpuData) {
  * @param {any} cpuData simulator information.
  */
 function imCUTooltipText(connection, cpuData) {
+  const instruction = cpuData.getInstruction();
+  if (connection === "funct7" && !usesFunct7(instruction.type)) {
+    return paragraph({ text: "Unused for this instruction" });
+  }
+
   const {
     opcode,
     funct3,
     funct7,
     encoding: { funct3: funct3Bin },
-  } = cpuData.getInstruction();
+  } = instruction;
 
   const title = _.capitalize(connection);
   const detail = {
@@ -1274,7 +1281,7 @@ export function IMCUFUNCT7(element, cpuData) {
       }
     },
     () => {
-      if (cpuData.enable("IMCUFUNCT7")) {
+      if (cpuData.enabled("IMCUFUNCT7")) {
         const html = currentBinInst(cpuData);
         cpuData.setBinaryInstruction(html);
       }
@@ -1304,11 +1311,12 @@ export function IMCUFUNCT7(element, cpuData) {
  * @param {any} cpuData simulator information.
  */
 function imRUTooltipText(connection, cpuData) {
-  const value10 = cpuData.getInstruction()[connection].regenc;
-  const value2 = cpuData.getInstruction().encoding[connection];
-  // return tabular({
-  //   pairs: [[title, ""], [("Value(2)", value2)], [("Value(10)", value10)]],
-  // });
+  const instruction = cpuData.getInstruction();
+  if (!usesRegister(connection, instruction.type)) {
+    return paragraph({ text: "Unused for this instruction" });
+  }
+  const value10 = instruction[connection].regenc;
+  const value2 = instruction.encoding[connection];
 
   return tabular({
     pairs: [
@@ -1320,10 +1328,6 @@ function imRUTooltipText(connection, cpuData) {
 }
 
 export function IMRURS1(element, cpuData) {
-  const {
-    cpuElemStates: { IMRURS1: state },
-  } = cpuData.getInfo();
-
   applyClass(element, "connectionDisabled");
   focus(element);
   cpuData.installTooltip(element, "top", () => {
@@ -1355,10 +1359,6 @@ export function IMRURS1(element, cpuData) {
 }
 
 export function IMRURS2(element, cpuData) {
-  const {
-    cpuElemStates: { IMRURS2: state },
-  } = cpuData.getInfo();
-
   applyClass(element, "connectionDisabled");
   focus(element);
   cpuData.installTooltip(element, "top", () => {
@@ -1469,7 +1469,7 @@ export function WBMUXRU(element, cpuData) {
     });
   });
   document.addEventListener("SimulatorUpdate", (e) => {
-    if (writesRU(cpuData.instructionType())) {
+    if (writesRU(cpuData.instructionType(), cpuData.instructionOpcode())) {
       applyClass(element, "connection");
       cpuData.enable("WBMUXRU");
     } else {
@@ -1487,11 +1487,16 @@ export function IMMALUB(element, cpuData) {
   applyClass(element, "connectionDisabled");
   focus(element);
   cpuData.installTooltip(element, "right", () => {
-    const value = shortBinary(cpuData.instructionResult().WBMUXRes); //Not sure!
+    const imm32 = cpuData.instructionResult().IMMALUBVal;
+    const value2 = shortBinary(imm32);
+    const value10 = parseInt(imm32, 2).toString(10);
+    const value16 = parseInt(imm32, 2).toString(16);
     return tabular({
       pairs: [
         ["IMM ⇔ ALUB", ""],
-        ["Value", value],
+        ["Value2", value2],
+        ["Value10", value10],
+        ["Value16", value16],
       ],
     });
   });
@@ -1662,9 +1667,6 @@ export function ALUAALU(element, cpuData) {
 }
 
 export function ALUBALU(element, cpuData) {
-  const {
-    cpuElemStates: { ALUBALU: state },
-  } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
   cpuData.installTooltip(element, "top", () => {
