@@ -66,7 +66,6 @@ type RegisterValue = {
   name: string;
   rawName: string;
   value: string;
-  rawValue: string;
   watched: boolean;
   modified: number;
   id: number;
@@ -129,11 +128,11 @@ function showRegistersView() {
 }
 
 function settingsChanged(newSettings: any, table: Tabulator) {
-  log('info', {
-    place: 'registersview',
-    m: 'Reacting to new settings',
-    n: newSettings
-  });
+  // log('info', {
+  //   place: 'registersview',
+  //   m: 'Reacting to new settings',
+  //   n: newSettings
+  // });
 
   const { sort } = newSettings;
   if (sort !== settings.sort) {
@@ -151,7 +150,8 @@ function selectRegister(register: string, table: Tabulator) {
 }
 
 function setRegister(register: string, value: string, table: Tabulator) {
-  table.updateRow(register, { value: value });
+  table.updateRow(register, { value: value, modified: Date.now() });
+  sortTable(table);
 }
 
 function tableSetup(): Tabulator {
@@ -253,7 +253,6 @@ function tableSetup(): Tabulator {
       name: `${xname} ${abi}`,
       rawName: `${xname}`,
       value: zeros32,
-      rawValue: zeros32,
       viewType: 2,
       watched: false,
       modified: 0,
@@ -327,12 +326,12 @@ function valueEditor(
 ) {
   const { name, value, viewType } = cell.getRow().getData();
 
-  log('info', {
-    msg: 'valueEditor called',
-    rawValue: value,
-    currentVType: viewType,
-    reg: name
-  });
+  // log('info', {
+  //   msg: 'valueEditor called',
+  //   rawValue: value,
+  //   currentVType: viewType,
+  //   reg: name
+  // });
   const viewValue = formatValueAsType(value, viewType);
 
   let editor = document.createElement('input');
@@ -347,12 +346,12 @@ function valueEditor(
   function successFunc() {
     const newValue = editor.value;
     const valid = isValidAs(newValue, viewType);
-    log('info', {
-      msg: 'called success function',
-      check: valid,
-      newValue: newValue,
-      type: viewType
-    });
+    // log('info', {
+    //   msg: 'called success function',
+    //   check: valid,
+    //   newValue: newValue,
+    //   type: viewType
+    // });
     if (valid) {
       const bin = toBinary(newValue, viewType);
       success(bin);
@@ -512,7 +511,6 @@ function notifyExtension(cell: CellComponent) {
  */
 function toggleWatched(event: UIEvent, row: RowComponent) {
   const { rawName: rn, watched: w } = row.getData();
-  log('info', { message: 'updXXXXXate error', rawName: rn, watched: w });
   row.update({ rawName: rn, watched: !w }).catch((error) => {
     log('info', { message: 'update error', rawName: rn, watched: w });
   });
@@ -542,11 +540,11 @@ function hederGrouping(
  * @param table view to sort
  */
 function sortTable(table: Tabulator) {
-  log('info', {
-    m: 'sortingTable',
-    sort: settings.sort,
-    place: 'registersview'
-  });
+  // log('info', {
+  //   m: 'sortingTable',
+  //   sort: settings.sort,
+  //   place: 'registersview'
+  // });
   if (settings.sort === 'name') {
     table.setSort('id', 'asc');
   } else {
