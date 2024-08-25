@@ -244,7 +244,7 @@ export function getRd(instruction) {
 }
 
 export function getFunct3(instruction) {
-  if (!usesFunct3(instruction)) {
+  if (!usesFunct3(instruction.type)) {
     throw new Error(
       "Instruction of type " + instruction.type + " does not have funct3 field"
     );
@@ -253,7 +253,7 @@ export function getFunct3(instruction) {
 }
 
 export function getFunct7(instruction) {
-  if (!usesFunct7(instruction)) {
+  if (!usesFunct7(instruction.type)) {
     throw new Error(
       "Instruction of type " + instruction.type + " does not have funct7 field"
     );
