@@ -283,6 +283,31 @@ function cuArrowTooltipText(cpuData) {
           ["RUWr", result.RUWr],
         ],
       });
+    case "I":
+      return tabular({
+        pairs: [
+          ["ALUASrc", result.ALUASrc],
+          ["ALUBSrc", result.ALUBSrc],
+          ["ALUOp", result.ALUOp],
+          ["BrOp", result.BrOp],
+          ["RUDataWrSrc", result.RUDataWrSrc],
+          ["NextPCSrc", result.BURes],
+          ["RUWr", result.RUWr],
+          ["IMMSrc", result.IMMSrc],
+        ],
+      });
+    case "S":
+      return tabular({
+        pairs: [
+          ["ALUASrc", result.ALUASrc],
+          ["ALUBSrc", result.ALUBSrc],
+          ["ALUOp", result.ALUOp],
+          ["BrOp", result.BrOp],
+          ["NextPCSrc", result.BURes],
+          ["RUWr", result.RUWr],
+          ["IMMSrc", result.IMMSrc],
+        ],
+      });
     default:
       return tabular({
         pairs: [
@@ -306,6 +331,7 @@ function styleSignals(cpuData, instType, style) {
       SgnALUOPPTH: ALUOpSignal,
       SgnWBPTH: RUDataWrSrcSignal,
       SgnBUBROPPTH: BrOpSignal,
+      SgnIMMSrcPTH: ImmSrcSignal,
     },
   } = cpuData.getInfo();
 
@@ -317,6 +343,23 @@ function styleSignals(cpuData, instType, style) {
       ALUOpSignal,
       RUDataWrSrcSignal,
       BrOpSignal,
+    ],
+    I: [
+      ALUBSignal,
+      ALUASignal,
+      RUWrSignal,
+      ALUOpSignal,
+      RUDataWrSrcSignal,
+      BrOpSignal,
+      ImmSrcSignal,
+    ],
+    S: [
+      ALUBSignal,
+      ALUASignal,
+      RUWrSignal,
+      ALUOpSignal,
+      BrOpSignal,
+      ImmSrcSignal,
     ],
   };
   signalList[instType].forEach((signal) => {
@@ -553,7 +596,14 @@ function immTooltipText(type, cpuData) {
       instruction: "[31:20]",
       imm: "[11:0]",
     },
-    S: 12,
+    S: {
+      bits: 12,
+      value2: instruction.encoding.imm12,
+      value10: instruction.imm12,
+      value16: parseInt(instruction.encoding.imm12, 2).toString(16),
+      instruction: "[31:25], [11:7]",
+      imm: "[11:0]",
+    },
     B: 12,
     U: 20,
     J: 20,
@@ -575,6 +625,15 @@ function immTooltipText(type, cpuData) {
       ["Position", immPosition],
     ],
   });
+}
+
+function setIMMSrc(cpuData) {
+  const {
+    cpuElements: { SgnIMMSRCVAL: immSignalValue },
+  } = cpuData.getInfo();
+
+  immSignalValue.getElementsByTagName("div")[2].innerHTML =
+    cpuData.instructionResult().IMMSrc;
 }
 
 export function IMM(element, cpuData) {
@@ -600,6 +659,7 @@ export function IMM(element, cpuData) {
   document.addEventListener("SimulatorUpdate", (e) => {
     if (usesIMM(cpuData.instructionType())) {
       applyClass(element, "component");
+      setIMMSrc(cpuData);
       signals.forEach((e) => {
         applyClass(e, "signal");
       });
@@ -1041,6 +1101,9 @@ export function WBMUX(element, cpuData) {
     } else {
       applyClass(element, "componentDisabled");
       applyClass(signal, "signalDisabled");
+      [path00, path01, path10].forEach((x) => {
+        applyClass(x, "connectionDisabled muxPathDisabled");
+      });
     }
   });
 }
