@@ -62,6 +62,9 @@ export class SCCPU {
   // TODO: We need a proper type for a program representation.
   private readonly program: any[];
   private registers: RegistersFile;
+  /**
+   * This pc indexes the program array. As so, it is not an address.
+   */
   private pc: number;
   public constructor(program: any[]) {
     this.program = program;
@@ -77,8 +80,23 @@ export class SCCPU {
   private currentType(): string {
     return this.currentInstruction().type;
   }
+  private currentKind(): string {
+    return this.currentInstruction().kind;
+  }
+
   private currentOpcode(): string {
     return this.currentInstruction().opcode;
+  }
+
+  private finished(): boolean {
+    return this.pc >= this.program.length;
+  }
+
+  public nextInstruction() {
+    this.pc++;
+    while (this.currentKind() !== 'SrcInstruction') {
+      this.pc++;
+    }
   }
 
   private computeALURes(A: string, B: string, ALUOp: string): string {
@@ -125,6 +143,8 @@ export class SCCPU {
         return this.executeRInstruction();
       case 'I':
         return this.executeIInstruction();
+      case 'S':
+        return this.executeSInstruction();
 
       default:
         throw new Error(
@@ -237,13 +257,44 @@ export class SCCPU {
       BUMUXRes: buMUXRes,
       WBMUXRes: wbMUXRes,
       RUDataWrSrc: ruDataWrSrc,
-      RUWr: '1'
+      RUWr: '1',
+      IMMSrc: '000'
     };
   }
 
-  public nextInstruction() {
-    this.pc++;
+  private executeSInstruction() {
+    const instruction = this.currentInstruction();
+    const baseAddressVal = this.registers.readRegisterFromName(
+      getRs1(instruction)
+    );
+    const offset12Val = this.currentInstruction().encoding.imm12;
+    const offset32Val = offset12Val.padStart(32, offset12Val.at(0));
+    const add4Res = parseInt(this.currentInstruction().inst) + 4;
+    const add4Res16 = Number(add4Res).toString(16);
+
+    const aluRes = this.computeALURes(baseAddressVal, offset32Val, '0000');
+
+    return {
+      RURS1Val: baseAddressVal,
+      IMMALUBVal: offset32Val,
+      ALUASrc: '0',
+      ALUBSrc: '1',
+      ALUARes: baseAddressVal,
+      ALUBRes: offset32Val,
+      A: baseAddressVal,
+      B: offset32Val,
+      ALUOp: '0000',
+      ALURes: aluRes,
+      BrOp: '00XXX',
+      ADD4Res: add4Res,
+      BURes: '0',
+      BUMUXRes: '0',
+      RUDataWrSrc: 'XX',
+      RUWr: '0',
+      IMMSrc: '001'
+    };
   }
+
   public getRegisterFile(): RegistersFile {
     return this.registers;
   }

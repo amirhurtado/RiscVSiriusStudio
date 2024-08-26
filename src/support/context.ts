@@ -173,19 +173,19 @@ export class RVSimulationContext {
   }
 
   private sendToSimulator(message: any) {
-    this.simPanel?.postMessage(message);
+    this.simPanel.postMessage(message);
   }
 
   private sendToRegisters(message: any) {
-    this.regPanel?.getWebView().postMessage(message);
+    this.regPanel.getWebView().postMessage(message);
   }
 
   private sendToMemory(message: any) {
-    this.memPanel?.getWebView().postMessage(message);
+    this.memPanel.getWebView().postMessage(message);
   }
 
   private selectRegister(registerName: string) {
-    const instruction = this.cpu?.currentInstruction();
+    const instruction = this.cpu.currentInstruction();
     if (usesRegister(registerName, instruction.type)) {
       this.sendToRegisters({
         operation: 'selectRegister',
@@ -206,7 +206,7 @@ export class RVSimulationContext {
       name: regName,
       value: value
     });
-    this.cpu?.getRegisterFile().writeRegister(regName, value);
+    this.cpu.getRegisterFile().writeRegister(regName, value);
   }
 
   private dispatch(message: any) {
@@ -236,7 +236,7 @@ export class RVSimulationContext {
                   instruction: instruction,
                   result: result
                 });
-                this.cpu?.nextInstruction();
+                this.cpu.nextInstruction();
               }
               break;
             case 'watchRegister':
@@ -250,7 +250,7 @@ export class RVSimulationContext {
               break;
             case 'imMouseenter':
               {
-                const instruction = this.cpu?.currentInstruction();
+                const instruction = this.cpu.currentInstruction();
                 this.sendToMemory({
                   operation: 'selectInstructionFromAddress',
                   address: instruction.inst
