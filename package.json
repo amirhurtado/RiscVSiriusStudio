@@ -53,6 +53,11 @@
           "type": "webview",
           "id": "rv-simulator.progmem",
           "name": "Program memory"
+        },
+        {
+          "type": "webview",
+          "id": "rv-simulator.datamem",
+          "name": "Data memory"
         }
       ]
     },
@@ -83,6 +88,18 @@
           "type": "boolean",
           "default": true,
           "description": "Keep source code editor synchronized with program memory (and warn when it is not.)."
+        },
+        "rv-simulator.dataMemoryView.memorySize": {
+          "type": "number",
+          "default": 128,
+          "enum": [128, 256, 512, 1024],
+          "enumDescriptions": [
+            "128 bytes.",
+            "256 bytes.",
+            "512 bytes.",
+            "1024 bytes."
+          ],
+          "description": "Size in bytes of the data memory."
         }
       }
     },

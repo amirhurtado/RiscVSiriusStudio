@@ -14,6 +14,7 @@ import {
   storesMemRead,
   storesALU,
   isLUI,
+  writesDM,
 } from "../utilities/instructions.js";
 
 import { computePosition, flip, shift, offset } from "@floating-ui/dom";
@@ -407,7 +408,10 @@ function registerTooltipText(name, type, cpuData) {
   const instruction = cpuData.getInstruction();
   const { regname, regeq, regenc } = instruction[name];
   const binEnc = instruction.encoding[name];
-  const value = cpuData.getRegisterValue(parseInt(regenc));
+  const value = cpuData.instructionResult()["RU" + name.toUpperCase() + "Val"];
+  const value2 = shortBinary(value);
+  const value10 = parseInt(value, 2).toString(10);
+  const value16 = parseInt(value, 2).toString(16);
 
   const data = {
     general: tabular({
@@ -422,7 +426,9 @@ function registerTooltipText(name, type, cpuData) {
     valueGeneral: tabular({
       pairs: [
         ["Register", `${regname} (${regeq})`],
-        ["Value", value],
+        ["Value2", value2],
+        ["Value10", value10],
+        ["Value16", value16],
       ],
     }),
   };
@@ -930,12 +936,78 @@ export function BU(element, cpuData) {
   });
 }
 
+function dmTooltipText(name, cpuData) {
+  const instType = cpuData.instructionType();
+  const instOpcode = cpuData.instructionOpcode();
+  if (name === "DataRd" && writesDM(instType, instOpcode)) {
+    return paragraph({ text: "Unused for this instruction" });
+  }
+  if (name === "DataWr" && storesMemRead(instType, instOpcode)) {
+    return paragraph({ text: "Unused for this instruction" });
+  }
+
+  const address = cpuData.instructionResult().DMAddress;
+  const address16 = parseInt(address, 2).toString(16);
+
+  switch (name) {
+    case "Address":
+      return tabular({
+        pairs: [
+          ["Value2", shortBinary(address)],
+          ["Value16", address16],
+        ],
+      });
+    case "DataWr": {
+      const data = cpuData.instructionResult().DMDataWr;
+      const data10 = parseInt(data, 2).toString(10);
+      const data16 = parseInt(data, 2).toString(16);
+      return tabular({
+        pairs: [
+          ["Value2", shortBinary(data)],
+          ["Value10", data10],
+          ["Value16", data16],
+        ],
+      });
+    }
+    case "DataRd": {
+      const data = cpuData.instructionResult().DMDataRd;
+      const data10 = parseInt(data, 2).toString(10);
+      const data16 = parseInt(data, 2).toString(16);
+      return tabular({
+        pairs: [
+          ["Value2", shortBinary(data)],
+          ["Value10", data10],
+          ["Value16", data16],
+        ],
+      });
+    }
+  }
+}
+
+function setDMWr(cpuData) {
+  const {
+    cpuElements: { SgnDMWRVAL: wrSignalValue },
+  } = cpuData.getInfo();
+
+  wrSignalValue.getElementsByTagName("div")[2].innerHTML =
+    cpuData.instructionResult().DMWr;
+}
+
+function setDMCtrl(cpuData) {
+  const {
+    cpuElements: { SgnDMCTRLVAL: ctrlSignalValue },
+  } = cpuData.getInfo();
+
+  ctrlSignalValue.getElementsByTagName("div")[2].innerHTML =
+    cpuData.instructionResult().DMCtrl;
+}
+
 export function DM(element, cpuData) {
   const {
     cpuElements: {
       DMTEXTINADDRESS: addressText,
       DMTEXTINDATAWR: datawrText,
-      // DMTEXTDATARD: dataRdText,
+      DMTEXTDATARD: dataRdText,
       SgnDMCTRLPTH: ctrlSignal,
       SgnDMCTRLVAL: ctrlSignalVal,
       SgnDMWRPTH: wrSignal,
@@ -951,6 +1023,7 @@ export function DM(element, cpuData) {
   const connections = [clkConnection];
   const signals = [ctrlSignal, wrSignal, ctrlSignalVal, wrSignalVal];
   const inputs = [addressText, datawrText];
+  const outputs = [dataRdText];
 
   signals.forEach((e) => {
     applyClass(e, "signalDisabled");
@@ -961,13 +1034,41 @@ export function DM(element, cpuData) {
   inputs.forEach((e) => {
     applyClass(e, "inputTextDisabled");
   });
+  outputs.forEach((e) => {
+    applyClass(e, "outputTextDisabled");
+  });
   connections.forEach((e) => {
     applyClass(e, "connectionDisabled");
   });
+  cpuData.installTooltip(
+    addressText,
+    "top",
+    () => {
+      return dmTooltipText("Address", cpuData);
+    },
+    "DM"
+  );
+  cpuData.installTooltip(
+    datawrText,
+    "top",
+    () => {
+      return dmTooltipText("DataWr", cpuData);
+    },
+    "DM"
+  );
+  cpuData.installTooltip(
+    dataRdText,
+    "top",
+    () => {
+      return dmTooltipText("DataRd", cpuData);
+    },
+    "DM"
+  );
+
   document.addEventListener("SimulatorUpdate", (e) => {
     const instType = cpuData.instructionType();
-    if (instType === "S" || cpuData.instructionOpcode() === "0000011") {
-      // Data memory only available for S and load instructions
+    const instOpcode = cpuData.instructionOpcode();
+    if (writesDM(instType, instOpcode) || storesMemRead(instType, instOpcode)) {
       cpuData.enable("DM");
       signals.forEach((e) => {
         applyClass(e, "signal");
@@ -975,12 +1076,27 @@ export function DM(element, cpuData) {
       components.forEach((e) => {
         applyClass(e, "component");
       });
-      inputs.forEach((e) => {
-        applyClass(e, "inputText");
-      });
       connections.forEach((e) => {
         applyClass(e, "connection");
       });
+      setDMWr(cpuData);
+      setDMCtrl(cpuData);
+      signals.forEach((e) => {
+        applyClass(e, "signal");
+      });
+      if (writesDM(instType, instOpcode)) {
+        inputs.forEach((e) => {
+          applyClass(e, "inputText");
+        });
+        outputs.forEach((e) => {
+          applyClass(e, "outputTextDisabled");
+        });
+      } else {
+        // reads from memory
+        applyClass(addressText, "inputText");
+        applyClass(datawrText, "inputTextDisabled");
+        applyClass(dataRdText, "outputText");
+      }
     } else {
       signals.forEach((e) => {
         applyClass(e, "signalDisabled");
@@ -990,6 +1106,9 @@ export function DM(element, cpuData) {
       });
       inputs.forEach((e) => {
         applyClass(e, "inputTextDisabled");
+      });
+      outputs.forEach((e) => {
+        applyClass(e, "outputTextDisabled");
       });
       connections.forEach((e) => {
         applyClass(e, "connectionDisabled");
@@ -1648,7 +1767,7 @@ export function RUDM(element, cpuData) {
   applyClass(element, "connectionDisabled");
   focus(element);
   cpuData.installTooltip(element, "bottom", () => {
-    const value = cpuData.instructionResult().RURS2Val;
+    const value = shortBinary(cpuData.instructionResult().RURS2Val);
     return tabular({
       pairs: [
         ["RU ⇔ DM", ""],
@@ -1669,10 +1788,6 @@ export function RUDM(element, cpuData) {
 }
 
 export function RURS1BU(element, cpuData) {
-  const {
-    cpuElemStates: { RURS1BU: state },
-    instruction: instruction,
-  } = cpuData.getInfo();
   cpuData.log("error", "RURS1BU handler");
   applyClass(element, "connectionDisabled");
   focus(element);
@@ -1689,10 +1804,6 @@ export function RURS1BU(element, cpuData) {
 }
 
 export function RURS2BU(element, cpuData) {
-  const {
-    cpuElemStates: { RURS2BU: state },
-    instruction: instruction,
-  } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
   document.addEventListener("SimulatorUpdate", (e) => {
@@ -1743,15 +1854,10 @@ export function ALUBALU(element, cpuData) {
 }
 
 export function ALUDM(element, cpuData) {
-  const {
-    cpuElemStates: { ALUDM: state },
-    instruction: instruction,
-  } = cpuData.getInfo();
-
   applyClass(element, "connectionDisabled");
   focus(element);
   cpuData.installTooltip(element, "bottom", () => {
-    const value = cpuData.instructionResult().ALURes;
+    const value = shortBinary(cpuData.instructionResult().ALURes);
     return tabular({
       pairs: [
         ["ALU ⇔ DM", ""],

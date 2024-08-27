@@ -14,6 +14,7 @@ import {
 import { SimulatorPanel } from './panels/SimulatorPanel';
 import { RegisterPanelView } from './panels/RegisterPanel';
 import { ProgMemPanelView } from './panels/ProgMemPanel';
+import { DataMemPanelView } from './panels/DataMemPanel';
 import { InstructionPanelView } from './panels/InstructionPanel';
 import { logger } from './utilities/logger';
 import { RVExtensionContext } from './support/context';
@@ -37,6 +38,15 @@ export function activate(context: ExtensionContext) {
     window.registerWebviewViewProvider(
       'rv-simulator.progmem',
       ProgMemPanelView.render(context.extensionUri, {}),
+      { webviewOptions: { retainContextWhenHidden: true } }
+    )
+  );
+
+  // Data memory view
+  context.subscriptions.push(
+    window.registerWebviewViewProvider(
+      'rv-simulator.datamem',
+      DataMemPanelView.render(context.extensionUri, {}),
       { webviewOptions: { retainContextWhenHidden: true } }
     )
   );
@@ -194,6 +204,7 @@ function simulateProgram(
       rvContext.startSimulation(
         simulator,
         ProgMemPanelView.render(extensionUri, {}),
+        DataMemPanelView.render(extensionUri, {}),
         RegisterPanelView.render(extensionUri, {}),
         InstructionPanelView.render(extensionUri, {})
       );

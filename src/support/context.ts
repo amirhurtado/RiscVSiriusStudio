@@ -4,8 +4,14 @@ import { SimulatorPanel } from '../panels/SimulatorPanel';
 import { ProgMemPanelView } from '../panels/ProgMemPanel';
 import { InstructionPanelView } from '../panels/InstructionPanel';
 import { RegisterPanelView } from '../panels/RegisterPanel';
-import { usesRegister, writesRU } from '../utilities/instructions';
+import {
+  getFunct3,
+  usesRegister,
+  writesDM,
+  writesRU
+} from '../utilities/instructions';
 import { compile } from '../utilities/riscvc';
+import { DataMemPanelView } from '../panels/DataMemPanel';
 
 export class RVExtensionContext {
   private currentFile: string | undefined;
@@ -106,6 +112,7 @@ export class RVExtensionContext {
   public startSimulation(
     simulator: SimulatorPanel,
     programMemory: ProgMemPanelView,
+    dataMemory: DataMemPanelView,
     registers: RegisterPanelView,
     instruction: InstructionPanelView
   ) {
@@ -117,6 +124,7 @@ export class RVExtensionContext {
       this.currentIR.instructions,
       simulator,
       programMemory,
+      dataMemory,
       registers
     );
   }
@@ -143,20 +151,27 @@ export class RVExtensionContext {
 export class RVSimulationContext {
   private cpu: SCCPU;
   private simPanel: SimulatorPanel;
-  private memPanel: ProgMemPanelView;
+  private progMemPanel: ProgMemPanelView;
+  private dataMemPanel: DataMemPanelView;
   private regPanel: RegisterPanelView;
 
   constructor(
     program: any[],
     simulator: SimulatorPanel,
     progmem: ProgMemPanelView,
+    datamem: DataMemPanelView,
     registers: RegisterPanelView
   ) {
     this.cpu = new SCCPU(program);
     this.simPanel = simulator;
-    this.memPanel = progmem;
+    this.progMemPanel = progmem;
+    this.dataMemPanel = datamem;
     this.regPanel = registers;
-    this.memPanel.getWebView().onDidReceiveMessage((message: any) => {
+
+    this.progMemPanel.getWebView().onDidReceiveMessage((message: any) => {
+      this.dispatch(message);
+    });
+    this.dataMemPanel.getWebView().onDidReceiveMessage((message: any) => {
       this.dispatch(message);
     });
     this.simPanel.getWebView().onDidReceiveMessage((message: any) => {
@@ -167,7 +182,9 @@ export class RVSimulationContext {
     });
 
     // Ensure nothing is selected in the program memory and the registers views
-    this.sendToMemory({ operation: 'clearSelection' });
+    this.sendToProgramMemory({ operation: 'clearSelection' });
+    this.sendToDataMemory({ operation: 'showDataMemView' });
+    this.sendToDataMemory({ operation: 'clearSelection' });
     this.sendToRegisters({ operation: 'clearSelection' });
     this.sendToRegisters({ operation: 'showRegistersView' });
   }
@@ -180,8 +197,12 @@ export class RVSimulationContext {
     this.regPanel.getWebView().postMessage(message);
   }
 
-  private sendToMemory(message: any) {
-    this.memPanel.getWebView().postMessage(message);
+  private sendToProgramMemory(message: any) {
+    this.progMemPanel.getWebView().postMessage(message);
+  }
+
+  private sendToDataMemory(message: any) {
+    this.dataMemPanel.getWebView().postMessage(message);
   }
 
   private selectRegister(registerName: string) {
@@ -223,11 +244,34 @@ export class RVSimulationContext {
                 const result = this.cpu.executeInstruction();
                 // Send messages to update the registers view.
                 if (writesRU(instruction.type, instruction.opcode)) {
-                  console.log('Writing result ', result.WBMUXRes);
+                  console.log('Writing result to RU ', result.WBMUXRes);
                   this.sendToRegisters({
                     operation: 'setRegister',
                     register: instruction.rd.regeq,
                     value: result.WBMUXRes
+                  });
+                }
+                if (writesDM(instruction.type, instruction.opcode)) {
+                  const selector = {
+                    '000': 1, // byte
+                    '001': 2, // half
+                    '010': 4 // word
+                  };
+                  const bytesToWrite = selector[getFunct3(instruction)];
+
+                  console.log(
+                    'Writing result to DM address: ',
+                    result.DMAddress,
+                    ' value to write ',
+                    result.DMDataWr,
+                    ' section to write ',
+                    bytesToWrite
+                  );
+                  this.sendToDataMemory({
+                    operation: 'write',
+                    address: result.DMAddress,
+                    value: result.DMDataWr,
+                    bytes: bytesToWrite
                   });
                 }
                 // Send message to update the simulator components.
@@ -251,7 +295,7 @@ export class RVSimulationContext {
             case 'imMouseenter':
               {
                 const instruction = this.cpu.currentInstruction();
-                this.sendToMemory({
+                this.sendToProgramMemory({
                   operation: 'selectInstructionFromAddress',
                   address: instruction.inst
                 });
@@ -259,7 +303,7 @@ export class RVSimulationContext {
               break;
             case 'imMouseleave':
               {
-                this.sendToMemory({ operation: 'clearSelection' });
+                this.sendToProgramMemory({ operation: 'clearSelection' });
               }
               break;
             case 'rs1Mouseenter':

@@ -90,6 +90,14 @@ const progmemviewConfig = {
   outfile: "./out/progmemview.js",
 };
 
+const datamemviewConfig = {
+  ...baseConfig,
+  target: "es2020",
+  format: "esm",
+  entryPoints: ["./src/datamemview/datamemview.ts"],
+  outfile: "./out/datamemview.js",
+};
+
 const instructionviewConfig = {
   ...baseConfig,
   target: "es2020",
@@ -142,6 +150,10 @@ const watchConfig = {
         ...watchConfig,
       });
       await build({
+        ...datamemviewConfig,
+        ...watchConfig,
+      });
+      await build({
         ...instructionviewConfig,
         ...watchConfig,
       });
@@ -152,6 +164,7 @@ const watchConfig = {
       await build(simulatorviewConfig);
       await build(registersviewConfig);
       await build(progmemviewConfig);
+      await build(datamemviewConfig);
       await build(instructionviewConfig);
       console.log("build complete");
     }

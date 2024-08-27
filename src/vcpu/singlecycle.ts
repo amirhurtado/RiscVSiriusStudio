@@ -207,6 +207,7 @@ export class SCCPU {
     }
 
     const aluRes = this.computeALURes(rs1Val, imm32Val, aluOp);
+    this.registers.writeRegister(getRd(instruction), aluRes);
 
     let brOp = undefined;
     let ruDataWrSrc = undefined;
@@ -267,6 +268,8 @@ export class SCCPU {
     const baseAddressVal = this.registers.readRegisterFromName(
       getRs1(instruction)
     );
+    const value = this.registers.readRegisterFromName(getRs2(instruction));
+
     const offset12Val = this.currentInstruction().encoding.imm12;
     const offset32Val = offset12Val.padStart(32, offset12Val.at(0));
     const add4Res = parseInt(this.currentInstruction().inst) + 4;
@@ -275,23 +278,28 @@ export class SCCPU {
     const aluRes = this.computeALURes(baseAddressVal, offset32Val, '0000');
 
     return {
-      RURS1Val: baseAddressVal,
-      IMMALUBVal: offset32Val,
-      ALUASrc: '0',
-      ALUBSrc: '1',
-      ALUARes: baseAddressVal,
-      ALUBRes: offset32Val,
       A: baseAddressVal,
-      B: offset32Val,
+      ADD4Res: add4Res,
+      ALUARes: baseAddressVal,
+      ALUASrc: '0',
+      ALUBRes: offset32Val,
+      ALUBSrc: '1',
       ALUOp: '0000',
       ALURes: aluRes,
+      B: offset32Val,
       BrOp: '00XXX',
-      ADD4Res: add4Res,
-      BURes: '0',
       BUMUXRes: '0',
+      BURes: '0',
+      DMAddress: aluRes,
+      DMDataWr: value,
+      DMWr: '1',
+      DMCtrl: getFunct3(instruction),
+      IMMALUBVal: offset32Val,
+      IMMSrc: '001',
       RUDataWrSrc: 'XX',
-      RUWr: '0',
-      IMMSrc: '001'
+      RURS1Val: baseAddressVal,
+      RURS2Val: value,
+      RUWr: '0'
     };
   }
 
