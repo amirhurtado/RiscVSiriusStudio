@@ -131,7 +131,7 @@ export class InstructionPanelView implements WebviewViewProvider {
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
         <body>
-          <div class="alert alert-secondary" id="instruction-cover">
+          <div class="alert alert-secondary mt-2" id="instruction-cover">
           <h4>Instruction unavailable</h4>
           <p>This can be for several reasons:</p>
           <ul>

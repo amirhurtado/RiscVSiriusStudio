@@ -105,7 +105,7 @@ export class DataMemPanelView implements WebviewViewProvider {
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
         <body>
-        <div class="alert alert-secondary" id="datamem-cover">
+        <div class="alert alert-secondary mt-2" id="datamem-cover">
         <h4>Data memory</h4>
         <p> This will be available only during simulation.</p>
         </div>
