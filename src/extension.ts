@@ -98,6 +98,10 @@ export function activate(context: ExtensionContext) {
       operation: 'settingsChanged',
       settings: { sort: sort }
     });
+    const memSize = workspace
+      .getConfiguration()
+      .get('rv-simulator.dataMemoryView.memorySize') as number;
+    rvContext.setMemorySize(memSize);
   });
 
   /**

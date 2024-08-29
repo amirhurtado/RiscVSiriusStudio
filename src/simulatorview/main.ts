@@ -124,7 +124,7 @@ function setInstruction(
 
   instView.newInstruction(cpuData.getInstruction());
 
-  log('info', { m: 'Execution result', result });
+  // log('info', { m: 'Execution result', result });
   cpuData.update();
 }
 

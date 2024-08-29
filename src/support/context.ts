@@ -17,8 +17,15 @@ export class RVExtensionContext {
   private currentFile: string | undefined;
   private currentIR: any | undefined;
   private simulator: RVSimulationContext | undefined;
+  private memorySize: number;
   public constructor() {
     this.currentFile = '';
+    this.memorySize = 128;
+  }
+
+  public setMemorySize(newSize: number) {
+    this.memorySize = newSize;
+    console.log('New memory size--------');
   }
 
   public getCurrentFile() {
@@ -122,6 +129,7 @@ export class RVExtensionContext {
     // views and will respond to them
     this.simulator = new RVSimulationContext(
       this.currentIR.instructions,
+      this.memorySize,
       simulator,
       programMemory,
       dataMemory,
@@ -157,12 +165,13 @@ export class RVSimulationContext {
 
   constructor(
     program: any[],
+    memSize: number,
     simulator: SimulatorPanel,
     progmem: ProgMemPanelView,
     datamem: DataMemPanelView,
     registers: RegisterPanelView
   ) {
-    this.cpu = new SCCPU(program);
+    this.cpu = new SCCPU(program, memSize);
     this.simPanel = simulator;
     this.progMemPanel = progmem;
     this.dataMemPanel = datamem;
@@ -273,6 +282,11 @@ export class RVSimulationContext {
                     value: result.DMDataWr,
                     bytes: bytesToWrite
                   });
+                  const chunks = result.DMDataWr.match(
+                    /.{1,8}/g
+                  ) as Array<string>;
+                  const address = parseInt(result.DMAddress, 2);
+                  this.cpu.getDataMemory().write(chunks.reverse(), address);
                 }
                 // Send message to update the simulator components.
                 this.sendToSimulator({

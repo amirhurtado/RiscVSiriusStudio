@@ -885,7 +885,7 @@ export function ALU(element, cpuData) {
   );
 
   document.addEventListener("SimulatorUpdate", (e) => {
-    cpuData.log("info", { m: "At ALU", v: cpuData.result });
+    // cpuData.log("info", { m: "At ALU", v: cpuData.result });
     // !TODO: Enabled for all components?
     cpuData.enable("ALU");
     applyClass(element, "component");
@@ -1916,7 +1916,7 @@ export function DMWBMUX(element, cpuData) {
   applyClass(element, "connectionDisabled");
   focus(element);
   cpuData.installTooltip(element, "bottom", () => {
-    const value = cpuData.instructionResult().DMRes;
+    const value = cpuData.instructionResult().DMDataRd;
     return tabular({
       pairs: [
         ["DM ⇔ WBMux", ""],

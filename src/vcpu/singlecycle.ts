@@ -58,17 +58,47 @@ class RegistersFile {
   }
 }
 
+class DataMemory {
+  private memory: Array<string>;
+  private readonly size: number;
+  public constructor(size: number) {
+    this.memory = new Array(size).fill('00000000');
+    this.size = size;
+  }
+  public write(data: Array<string>, address: number) {
+    const lastAddress = address + data.length - 1;
+    if (lastAddress > this.size - 1) {
+      throw new Error('Data memory size exceeded.');
+    }
+    for (let i = 0; i < data.length; i++) {
+      this.memory[address + i] = data[i];
+    }
+  }
+  public read(address: number, length: number): Array<string> {
+    const lastAddress = address + length - 1;
+    if (lastAddress > this.size - 1) {
+      throw new Error('Data memory size exceeded.');
+    }
+    let data = [] as Array<string>;
+    for (let i = 0; i < length; i++) {
+      data.push(this.memory[address + i]);
+    }
+    return data.reverse();
+  }
+}
 export class SCCPU {
   // TODO: We need a proper type for a program representation.
   private readonly program: any[];
   private registers: RegistersFile;
+  private dataMemory: DataMemory;
   /**
    * This pc indexes the program array. As so, it is not an address.
    */
   private pc: number;
-  public constructor(program: any[]) {
+  public constructor(program: any[], memSize: number) {
     this.program = program;
     this.registers = new RegistersFile();
+    this.dataMemory = new DataMemory(memSize);
     this.pc = 0;
   }
 
@@ -209,28 +239,39 @@ export class SCCPU {
     const aluRes = this.computeALURes(rs1Val, imm32Val, aluOp);
     this.registers.writeRegister(getRd(instruction), aluRes);
 
-    let brOp = undefined;
+    let brOp = '00XXX';
     let ruDataWrSrc = undefined;
     let wbMUXRes = undefined;
     let buRes = undefined;
     let buMUXRes = undefined;
 
+    let dmAddress = undefined;
+    let dmDataRd = undefined;
+    let dmWr = 'X';
+    let dmCtrl: 'XXX';
+
     switch (true) {
       case isIArithmetic(instruction.type, instruction.opcode):
         // TODO: I have to update the parser to look for shift operations that use shamt and funct7
-        brOp = '00XXX';
         ruDataWrSrc = '00';
         wbMUXRes = aluRes;
         buRes = '0';
         buMUXRes = add4Res16;
         break;
       case isILoad(this.currentType(), this.currentOpcode()):
-        brOp = '00XXX';
         ruDataWrSrc = '01';
         // TODO: read from memory
-        wbMUXRes = undefined;
+        dmAddress = aluRes;
         buRes = '0';
         buMUXRes = add4Res16;
+        dmWr = '0';
+        dmCtrl = getFunct3(instruction);
+        let value = this.readFromMemory(
+          parseInt(aluRes, 2),
+          parseInt(dmCtrl, 2)
+        );
+        dmDataRd = value;
+        wbMUXRes = value;
         break;
       case isIJump(this.currentType(), this.currentOpcode()):
         brOp = '1XXXX';
@@ -242,25 +283,71 @@ export class SCCPU {
     }
 
     return {
-      RURS1Val: rs1Val,
-      IMMALUBVal: imm32Val,
-      ALUASrc: '0',
-      ALUBSrc: '1',
-      ALUARes: rs1Val,
-      ALUBRes: imm32Val,
       A: rs1Val,
-      B: imm32Val,
+      ADD4Res: add4Res,
+      ALUARes: rs1Val,
+      ALUASrc: '0',
+      ALUBRes: imm32Val,
+      ALUBSrc: '1',
       ALUOp: aluOp,
       ALURes: aluRes,
+      B: imm32Val,
       BrOp: brOp,
-      ADD4Res: add4Res,
-      BURes: buRes,
       BUMUXRes: buMUXRes,
-      WBMUXRes: wbMUXRes,
+      BURes: buRes,
+      DMWr: dmWr,
+      DMCtrl: dmCtrl,
+      DMAddress: dmAddress,
+      DMDataRd: dmDataRd,
+      IMMALUBVal: imm32Val,
+      IMMSrc: '000',
       RUDataWrSrc: ruDataWrSrc,
+      RURS1Val: rs1Val,
       RUWr: '1',
-      IMMSrc: '000'
+      WBMUXRes: wbMUXRes
     };
+  }
+
+  private readFromMemory(address: number, control: number): string {
+    let value = '';
+    switch (control) {
+      case 0: {
+        // lb
+        console.log('reading for lb');
+        const val = this.getDataMemory().read(address, 1).join('');
+        value = val.padStart(32, val.at(0));
+        break;
+      }
+      case 1: {
+        // lh
+        console.log('reading for lb');
+        const val = this.getDataMemory().read(address, 2).join('');
+        value = val.padStart(32, val.at(0));
+        break;
+      }
+      case 2: {
+        //lw
+        console.log('reading for lw');
+        const val = this.getDataMemory().read(address, 4);
+        value = val.join('');
+        break;
+      }
+      case 4: {
+        //lbu
+        console.log('reading for lb');
+        const val = this.getDataMemory().read(address, 1).join('');
+        value = val.padStart(32, '0');
+        break;
+      }
+      case 5: {
+        // lhu
+        console.log('reading for lb');
+        const val = this.getDataMemory().read(address, 2).join('');
+        value = val.padStart(32, '0');
+        break;
+      }
+    }
+    return value;
   }
 
   private executeSInstruction() {
@@ -306,6 +393,11 @@ export class SCCPU {
   public getRegisterFile(): RegistersFile {
     return this.registers;
   }
+
+  public getDataMemory(): DataMemory {
+    return this.dataMemory;
+  }
+
   public printInfo() {
     logger().info('CPU state');
     logger().info('Registers');

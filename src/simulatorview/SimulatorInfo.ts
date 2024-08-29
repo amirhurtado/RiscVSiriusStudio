@@ -72,7 +72,7 @@ export class SimulatorInfo {
     const cpuData = this;
 
     function update({ clientX: x, clientY: y }) {
-      logger('info', { m: 'Update function called', x: x, y: y });
+      // logger('info', { m: 'Update function called', x: x, y: y });
       /**
        * If the element has a g tag then it is probably an svg element from
        * draw.io. In that case we go deep in the hierarchy to position the tooltip
@@ -86,7 +86,7 @@ export class SimulatorInfo {
         if (elements.length > 0) {
           element = elements[0];
         } else {
-          logger('info', { m: 'inside a group without rect' });
+          // logger('info', { m: 'inside a group without rect' });
           const elements = element.querySelectorAll(
             '#main-svg div:not(:has(div))'
           );
