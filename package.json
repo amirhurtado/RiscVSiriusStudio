@@ -20,6 +20,10 @@
         }
       },
       {
+        "command": "rv-simulator.progMemExportJSON",
+        "title": "RISCV simulator: export instruction memory as JSON"
+      },
+      {
         "command": "rv-simulator.irForCurrentLine",
         "title": "RISCV simulator: compute internal representation for current line"
       },

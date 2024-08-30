@@ -68,6 +68,12 @@ export function activate(context: ExtensionContext) {
   );
 
   context.subscriptions.push(
+    commands.registerCommand('rv-simulator.progMemExportJSON', () => {
+      exportProgMemJSON(context.extensionUri, rvContext);
+    })
+  );
+
+  context.subscriptions.push(
     commands.registerCommand('rv-simulator.irForCurrentLine', () => {
       irForCurrentLine(rvContext);
     })
@@ -214,6 +220,20 @@ function simulateProgram(
       );
     }
   }
+}
+
+function exportProgMemJSON(
+  extensionUri: string,
+  rvContext: RVExtensionContext
+) {
+  const program = rvContext.exportJSON();
+  workspace
+    .openTextDocument({ language: 'json', content: program })
+    .then((document) => {
+      window.showTextDocument(document).then((editor) => {
+        commands.executeCommand('editor.action.formatDocument');
+      });
+    });
 }
 
 function sendMessageToProgMemView(msg: any) {

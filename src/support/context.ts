@@ -138,6 +138,22 @@ export class RVExtensionContext {
     );
   }
 
+  public exportJSON() {
+    const program = this.currentIR.instructions
+      .filter((sc) => {
+        return sc.kind === 'SrcInstruction';
+      })
+      .map((instruction) => {
+        return {
+          asm: instruction.asm,
+          encoding: {
+            binary: instruction.encoding.binEncoding,
+            hex: instruction.encoding.hexEncoding
+          }
+        };
+      });
+    return JSON.stringify(program);
+  }
   public isCurrentFile(name: string) {
     return this.currentFile ? name === this.currentFile : false;
   }
