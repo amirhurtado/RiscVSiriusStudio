@@ -15,6 +15,7 @@ import {
   storesALU,
   isLUI,
   writesDM,
+  isAUIPC,
 } from "../utilities/instructions.js";
 
 import { computePosition, flip, shift, offset } from "@floating-ui/dom";
@@ -428,7 +429,7 @@ function registerTooltipText(name, type, cpuData) {
         ["Register", `${regname} (${regeq})`],
         ["Value2", value2],
         ["Value10", value10],
-        ["Value16", value16],
+        ["Value16", "0x" + value16],
       ],
     }),
   };
@@ -610,7 +611,14 @@ function immTooltipText(type, cpuData) {
       instruction: "[31:25], [11:7]",
       imm: "[11:0]",
     },
-    B: 12,
+    B: {
+      bits: 13,
+      value2: instruction.encoding.imm13,
+      value10: instruction.imm13,
+      value16: parseInt(instruction.encoding.imm13, 2).toString(16),
+      instruction: "[31:25], [11:7]",
+      imm: "[12|10:5] [4:1|11]",
+    },
     U: 20,
     J: 20,
   };
@@ -698,16 +706,17 @@ export function ALUA(element, cpuData) {
   const path0Visible = (inst) => {
     return inst === "R" || inst === "I" || inst === "S";
   };
+  // TODO: the value is presented in decimal.
   cpuData.installTooltip(
-    path0,
+    path1,
     "bottom-start",
     () => {
-      const value = shortBinary(cpuData.instructionResult().RURS1Val);
-      return paragraph({ text: value });
+      const value = cpuData.getInstruction().inst;
+      const value2 = shortBinary(value.toString(2));
+      return paragraph({ text: value2 });
     },
     "ALUA"
   );
-  // TODO: missing path1
   document.addEventListener("SimulatorUpdate", (e) => {
     const instType = cpuData.instructionType();
     const instOpcode = cpuData.instructionOpcode();
@@ -795,6 +804,7 @@ function aluTooltipText(name, cpuData) {
   const valA10 = parseInt(valA, 2);
   const valB10 = parseInt(valB, 2);
   const valALURes10 = parseInt(valALURes, 2);
+  const valALURes16 = valALURes10.toString(16);
 
   const shortValB = shortBinary(valB);
   const data = {
@@ -814,12 +824,12 @@ function aluTooltipText(name, cpuData) {
       pairs: [
         ["Value", shortValALURes],
         ["Value10", valALURes10],
+        ["Value16", "0x" + valALURes16],
       ],
     }),
   };
 
   // !TODO if the object is to functions we can save some time by lazily
-  // executing just one tabular.
   return data[name];
 }
 
@@ -954,7 +964,7 @@ function dmTooltipText(name, cpuData) {
       return tabular({
         pairs: [
           ["Value2", shortBinary(address)],
-          ["Value16", address16],
+          ["Value16", "0x" + address16],
         ],
       });
     case "DataWr": {
@@ -965,7 +975,7 @@ function dmTooltipText(name, cpuData) {
         pairs: [
           ["Value2", shortBinary(data)],
           ["Value10", data10],
-          ["Value16", data16],
+          ["Value16", "0x" + data16],
         ],
       });
     }
@@ -977,7 +987,7 @@ function dmTooltipText(name, cpuData) {
         pairs: [
           ["Value2", shortBinary(data)],
           ["Value10", data10],
-          ["Value16", data16],
+          ["Value16", "0x" + data16],
         ],
       });
     }
@@ -1120,8 +1130,6 @@ export function DM(element, cpuData) {
 export function BUMUX(element, cpuData) {
   const {
     cpuElements: { BUMUXIC1: path1, BUMUXIC0: path0 },
-    cpuElemStates: { BUMUX: state },
-    instruction: instruction,
   } = cpuData.getInfo();
 
   const connections = [path1, path0];
@@ -1136,13 +1144,17 @@ export function BUMUX(element, cpuData) {
     const value = cpuData.instructionResult().ADD4Res;
     return paragraph({ text: value });
   });
+  cpuData.installTooltip(path1, "top", () => {
+    const value = shortBinary(cpuData.instructionResult().ALURes);
+    return paragraph({ text: value });
+  });
   document.addEventListener("SimulatorUpdate", (e) => {
     cpuData.enable("BUMUX");
     applyClass(element, "component");
     const instType = cpuData.instructionType();
     const instOpcode = cpuData.instructionOpcode();
     const branchResult = cpuData.instructionResult().BURes;
-    if (path1Visible(instType, instOpcode, branchResult)) {
+    if (path1Visible(instType, instOpcode, parseInt(branchResult))) {
       applyClass(path1, "connection muxPath");
       applyClass(path0, "connectionDisabled muxPathDisabled");
     } else {
@@ -1316,10 +1328,23 @@ export function PCALUA(element, cpuData) {
   } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
+  cpuData.installTooltip(element, "top", () => {
+    const inst = cpuData.getInstruction().inst;
+    return tabular({
+      pairs: [
+        ["PC ⇔ ALUA", ""],
+        ["Instruction", inst],
+      ],
+    });
+  });
   document.addEventListener("SimulatorUpdate", (e) => {
     const instType = cpuData.instructionType();
     const instOpcode = cpuData.instructionOpcode();
-    if (instType === "U" && !isLUI(instType, instOpcode)) {
+    if (
+      branchesOrJumps(instType, instOpcode) ||
+      isAUIPC(instType, instOpcode)
+    ) {
+      // if (instType === "U" && !isLUI(instType, instOpcode)) {
       applyClass(element, "connection");
       cpuData.enable("PCALUA");
     } else {
@@ -1678,7 +1703,7 @@ export function IMMALUB(element, cpuData) {
         ["IMM ⇔ ALUB", ""],
         ["Value2", value2],
         ["Value10", value10],
-        ["Value16", value16],
+        ["Value16", "0x" + value16],
       ],
     });
   });
@@ -1791,6 +1816,15 @@ export function RURS1BU(element, cpuData) {
   cpuData.log("error", "RURS1BU handler");
   applyClass(element, "connectionDisabled");
   focus(element);
+  cpuData.installTooltip(element, "right", () => {
+    const value = shortBinary(cpuData.instructionResult().RURS1Val);
+    return tabular({
+      pairs: [
+        ["RU ⇔ BU", ""],
+        ["Value", value],
+      ],
+    });
+  });
   document.addEventListener("SimulatorUpdate", (e) => {
     const instType = cpuData.instructionType();
     if (instType === "B") {
@@ -1806,6 +1840,15 @@ export function RURS1BU(element, cpuData) {
 export function RURS2BU(element, cpuData) {
   applyClass(element, "connectionDisabled");
   focus(element);
+  cpuData.installTooltip(element, "right", () => {
+    const value = shortBinary(cpuData.instructionResult().RURS2Val);
+    return tabular({
+      pairs: [
+        ["RU ⇔ BU", ""],
+        ["Value", value],
+      ],
+    });
+  });
   document.addEventListener("SimulatorUpdate", (e) => {
     const instType = cpuData.instructionType();
     if (instType === "B") {
@@ -1980,7 +2023,7 @@ export function BUBUMUX(element, cpuData) {
     return tabular({
       pairs: [
         ["BU ⇔ BUMux", ""],
-        ["Instruction", BURes],
+        ["NextPCSrc", BURes],
       ],
     });
   });
@@ -2000,12 +2043,14 @@ export function ALUBUMUX(element, cpuData) {
   cpuData.installTooltip(element, "bottom", () => {
     const value = shortBinary(cpuData.instructionResult().ALURes);
     const value10 = parseInt(cpuData.instructionResult().ALURes, 2);
+    const value16 = value10.toString(16);
 
     return tabular({
       pairs: [
         ["ALU ⇔ BUMux", ""],
-        ["Value", value],
-        ["Value10", value10],
+        ["Address2", value],
+        ["Address10", value10],
+        ["Address16", "0x" + value16],
       ],
     });
   });
@@ -2034,7 +2079,7 @@ export function ADD4BUMUX(element, cpuData) {
     return tabular({
       pairs: [
         ["ADD4 ⇔ BUMux", ""],
-        ["Instruction", value],
+        ["Value", "0x" + value],
       ],
     });
   });
@@ -2052,6 +2097,7 @@ export function BUMUXPC(element, cpuData) {
   } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
+
   cpuData.installTooltip(element, "top", () => {
     const BUMUXRes = cpuData.instructionResult().BUMUXRes;
     const inst = cpuData.getInstruction().inst;

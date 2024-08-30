@@ -5,6 +5,7 @@ import { ProgMemPanelView } from '../panels/ProgMemPanel';
 import { InstructionPanelView } from '../panels/InstructionPanel';
 import { RegisterPanelView } from '../panels/RegisterPanel';
 import {
+  branchesOrJumps,
   getFunct3,
   usesRegister,
   writesDM,
@@ -294,7 +295,12 @@ export class RVSimulationContext {
                   instruction: instruction,
                   result: result
                 });
-                this.cpu.nextInstruction();
+
+                if (branchesOrJumps(instruction.type, instruction.opcode)) {
+                  this.cpu.jumpToInstruction(result.BUMUXRes as string);
+                } else {
+                  this.cpu.nextInstruction();
+                }
               }
               break;
             case 'watchRegister':

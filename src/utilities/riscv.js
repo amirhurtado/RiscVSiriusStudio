@@ -2640,7 +2640,7 @@ function peg$parse(input, options) {
 
     peg$silentFails++;
     s0 = peg$currPos;
-    s1 = peg$parseImm13();
+    s1 = peg$parseImm12();
     if (s1 !== peg$FAILED) {
       peg$savedPos = s0;
       s1 = peg$f49(s1);

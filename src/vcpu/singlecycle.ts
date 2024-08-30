@@ -95,8 +95,13 @@ export class SCCPU {
    * This pc indexes the program array. As so, it is not an address.
    */
   private pc: number;
+
   public constructor(program: any[], memSize: number) {
-    this.program = program;
+    this.program = program.filter((sc) => {
+      return sc.kind === 'SrcInstruction';
+    });
+    console.log('Program to execute: ', this.program);
+
     this.registers = new RegistersFile();
     this.dataMemory = new DataMemory(memSize);
     this.pc = 0;
@@ -110,9 +115,6 @@ export class SCCPU {
   private currentType(): string {
     return this.currentInstruction().type;
   }
-  private currentKind(): string {
-    return this.currentInstruction().kind;
-  }
 
   private currentOpcode(): string {
     return this.currentInstruction().opcode;
@@ -124,9 +126,12 @@ export class SCCPU {
 
   public nextInstruction() {
     this.pc++;
-    while (this.currentKind() !== 'SrcInstruction') {
-      this.pc++;
-    }
+    console.log('[next] new value of PC is ', this.pc);
+  }
+
+  public jumpToInstruction(address: string) {
+    this.pc = parseInt(address, 16) / 4;
+    console.log('[jump] new value of PC is ', this.pc);
   }
 
   private computeALURes(A: string, B: string, ALUOp: string): string {
@@ -175,7 +180,8 @@ export class SCCPU {
         return this.executeIInstruction();
       case 'S':
         return this.executeSInstruction();
-
+      case 'B':
+        return this.executeBInstruction();
       default:
         throw new Error(
           'Unknown instruction ' + JSON.stringify(this.currentInstruction())
@@ -386,6 +392,77 @@ export class SCCPU {
       RUDataWrSrc: 'XX',
       RURS1Val: baseAddressVal,
       RURS2Val: value,
+      RUWr: '0'
+    };
+  }
+  private executeBInstruction() {
+    const instruction = this.currentInstruction();
+    const add4Res = parseInt(this.currentInstruction().inst) + 4;
+    const add4Res16 = Number(add4Res).toString(16);
+    const funct3 = getFunct3(instruction);
+    const rs1 = this.registers.readRegisterFromName(getRs1(instruction));
+    const rs2 = this.registers.readRegisterFromName(getRs2(instruction));
+    const rs1Int = parseInt(rs1, 2);
+    const rs2Int = parseInt(rs2, 2);
+    const imm13 = this.currentInstruction().encoding.imm13;
+    const imm32Val = imm13.padStart(32, imm13.at(0));
+
+    // const imm13Val = parseInt(imm13, 2);
+
+    let condition = false;
+    switch (parseInt(funct3, 2)) {
+      case 0: {
+        //beq
+        condition = rs1Int === rs2Int;
+        break;
+      }
+      case 1: {
+        //bne
+        condition = rs1Int !== rs2Int;
+        break;
+      }
+      case 4: {
+        //blt
+        condition = rs1Int < rs2Int;
+        break;
+      }
+      case 5: {
+        //bge
+        condition = rs1Int >= rs2Int;
+        break;
+      }
+      case 6: {
+        //bltu
+        break;
+      }
+      case 7: {
+        //bgeu
+        break;
+      }
+    }
+    const aluaRes = (this.currentInstruction().inst as number).toString(2);
+    const aluaRes32 = aluaRes.padStart(32, '0');
+    const aluRes = this.computeALURes(aluaRes32, imm32Val, '0000');
+
+    return {
+      A: aluaRes,
+      ADD4Res: add4Res16,
+      ALUARes: aluaRes32,
+      ALUASrc: '1',
+      ALUBRes: imm32Val,
+      ALUBSrc: '1',
+      ALUOp: '0000',
+      ALURes: aluRes,
+      B: imm32Val,
+      BrOp: '01' + funct3,
+      BUMUXRes: condition ? parseInt(aluRes, 2).toString(16) : add4Res16,
+      BURes: condition ? '1' : '0',
+      DMWr: '0',
+      DMCtrl: 'XXX',
+      IMMALUBVal: imm32Val,
+      IMMSrc: '101',
+      RURS1Val: rs1,
+      RURS2Val: rs2,
       RUWr: '0'
     };
   }
