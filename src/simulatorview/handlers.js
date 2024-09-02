@@ -440,7 +440,7 @@ function setRUWr(cpuData) {
   const {
     cpuElements: { SgnRUWRVAL: ruwrSignalValue },
   } = cpuData.getInfo();
-  ruwrSignalValue.getElementsByTagName("div")[2].innerHTML =
+  ruwrSignalValue.getElementsByTagName("text")[0].innerHTML =
     cpuData.instructionResult().RUWr;
 }
 
@@ -646,7 +646,7 @@ function setIMMSrc(cpuData) {
     cpuElements: { SgnIMMSRCVAL: immSignalValue },
   } = cpuData.getInfo();
 
-  immSignalValue.getElementsByTagName("div")[2].innerHTML =
+  immSignalValue.getElementsByTagName("text")[0].innerHTML =
     cpuData.instructionResult().IMMSrc;
 }
 
@@ -838,7 +838,7 @@ function setALUOp(cpuData) {
     cpuElements: { SgnALUOPVAL: aluSignalValue },
   } = cpuData.getInfo();
 
-  aluSignalValue.getElementsByTagName("div")[2].innerHTML =
+  aluSignalValue.getElementsByTagName("text")[0].innerHTML =
     cpuData.instructionResult().ALUOp;
 }
 
@@ -914,7 +914,7 @@ function setBrOp(cpuData) {
   const {
     cpuElements: { SgnBUBROPVAL: bropSignalValue },
   } = cpuData.getInfo();
-  bropSignalValue.getElementsByTagName("div")[2].innerHTML =
+  bropSignalValue.getElementsByTagName("text")[0].innerHTML =
     cpuData.instructionResult().BrOp;
 }
 

@@ -100,8 +100,8 @@ html {
     fill: var(--component-fill);
     transition: stroke-width var(--transition-time);
   }
-  div div div {
-    color: var(--component-text-color) !important;
+  text {
+    fill: var(--component-text-color) !important;
     font-size: var(--font-size) !important;
   }
 }
@@ -116,8 +116,8 @@ html {
     stroke-width: var(--stroke-width-highlighted);
     fill: var(--component-fill-hover);
   }
-  div div div {
-    color: var(--component-text-color-hover) !important;
+  text {
+    fill: var(--component-text-color-hover) !important;
   }
 }
 
@@ -134,8 +134,8 @@ html {
     fill: var(--component-fill-inactive);
   }
 
-  div div div {
-    color: var(--component-text-color-disabled) !important;
+  text {
+    fill: var(--component-text-color-disabled) !important;
     pointer-events: none !important;
   }
 }
@@ -152,8 +152,8 @@ html {
     stroke: var(--connection-stroke);
     transition: stroke-width var(--transition-time);
   }
-  div div div{
-    color: var(--component-text-color) !important;
+  text {
+    fill: var(--component-text-color) !important;
     font-size: var(--connection-font-size) !important;
   }
 }
@@ -164,8 +164,8 @@ html {
     stroke: var(--connection-stroke-hover);
     animation: blinker var(--transition-time) linear infinite;
   }
-  div div div {
-    color: var(--connection-text-color-hover) !important;
+  text {
+    fill: var(--connection-text-color-hover) !important;
     font-size: var(--connection-font-size) !important;
     animation: blinker var(--transition-time) linear infinite;
   }
@@ -178,8 +178,8 @@ html {
     stroke: var(--connection-stroke-disabled);
     pointer-events: none;
   }
-  div div div {
-    color: var(--connection-text-color-disabled) !important;
+  text {
+    fill: var(--connection-text-color-disabled) !important;
   }
 }
 
@@ -197,8 +197,8 @@ html {
     stroke: var(--signal-stroke);
     fill: var(--signal-stroke);
   }
-  div {
-    color: var(--signal-text-color) !important;
+  text {
+    fill: var(--signal-text-color) !important;
   }
 }
 
@@ -209,8 +209,8 @@ html {
     fill: var(--signal-stroke-hover);
     animation: blinker 1.5s linear infinite;
   }
-  div {
-    color: var(--signal-text-color-hover) !important;
+  text {
+    fill: var(--signal-text-color-hover) !important;
   }
 }
 
@@ -222,8 +222,8 @@ html {
     fill: var(--signal-stroke-hover);
     animation: blinker 1.5s linear infinite;
   }
-  div {
-    color: var(--signal-text-color-hover) !important;
+  text {
+    fill: var(--signal-text-color-hover) !important;
   }
 }
 
@@ -236,8 +236,8 @@ html {
       pointer-events: none
     }
     
-    div {
-      color: var(--signal-text-color-disabled) !important;
+    text {
+      fill: var(--signal-text-color-disabled) !important;
     }
 }
 
@@ -257,46 +257,46 @@ html {
 }
 
 .inputText {
-  div div div {
-    color: var(--component-text-color) !important;
+  text {
+    fill: var(--component-text-color) !important;
     /* pointer-events: auto; */
   }
 }
 
 .inputText:hover {
-  div div div {
+  text {
     /* pointer-events: auto; */
-    color: var(--component-text-color-hover) !important;
+    fill: var(--component-text-color-hover) !important;
     font-weight: 800;
   }
 }
 
 .inputTextDisabled {
-  div div div {
-    color: var(--component-text-color-disabled) !important;
-    /* pointer-events: none !important; */
+  text {
+    fill: var(--component-text-color-disabled) !important;
+    pointer-events: none !important;
   }
 }
 
 .outputText {
-  div div div {
-    color: var(--component-text-color) !important;
+  text {
+    fill: var(--component-text-color) !important;
     /* pointer-events: auto; */
   }
 }
 
 .outputText:hover {
-  div div div {
+  text {
     /* pointer-events: auto; */
-    color: var(--component-text-color-hover) !important;
+    fill: var(--component-text-color-hover) !important;
     font-weight: 800;
   }
 }
 
 .outputTextDisabled {
-  div div div {
-    color: var(--component-text-color-disabled) !important;
-    /* pointer-events: none !important; */
+  text {
+    fill: var(--component-text-color-disabled) !important;
+    pointer-events: none !important;
   }
 }
 
@@ -351,7 +351,7 @@ html {
     fill: var(--component-text-color);
   }
 
-  div div div {
+  text {
     font-size: 32px !important;
   }
 }
