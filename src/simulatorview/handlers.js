@@ -694,11 +694,13 @@ export function ALUA(element, cpuData) {
       ALUAMUXIC1: path1,
       ALUAMUXIC0: path0,
       SgnALUASrcPTH: signal,
+      ALUAMUXTEXT: text,
     },
   } = cpuData.getInfo();
 
   const paths = [path0, path1];
   applyClass(element, "componentDisabled");
+  applyClass(text, "inputTextDisabled");
   paths.forEach((x) => {
     applyClass(x, "connectionDisabled muxPathDisabled");
   });
@@ -727,6 +729,7 @@ export function ALUA(element, cpuData) {
     }
     if (cpuData.enabled("ALUA")) {
       applyClass(element, "component");
+      applyClass(text, "inputText");
       applyClass(signal, "signal");
       if (path0Visible(instType)) {
         applyClass(path0, "connection muxPath");
@@ -737,6 +740,7 @@ export function ALUA(element, cpuData) {
       }
     } else {
       applyClass(element, "componentDisabled");
+      applyClass(text, "inputTextDisabled");
       applyClass(signal, "signalDisabled");
       paths.forEach((x) => {
         applyClass(x, "connectionDisabled muxPathDisabled");
@@ -751,10 +755,12 @@ export function ALUB(element, cpuData) {
       ALUBMUXIC1: path1,
       ALUBMUXIC0: path0,
       SgnALUBSrcPTH: signal,
+      ALUBMUXTEXT: text,
     },
   } = cpuData.getInfo();
 
   applyClass(element, "componentDisabled");
+  applyClass(text, "inputTextDisabled");
   [path1, path0].forEach((x) => {
     applyClass(x, "connectionDisabled muxPathDisabled");
   });
@@ -785,6 +791,7 @@ export function ALUB(element, cpuData) {
     // Always enabled for all instructions
     cpuData.enable("ALUB");
     applyClass(element, "component");
+    applyClass(text, "inputText");
     applyClass(signal, "signal");
     const instType = cpuData.instructionType();
     if (path0Visible(instType)) {
@@ -1129,11 +1136,12 @@ export function DM(element, cpuData) {
 
 export function BUMUX(element, cpuData) {
   const {
-    cpuElements: { BUMUXIC1: path1, BUMUXIC0: path0 },
+    cpuElements: { BUMUXIC1: path1, BUMUXIC0: path0, BUMUXTEXT: text },
   } = cpuData.getInfo();
 
   const connections = [path1, path0];
   applyClass(element, "componentDisabled");
+  applyClass(text, "inputTextDisabled");
   connections.forEach((x) => {
     applyClass(x, "connectionDisabled muxPathDisabled");
   });
@@ -1151,6 +1159,7 @@ export function BUMUX(element, cpuData) {
   document.addEventListener("SimulatorUpdate", (e) => {
     cpuData.enable("BUMUX");
     applyClass(element, "component");
+    applyClass(text, "inputText");
     const instType = cpuData.instructionType();
     const instOpcode = cpuData.instructionOpcode();
     const branchResult = cpuData.instructionResult().BURes;
@@ -1171,12 +1180,12 @@ export function WBMUX(element, cpuData) {
       WBMUXIC01: path01,
       WBMUXIC10: path10,
       SgnWBPTH: signal,
+      WBMUXTEXT: text,
     },
-    cpuElemStates: { WBMUX: state },
-    instruction: instruction,
   } = cpuData.getInfo();
 
   applyClass(element, "componentDisabled");
+  applyClass(text, "inputTextDisabled");
   applyClass(signal, "signalDisabled");
   [path00, path01, path10].forEach((x) => {
     applyClass(x, "connectionDisabled muxPathDisabled");
@@ -1205,6 +1214,7 @@ export function WBMUX(element, cpuData) {
 
     if (cpuData.enabled("WBMUX")) {
       applyClass(element, "component");
+      applyClass(text, "inputText");
       applyClass(signal, "signal");
       const instOC = cpuData.instructionOpcode();
       if (path00Visible(instType, instOC)) {
@@ -1231,6 +1241,7 @@ export function WBMUX(element, cpuData) {
       }
     } else {
       applyClass(element, "componentDisabled");
+      applyClass(text, "inputTextDisabled");
       applyClass(signal, "signalDisabled");
       [path00, path01, path10].forEach((x) => {
         applyClass(x, "connectionDisabled muxPathDisabled");

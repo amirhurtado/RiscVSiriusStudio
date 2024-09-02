@@ -345,7 +345,7 @@ html {
     fill: var(--inst-type-fill-high);
   }
 }
-
+ 
 [data-cpuName="ADD4"], [data-cpuName="ADD4"]:hover { 
   path {
     fill: var(--component-text-color);
