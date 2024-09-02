@@ -366,16 +366,8 @@ html {
   width: max-content;
   top: 0;
   left: 0;
-  /* background: var(--vscode-problemsInfoIcon-foreground); */
-  /* background: var(--vscode-minimap-selectionHighlight); */
-  /* background: var(--vscode-inputValidation-errorBorder); */
   
   border: 2px solid var(--tooltip-border);
-  /* background: var(--tooltip-background);
-  border-radius: 4px;
-  padding: 5px;
-  font-family: 'Roboto mono';
-  font-size: 1em; */
 }
 
 #arrow {
@@ -386,68 +378,25 @@ html {
   transform: rotate(45deg);
 }
 
-.tooltipinfo2 {
-  border: 1px dashed red;
-  /* h1 {
-    font-size: 1em;
-    font-style: italic;
-    font-weight: 700;
-    color: var(--tooltip-text-color-h1);
-    padding: 0;
-    margin: 0;
-  }
-  p {
-    font-size: 1em;
-    font-weight: 400;
-    color: var(--tooltip-text-color-p);
-    padding: 0.5em;
-    margin: 0;
-    margin-left: 1ch;
-  }
-  ul {
-    font-size: 1em;
-    color: var(--tooltip-text-color);
-    padding: 1ch;
-    margin: 0;
-    margin-left: 1ch;
-  }
-  dl {
-    display: grid;
-    grid-gap: 4px 10px;
-  }
-  dt {
-    font-weight: bold;
-  }
-  dd {
-    margin: 0;
-    grid-column-start: 2;
-  } */
-}
-
 .grid-container {
-  /* border: 2px dashed red; */
   padding-top: 0.5em;
   padding-bottom: 0.5em;
   display: grid;
   grid-template-columns: minmax(0,1fr);
-  /* grid-template-rows: 5% 90% 5%; */
   grid-template-rows: auto auto auto;
   row-gap: 0.5em;
 }
 
 .grid-item-1 {
-  /* border: 2px dashed purple; */
   grid-row: 1;
 }
 
 .grid-item-2 {
-  /* border: 2px dashed peru; */
   grid-row: 2;
   vscode-divider {
     margin-top: 0px;
     margin-bottom: 0px;
     padding: 0px;
-    /* border: 2px dashed red; */
   }
   #main-svg {
     padding: 0px !important;
@@ -459,7 +408,6 @@ html {
 }
 
 .grid-item-3 {
-  /* border: 2px dashed peru; */
   grid-row: 3;
   border-top-width: 0px;
   border-bottom-width: 0px;
@@ -475,8 +423,6 @@ html {
 
 .toolbar-left {
   grid-column: 1;
-  /* border: 1px dashed blue; */
-
 }
 
 .toolbar-center {
@@ -486,12 +432,9 @@ html {
   align-items: center;
   padding-left: 10px;
   padding-right: 10px;
-  /* border: 1px dashed red; */
 }
 
 .toolbar-right {
-  /* border: 1px dashed blue; */
-  /* align-items: center; */
   justify-self: right;
   grid-column: 3;
 }
@@ -504,12 +447,10 @@ html {
   #instruction-asm {
     grid-column: 1;
     justify-self: left;
-    /* border: 1pt solid magenta; */
   }
   #instruction-bin {
     grid-column: 2;
     justify-self: right;
-    /* border: 1pt solid rgb(255, 94, 0); */
   }
 }
 
@@ -517,34 +458,21 @@ html {
   display: grid;
   grid-template-columns: auto auto auto;
   grid-template-rows: auto;
-  /* border: 1pt solid magenta; */
 }
 
 .bottom-left {
-  /* border: 1pt solid magenta; */
   grid-column: 1;
   justify-self: left;
-  /* align-items: center; */
 }
 
 .bottom-center {
-  /* border: 1pt solid magenta; */
   grid-column: 2;
   justify-self: left;
-  /* align-items: center; */
 }
 
 .bottom-right {
-  /* border: 1pt solid magenta; */
   grid-column: 3;
   justify-self: right;
-  #instruction-svg {
-    padding: 0px;
-    width: calc(40px * 6);
-    height: 22px; /* same size as vscode buttons*/
-    /* scale: 70%; */
-  }
-  /* align-items: center; */
 }
 
 #instruction-type-r,
