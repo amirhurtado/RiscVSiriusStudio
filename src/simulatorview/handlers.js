@@ -1300,7 +1300,7 @@ export function PCIM(element, cpuData) {
     return tabular({
       pairs: [
         ["PC ⇔ IM", ""],
-        ["Instruction", inst],
+        ["Instruction", "0x" + inst],
       ],
     });
   });
@@ -1321,7 +1321,7 @@ export function PCADD4(element, cpuData) {
     return tabular({
       pairs: [
         ["PC ⇔ ADD4", ""],
-        ["Instruction", inst],
+        ["Instruction", "0x" + inst],
       ],
     });
   });
@@ -2115,7 +2115,7 @@ export function BUMUXPC(element, cpuData) {
     return tabular({
       pairs: [
         ["NextPC ⇔ PC", ""],
-        ["Address", BUMUXRes],
+        ["Address", "0x" + BUMUXRes],
       ],
     });
   });
