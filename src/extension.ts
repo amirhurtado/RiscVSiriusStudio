@@ -1,3 +1,4 @@
+//commit
 import {
   commands,
   ConfigurationChangeEvent,
