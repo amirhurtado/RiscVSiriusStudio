@@ -170,13 +170,15 @@ function mouseHover(element, mmove, mout) {
  */
 export function CLK(element, cpuData) {
   const {
-    cpuElemStates: { CLK: state },
+    cpuElements: { CLKCLK: wave },
   } = cpuData.getInfo();
 
   applyClass(element, "component");
+  applyClass(wave, "connection");
   cpuData.installTooltip(element, "bottom", paragraph({ text: "Clock" }));
   document.addEventListener("SimulatorUpdate", (e) => {
     applyClass(element, "component");
+    applyClass(wave, "connection");
     cpuData.enable("CLK");
   });
 }
@@ -375,9 +377,8 @@ export function CU(element, cpuData) {
     cpuElemStates: { CU: state },
   } = cpuData.getInfo();
 
-  [element, arrow].forEach((e) => {
-    applyClass(e, "componentDisabled");
-  });
+  applyClass(element, "componentDisabled");
+  applyClass(arrow, "connectionDisabled");
   cpuData.installTooltip(
     arrow,
     "left-start",
@@ -398,9 +399,9 @@ export function CU(element, cpuData) {
   );
 
   document.addEventListener("SimulatorUpdate", (e) => {
-    [element, arrow].forEach((e) => {
-      applyClass(e, "component");
-    });
+    applyClass(element, "component");
+    applyClass(arrow, "connection");
+
     cpuData.enable("CU");
   });
 }
