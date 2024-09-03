@@ -186,7 +186,6 @@ export function CLK(element, cpuData) {
 export function PC(element, cpuData) {
   const {
     cpuElements: { PCCLOCK: clock },
-    cpuElemStates: { PC: state },
   } = cpuData.getInfo();
 
   const components = [element, clock];
@@ -211,9 +210,7 @@ export function PC(element, cpuData) {
 export function ADD4(element, cpuData) {
   const {
     cpuElements: { ADD4WBMUX: add4WBMux },
-    cpuElemStates: { ADD4: state },
   } = cpuData.getInfo();
-
   applyClass(element, "componentDisabled");
   applyClass(add4WBMux, "connectionDisabled");
 
@@ -227,7 +224,6 @@ export function ADD4(element, cpuData) {
 export function IM(element, cpuData) {
   const {
     cpuElements: { IMADDRESSTEXT: addressText, IMINSTRUCTIONTEXT: instText },
-    cpuElemStates: { IM: state },
   } = cpuData.getInfo();
 
   const inputs = [addressText, instText];
@@ -374,7 +370,6 @@ function styleSignals(cpuData, instType, style) {
 export function CU(element, cpuData) {
   const {
     cpuElements: { CUArrow: arrow },
-    cpuElemStates: { CU: state },
   } = cpuData.getInfo();
 
   applyClass(element, "componentDisabled");
@@ -459,7 +454,6 @@ export function RU(element, cpuData) {
       RUTEXTOUTRD1: val1Text,
       RUTEXTOUTRD2: val2Text,
     },
-    cpuElemStates: { RU: state },
   } = cpuData.getInfo();
 
   const components = [element, clock];
@@ -654,7 +648,6 @@ function setIMMSrc(cpuData) {
 export function IMM(element, cpuData) {
   const {
     cpuElements: { SgnIMMSrcPTH: signal, SgnIMMSRCVAL: value },
-    cpuElemStates: { IMM: state },
     instruction: instruction,
   } = cpuData.getInfo();
 
@@ -859,8 +852,6 @@ export function ALU(element, cpuData) {
       SgnALUOPPTH: aluSignal,
       SgnALUOPVAL: aluSignalValue,
     },
-    cpuElemStates: { ALU: state },
-    instruction: instruction,
   } = cpuData.getInfo();
 
   const inputs = [textA, textB];
@@ -929,7 +920,6 @@ function setBrOp(cpuData) {
 export function BU(element, cpuData) {
   const {
     cpuElements: { SgnBUBROPPTH: signal, SgnBUBROPVAL: signalVal },
-    cpuElemStates: { BU: state },
     instruction: instruction,
   } = cpuData.getInfo();
   const signals = [signal, signalVal];
@@ -1007,7 +997,7 @@ function setDMWr(cpuData) {
     cpuElements: { SgnDMWRVAL: wrSignalValue },
   } = cpuData.getInfo();
 
-  wrSignalValue.getElementsByTagName("div")[2].innerHTML =
+  wrSignalValue.getElementsByTagName("text")[0].innerHTML =
     cpuData.instructionResult().DMWr;
 }
 
@@ -1016,7 +1006,7 @@ function setDMCtrl(cpuData) {
     cpuElements: { SgnDMCTRLVAL: ctrlSignalValue },
   } = cpuData.getInfo();
 
-  ctrlSignalValue.getElementsByTagName("div")[2].innerHTML =
+  ctrlSignalValue.getElementsByTagName("text")[0].innerHTML =
     cpuData.instructionResult().DMCtrl;
 }
 
@@ -1033,8 +1023,6 @@ export function DM(element, cpuData) {
       CLKDM: clkConnection,
       MEMCLOCK: clock,
     },
-    cpuElemStates: { DM: state },
-    instruction: instruction,
   } = cpuData.getInfo();
 
   const components = [element, clock];
@@ -1254,11 +1242,6 @@ export function WBMUX(element, cpuData) {
 // PATHS
 
 export function CLKPC(element, cpuData) {
-  const {
-    cpuElemStates: { CLKPC: state },
-    instruction: instruction,
-  } = cpuData.getInfo();
-
   applyClass(element, "connectionDisabled");
   focus(element);
   cpuData.installTooltip(element, "right", paragraph({ text: "Clock ⇔ PC" }));
@@ -1270,10 +1253,6 @@ export function CLKPC(element, cpuData) {
 }
 
 export function CLKRU(element, cpuData) {
-  const {
-    cpuElemStates: { CLKRU: state },
-  } = cpuData.getInfo();
-
   applyClass(element, "connectionDisabled");
   focus(element);
   document.addEventListener("SimulatorUpdate", (e) => {
@@ -1290,10 +1269,6 @@ export function CLKDM(element, cpuData) {
 }
 
 export function PCIM(element, cpuData) {
-  const {
-    cpuElemStates: { PCIM: state },
-  } = cpuData.getInfo();
-
   applyClass(element, "connectionDisabled");
   focus(element);
   cpuData.installTooltip(element, "top", () => {
@@ -1312,9 +1287,6 @@ export function PCIM(element, cpuData) {
 }
 
 export function PCADD4(element, cpuData) {
-  const {
-    cpuElemStates: { PCADD4: state },
-  } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   // focus(element);
   cpuData.installTooltip(element, "left", () => {
@@ -1334,10 +1306,6 @@ export function PCADD4(element, cpuData) {
 }
 
 export function PCALUA(element, cpuData) {
-  const {
-    cpuElemStates: { PCALUA: state },
-    instruction: instruction,
-  } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
   cpuData.installTooltip(element, "top", () => {
@@ -1417,10 +1385,6 @@ function imCUTooltipText(connection, cpuData) {
 
 export function IMCUOPCODE(element, cpuData) {
   applyClass(element, "connectionDisabled");
-  const {
-    cpuElemStates: { IMCUOPCODE: state },
-    instruction: instruction,
-  } = cpuData.getInfo();
   focus(element);
   cpuData.installTooltip(element, "left", () => {
     return imCUTooltipText("opcode", cpuData);
@@ -1446,10 +1410,6 @@ export function IMCUOPCODE(element, cpuData) {
 }
 
 export function IMCUFUNCT3(element, cpuData) {
-  const {
-    cpuElemStates: { IMCUFUNCT3: state },
-    instruction: instruction,
-  } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
   cpuData.installTooltip(element, "left", () => {
@@ -1481,11 +1441,6 @@ export function IMCUFUNCT3(element, cpuData) {
 }
 
 export function IMCUFUNCT7(element, cpuData) {
-  const {
-    cpuElemStates: { IMCUFUNCT7: state },
-    instruction: instruction,
-  } = cpuData.getInfo();
-
   applyClass(element, "connectionDisabled");
   focus(element);
   cpuData.installTooltip(element, "left", () => {
@@ -1609,10 +1564,6 @@ export function IMRURS2(element, cpuData) {
 }
 
 export function IMRURDEST(element, cpuData) {
-  const {
-    cpuElemStates: { IMRURDEST: state },
-  } = cpuData.getInfo();
-
   applyClass(element, "connectionDisabled");
   focus(element);
   cpuData.installTooltip(element, "top", () => {
@@ -1644,9 +1595,6 @@ export function IMRURDEST(element, cpuData) {
 }
 
 export function IMIMM(element, cpuData) {
-  const {
-    cpuElemStates: { IMIMM: state },
-  } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
   mouseHover(
@@ -1670,10 +1618,6 @@ export function IMIMM(element, cpuData) {
 }
 
 export function WBMUXRU(element, cpuData) {
-  const {
-    cpuElemStates: { WBMUXRU: state },
-  } = cpuData.getInfo();
-
   applyClass(element, "connectionDisabled");
   focus(element);
   cpuData.installTooltip(element, "bottom", () => {
@@ -1699,10 +1643,6 @@ export function WBMUXRU(element, cpuData) {
 }
 
 export function IMMALUB(element, cpuData) {
-  const {
-    cpuElemStates: { IMMALUB: state },
-    instruction: instruction,
-  } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
   cpuData.installTooltip(element, "right", () => {
@@ -1731,9 +1671,6 @@ export function IMMALUB(element, cpuData) {
 }
 
 export function RUALUA(element, cpuData) {
-  const {
-    cpuElemStates: { RUALUA: state },
-  } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
   cpuData.installTooltip(element, "bottom", () => {
@@ -1763,11 +1700,6 @@ export function RUALUA(element, cpuData) {
 }
 
 export function RUALUB(element, cpuData) {
-  const {
-    cpuElemStates: { RUALUB: state },
-    instruction: instruction,
-  } = cpuData.getInfo();
-
   applyClass(element, "connectionDisabled");
   focus(element);
   cpuData.installTooltip(element, "bottom", () => {
@@ -1796,11 +1728,6 @@ export function RUALUB(element, cpuData) {
 }
 
 export function RUDM(element, cpuData) {
-  const {
-    cpuElemStates: { RUDM: state },
-    instruction: instruction,
-  } = cpuData.getInfo();
-
   applyClass(element, "connectionDisabled");
   focus(element);
   cpuData.installTooltip(element, "bottom", () => {
@@ -1874,10 +1801,6 @@ export function RURS2BU(element, cpuData) {
 }
 
 export function ALUAALU(element, cpuData) {
-  const {
-    cpuElemStates: { ALUAALU: state },
-  } = cpuData.getInfo();
-
   applyClass(element, "connectionDisabled");
   focus(element);
   cpuData.installTooltip(element, "top", () => {
@@ -1933,11 +1856,6 @@ export function ALUDM(element, cpuData) {
 }
 
 export function ALUWBMUX(element, cpuData) {
-  const {
-    cpuElemStates: { ALUWBMUX: state },
-    instruction: instruction,
-  } = cpuData.getInfo();
-
   applyClass(element, "connectionDisabled");
   focus(element);
   cpuData.installTooltip(element, "bottom", () => {
@@ -1964,10 +1882,6 @@ export function ALUWBMUX(element, cpuData) {
 }
 
 export function DMWBMUX(element, cpuData) {
-  const {
-    cpuElemStates: { DMWBMUX: state },
-    instruction: instruction,
-  } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
   cpuData.installTooltip(element, "bottom", () => {
@@ -1993,11 +1907,6 @@ export function DMWBMUX(element, cpuData) {
 }
 
 export function ADD4WBMUX(element, cpuData) {
-  const {
-    cpuElemStates: { ADD4WBMUX: state },
-    instruction: instruction,
-  } = cpuData.getInfo();
-  applyClass(element, "connectionDisabled");
   focus(element);
   cpuData.installTooltip(element, "bottom", () => {
     const value = cpuData.instructionResult().ADD4Res;
@@ -2023,10 +1932,6 @@ export function ADD4WBMUX(element, cpuData) {
 }
 
 export function BUBUMUX(element, cpuData) {
-  const {
-    cpuElemStates: { BUBUMUX: state },
-    instruction: instruction,
-  } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
   cpuData.installTooltip(element, "top", () => {
@@ -2046,10 +1951,6 @@ export function BUBUMUX(element, cpuData) {
 }
 
 export function ALUBUMUX(element, cpuData) {
-  const {
-    cpuElemStates: { ALUBUMUX: state },
-    instruction: instruction,
-  } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
   cpuData.installTooltip(element, "bottom", () => {
@@ -2080,10 +1981,6 @@ export function ALUBUMUX(element, cpuData) {
 }
 
 export function ADD4BUMUX(element, cpuData) {
-  const {
-    cpuElemStates: { ADD4BUMUX: state },
-    instruction: instruction,
-  } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
   cpuData.installTooltip(element, "top", () => {
@@ -2103,10 +2000,6 @@ export function ADD4BUMUX(element, cpuData) {
 }
 
 export function BUMUXPC(element, cpuData) {
-  const {
-    cpuElemStates: { BUMUXPC: state },
-    instruction: instruction,
-  } = cpuData.getInfo();
   applyClass(element, "connectionDisabled");
   focus(element);
 
@@ -2127,11 +2020,6 @@ export function BUMUXPC(element, cpuData) {
 }
 
 export function ADD4CT(element, cpuData) {
-  const {
-    cpuElemStates: { ADD4CT: state },
-    instruction: instruction,
-  } = cpuData.getInfo();
-
   applyClass(element, "connectionDisabled");
   focus(element);
   document.addEventListener("SimulatorUpdate", (e) => {
@@ -2152,7 +2040,7 @@ function setImmInstruction(cpuData, html) {
   const {
     cpuElements: { LOGTEXTIMM: text },
   } = cpuData.getInfo();
-  const immText = text.getElementsByTagName("div")[2];
+  const immText = text.getElementsByTagName("text")[0];
   immText.innerHTML = html;
 }
 
