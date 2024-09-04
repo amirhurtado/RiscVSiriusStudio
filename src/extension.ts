@@ -1,4 +1,3 @@
-//commit
 import {
   commands,
   ConfigurationChangeEvent,
@@ -17,6 +16,7 @@ import { RegisterPanelView } from './panels/RegisterPanel';
 import { ProgMemPanelView } from './panels/ProgMemPanel';
 import { DataMemPanelView } from './panels/DataMemPanel';
 import { InstructionPanelView } from './panels/InstructionPanel';
+import { RiscCardPanel } from './panels/RiscCardPanel';
 import { logger } from './utilities/logger';
 import { RVExtensionContext } from './support/context';
 
@@ -77,6 +77,12 @@ export function activate(context: ExtensionContext) {
   context.subscriptions.push(
     commands.registerCommand('rv-simulator.irForCurrentLine', () => {
       irForCurrentLine(rvContext);
+    })
+  );
+  
+  context.subscriptions.push(
+    commands.registerCommand('rv-simulator.ShowCard', () => {
+      RiscCardPanel.riscCard();
     })
   );
 

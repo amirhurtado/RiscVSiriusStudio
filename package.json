@@ -30,6 +30,10 @@
       {
         "command": "rv-simulator.enableProgMemSync",
         "title": "RISCV simuator: synchronize code with program memory"
+      },
+      {
+        "command": "rv-simulator.ShowCard",
+        "title": "RISCV simulator: show card"
       }
     ],
     "viewsContainers": {
@@ -119,6 +123,10 @@
       {
         "key": "ctrl+f12",
         "command": "rv-simulator.simulate"
+      },
+      {
+        "command": "rv-simulator.ShowCard",
+        "key": "ctrl+f7"
       }
     ],
     "languages": [
