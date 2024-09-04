@@ -165,6 +165,7 @@ export class SimulatorPanel {
         </head>
 
         <body class="p-1">
+          <!-- Tooltip box -->
           <div
             id="tooltip"
             role="tooltip"
@@ -173,6 +174,43 @@ export class SimulatorPanel {
             tooltip
             <div id="arrow"></div>
           </div>
+          <!-- Modal box -->
+          <div class="modal" id="simulator-modal">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <!-- Modal Header -->
+                <div class="modal-header">
+                  <h4 class="modal-title">Simulation finished</h4>
+                  <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                  ></button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body">
+                  
+                  The simulation has finished. You can save the current status of the memory and registers before performing a new simulation.
+
+                  Statistics:
+                
+                </div>
+
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                  <button
+                    type="button"
+                    class="btn btn-primary"
+                    data-bs-dismiss="modal"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="grid-container">
             <div class="simulator-toolbar grid-item-1 toolbar-container">
               <div class="toolbar-left">
