@@ -10,6 +10,9 @@ import {
   Uri,
   window,
   workspace,
+  ProgressLocation,
+  ThemeColor,
+  StatusBarItem,
 } from "vscode";
 
 import { SimulatorPanel } from "./panels/SimulatorPanel";
@@ -19,6 +22,7 @@ import { DataMemPanelView } from "./panels/DataMemPanel";
 import { InstructionPanelView } from "./panels/InstructionPanel";
 import { logger } from "./utilities/logger";
 import { RVExtensionContext } from "./support/context";
+import { setTimeout } from "timers/promises";
 
 export function activate(context: ExtensionContext) {
   console.log("Activating extension");
@@ -61,6 +65,13 @@ export function activate(context: ExtensionContext) {
     )
   );
 
+  const statusBarItem = window.createStatusBarItem("RVSiriusStudioBarItem", 1);
+  // statusBarItem.backgroundColor = new ThemeColor(
+  //   "statusBarItem.errorBackground"
+  // );
+  statusBarItem.text = "RiscVSiriusStudio";
+  statusBarItem.show();
+
   context.subscriptions.push(
     commands.registerCommand("rv-simulator.simulate", () => {
       const editor = window.activeTextEditor;
@@ -72,7 +83,12 @@ export function activate(context: ExtensionContext) {
     commands.registerCommand("rv-simulator.build", () => {
       const editor = window.activeTextEditor;
       if (editor) {
-        updateContext(context.extensionUri, editor.document, rvContext);
+        updateContext(
+          context.extensionUri,
+          editor.document,
+          rvContext,
+          statusBarItem
+        );
       }
     })
   );
@@ -125,7 +141,7 @@ export function activate(context: ExtensionContext) {
    */
   workspace.onDidSaveTextDocument((document) => {
     // console.log('Save editor event');
-    updateContext(context.extensionUri, document, rvContext);
+    updateContext(context.extensionUri, document, rvContext, statusBarItem);
   });
 
   /**
@@ -134,7 +150,7 @@ export function activate(context: ExtensionContext) {
   workspace.onDidChangeTextDocument((event: TextDocumentChangeEvent) => {
     // console.log('Change text document event');
     const document = event.document;
-    updateContext(context.extensionUri, document, rvContext);
+    updateContext(context.extensionUri, document, rvContext, statusBarItem);
   });
 
   window.onDidChangeTextEditorSelection(
@@ -144,7 +160,12 @@ export function activate(context: ExtensionContext) {
       // This event will trigger for any workspace file.
       if (RVExtensionContext.isValidFile(document)) {
         if (!rvContext.validIR()) {
-          updateContext(context.extensionUri, document, rvContext);
+          updateContext(
+            context.extensionUri,
+            document,
+            rvContext,
+            statusBarItem
+          );
         }
         const ir = irForCurrentLine(rvContext);
         if (typeof ir !== "undefined") {
@@ -187,17 +208,23 @@ function irForCurrentLine(rvContext: RVExtensionContext) {
 function updateContext(
   uri: Uri,
   document: TextDocument,
-  rvContext: RVExtensionContext
+  rvContext: RVExtensionContext,
+  statusBarItem: StatusBarItem
 ) {
   const fileName = document.fileName;
   if (RVExtensionContext.isValidFile(document)) {
     rvContext.setAndBuildCurrentFile(fileName, document.getText());
-
     if (rvContext.validIR()) {
-      window.showInformationMessage("Build process succeeded.");
+      statusBarItem.text = "RISCV: success build";
+      statusBarItem.backgroundColor = new ThemeColor("statusBar.background");
+      statusBarItem.show();
       rvContext.uploadIR(ProgMemPanelView.render(uri, {}));
     } else {
-      window.showErrorMessage("Build process failed.");
+      statusBarItem.text = "RISCV: error";
+      statusBarItem.backgroundColor = new ThemeColor(
+        "statusBarItem.errorBackground"
+      );
+      statusBarItem.show();
     }
   } else {
     // Skip as the document is not a riscv file.
