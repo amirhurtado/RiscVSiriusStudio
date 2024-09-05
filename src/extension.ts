@@ -15,6 +15,7 @@ import {
   StatusBarItem,
 } from "vscode";
 
+import { DocumentationPanel } from "./panels/DocumentationPanel";
 import { SimulatorPanel } from "./panels/SimulatorPanel";
 import { RegisterPanelView } from "./panels/RegisterPanel";
 import { ProgMemPanelView } from "./panels/ProgMemPanel";
@@ -22,7 +23,6 @@ import { DataMemPanelView } from "./panels/DataMemPanel";
 import { InstructionPanelView } from "./panels/InstructionPanel";
 import { logger } from "./utilities/logger";
 import { RVExtensionContext } from "./support/context";
-import { setTimeout } from "timers/promises";
 
 export function activate(context: ExtensionContext) {
   console.log("Activating extension");
@@ -71,6 +71,12 @@ export function activate(context: ExtensionContext) {
   // );
   statusBarItem.text = "RiscVSiriusStudio";
   statusBarItem.show();
+
+  context.subscriptions.push(
+    commands.registerCommand("rv-simulator.documentation", () => {
+      const simulator = DocumentationPanel.getPanel(context.extensionUri);
+    })
+  );
 
   context.subscriptions.push(
     commands.registerCommand("rv-simulator.simulate", () => {

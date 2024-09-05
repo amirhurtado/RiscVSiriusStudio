@@ -44,6 +44,10 @@ const extensionConfig = {
           from: "./src/panels/panels.css",
           to: "./out",
         },
+        {
+          from: "./src/documentation/index.md",
+          to: "./out/",
+        },
         // watch: true
       ],
     }),
@@ -106,6 +110,14 @@ const instructionviewConfig = {
   outfile: "./out/instructionview.js",
 };
 
+const documentationviewConfig = {
+  ...baseConfig,
+  target: "es2020",
+  format: "esm",
+  entryPoints: ["./src/documentationview/documentationview.ts"],
+  outfile: "./out/documentationview.js",
+};
+
 // This watch config adheres to the conventions of the esbuild-problem-matchers
 // extension (https://github.com/connor4312/esbuild-problem-matchers#esbuild-via-js)
 /** @type BuildOptions */
@@ -157,6 +169,10 @@ const watchConfig = {
         ...instructionviewConfig,
         ...watchConfig,
       });
+      await build({
+        ...documentationviewConfig,
+        ...watchConfig,
+      });
       console.log("[watch] build finished");
     } else {
       // Build extension and webview code
@@ -166,6 +182,7 @@ const watchConfig = {
       await build(progmemviewConfig);
       await build(datamemviewConfig);
       await build(instructionviewConfig);
+      await build(documentationviewConfig);
       console.log("build complete");
     }
   } catch (err) {

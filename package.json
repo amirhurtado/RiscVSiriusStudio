@@ -21,7 +21,11 @@
         "title": "RISCV simulator: build program",
         "icon": "$(run)"
       },
-
+      {
+        "command": "rv-simulator.documentation",
+        "title": "RISCV simulator: open documentation",
+        "icon": "$(book)"
+      },
       {
         "command": "rv-simulator.progMemExportJSON",
         "title": "RISCV simulator: export instruction memory as JSON"
@@ -121,6 +125,11 @@
           "command": "rv-simulator.simulate",
           "group": "navigation",
           "when": "editorLangId == riscvasm"
+        },
+        {
+          "command": "rv-simulator.documentation",
+          "group": "navigation",
+          "when": "editorLangId == riscvasm"
         }
       ]
     },
@@ -184,7 +193,8 @@
     "peggy": "^4.0.2",
     "prettier": "^2.8.1",
     "tabulator-tables": "^6.2.1",
-    "typescript": "^4.8.4"
+    "typescript": "^4.8.4",
+    "zero-md": "^3.1.4"
   },
   "dependencies": {
     "@vscode/codicons": "^0.0.36",
