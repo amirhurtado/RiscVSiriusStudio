@@ -11,7 +11,9 @@ import {
   workspace,
   ProgressLocation,
   ThemeColor,
-  StatusBarItem
+  StatusBarItem,
+  TreeDataProvider,
+  TreeItem
 } from 'vscode';
 
 import { SimulatorPanel } from './panels/SimulatorPanel';
@@ -19,16 +21,20 @@ import { RegisterPanelView } from './panels/RegisterPanel';
 import { ProgMemPanelView } from './panels/ProgMemPanel';
 import { DataMemPanelView } from './panels/DataMemPanel';
 import { InstructionPanelView } from './panels/InstructionPanel';
+import { InstructionDataProvider } from './panels/InstructionTree';
 import { RiscCardPanel } from './panels/RiscCardPanel';
 import { logger } from './utilities/logger';
 import { RVExtensionContext } from './support/context';
-import { setTimeout } from 'timers/promises';
 
 export function activate(context: ExtensionContext) {
   console.log('Activating extension');
   logger().info('Activating extension');
   const rvContext = new RVExtensionContext();
-
+  const instructionTree = new InstructionDataProvider();
+  // window.registerTreeDataProvider('rv-simulator.progmem2', instructionTree);
+  const instructionView = window.createTreeView('rv-simulator.progmem2', {
+    treeDataProvider: instructionTree
+  });
   // Registers view
   context.subscriptions.push(
     window.registerWebviewViewProvider(
@@ -87,6 +93,7 @@ export function activate(context: ExtensionContext) {
           context.extensionUri,
           editor.document,
           rvContext,
+          instructionTree,
           statusBarItem
         );
       }
@@ -147,7 +154,13 @@ export function activate(context: ExtensionContext) {
    */
   workspace.onDidSaveTextDocument((document) => {
     // console.log('Save editor event');
-    updateContext(context.extensionUri, document, rvContext, statusBarItem);
+    updateContext(
+      context.extensionUri,
+      document,
+      rvContext,
+      instructionTree,
+      statusBarItem
+    );
   });
 
   /**
@@ -156,7 +169,13 @@ export function activate(context: ExtensionContext) {
   workspace.onDidChangeTextDocument((event: TextDocumentChangeEvent) => {
     // console.log('Change text document event');
     const document = event.document;
-    updateContext(context.extensionUri, document, rvContext, statusBarItem);
+    updateContext(
+      context.extensionUri,
+      document,
+      rvContext,
+      instructionTree,
+      statusBarItem
+    );
   });
 
   window.onDidChangeTextEditorSelection(
@@ -170,6 +189,7 @@ export function activate(context: ExtensionContext) {
             context.extensionUri,
             document,
             rvContext,
+            instructionTree,
             statusBarItem
           );
         }
@@ -180,7 +200,12 @@ export function activate(context: ExtensionContext) {
             ProgMemPanelView.render(context.extensionUri, {}),
             ir
           );
-          // console.log('Editor selection ', ir);
+          const instructionItem = instructionTree.selectItem(ir.inst);
+          if (instructionItem !== undefined) {
+            instructionView.reveal(instructionItem, {
+              focus: true
+            });
+          }
         }
       }
     }
@@ -215,15 +240,19 @@ function updateContext(
   uri: Uri,
   document: TextDocument,
   rvContext: RVExtensionContext,
+  instructionTree: InstructionDataProvider,
   statusBarItem: StatusBarItem
 ) {
   const fileName = document.fileName;
   if (RVExtensionContext.isValidFile(document)) {
     rvContext.setAndBuildCurrentFile(fileName, document.getText());
     if (rvContext.validIR()) {
+      // Report on the status bar
       statusBarItem.text = 'RISCV: success build';
       statusBarItem.backgroundColor = new ThemeColor('statusBar.background');
       statusBarItem.show();
+      // Upload representation to context
+      instructionTree.update(rvContext.getIR());
       rvContext.uploadIR(ProgMemPanelView.render(uri, {}));
     } else {
       statusBarItem.text = 'RISCV: error';

@@ -64,6 +64,12 @@ export class RVExtensionContext {
     this.build(name, sourceCode);
   }
 
+  public getIR(): any {
+    if (this.currentIR === undefined) {
+      throw Error('There is no intermediate representation of code yet.');
+    }
+    return this.currentIR;
+  }
   public getIRForInstructionAt(line: number): any {
     if (this.currentIR === undefined) {
       throw Error('There is no intermediate representation of code yet.');
