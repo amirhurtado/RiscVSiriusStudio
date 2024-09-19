@@ -50,9 +50,9 @@
     "views": {
       "riscv": [
         {
-          "type": "webview",
-          "id": "rv-simulator.instruction",
-          "name": "Instruction"
+          "type": "tree",
+          "id": "rv-simulator.progmem2",
+          "name": "Program memory"
         },
         {
           "type": "webview",
@@ -61,16 +61,17 @@
         },
         {
           "type": "webview",
-          "id": "rv-simulator.progmem",
-          "name": "Program memory"
-        },
-        {
-          "type": "webview",
           "id": "rv-simulator.datamem",
           "name": "Data memory"
         }
       ]
     },
+    "viewsWelcome": [
+      {
+        "view": "rv-simulator.progmem2",
+        "contents": "Program memory wll be available after the program has been built.\n[Build program](command:rv-simulator.build)"
+      }
+    ],
     "configuration": {
       "title": "RISCV Simulator",
       "properties": {

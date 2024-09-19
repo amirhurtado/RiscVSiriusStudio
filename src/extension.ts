@@ -18,9 +18,7 @@ import {
 
 import { SimulatorPanel } from './panels/SimulatorPanel';
 import { RegisterPanelView } from './panels/RegisterPanel';
-import { ProgMemPanelView } from './panels/ProgMemPanel';
 import { DataMemPanelView } from './panels/DataMemPanel';
-import { InstructionPanelView } from './panels/InstructionPanel';
 import { InstructionDataProvider } from './panels/InstructionTree';
 import { RiscCardPanel } from './panels/RiscCardPanel';
 import { logger } from './utilities/logger';
@@ -44,29 +42,11 @@ export function activate(context: ExtensionContext) {
     )
   );
 
-  // Program memory view
-  context.subscriptions.push(
-    window.registerWebviewViewProvider(
-      'rv-simulator.progmem',
-      ProgMemPanelView.render(context.extensionUri, {}),
-      { webviewOptions: { retainContextWhenHidden: true } }
-    )
-  );
-
   // Data memory view
   context.subscriptions.push(
     window.registerWebviewViewProvider(
       'rv-simulator.datamem',
       DataMemPanelView.render(context.extensionUri, {}),
-      { webviewOptions: { retainContextWhenHidden: true } }
-    )
-  );
-
-  // Instruction view
-  context.subscriptions.push(
-    window.registerWebviewViewProvider(
-      'rv-simulator.instruction',
-      InstructionPanelView.render(context.extensionUri, {}),
       { webviewOptions: { retainContextWhenHidden: true } }
     )
   );
@@ -131,10 +111,6 @@ export function activate(context: ExtensionContext) {
     const instFormat = workspace
       .getConfiguration()
       .get('rv-simulator.programMemoryView.instructionFormat');
-    sendMessageToProgMemView({
-      operation: 'settingsChanged',
-      settings: { codeSync: codeSync, instFormat: instFormat }
-    });
     const stackPointerAddress = workspace
       .getConfiguration()
       .get('rv-simulator.dataMemoryView.stackPointerInitialAddress') as number;
@@ -195,11 +171,6 @@ export function activate(context: ExtensionContext) {
         }
         const ir = irForCurrentLine(rvContext);
         if (typeof ir !== 'undefined') {
-          rvContext.reflectInstruction(
-            InstructionPanelView.render(context.extensionUri, {}),
-            ProgMemPanelView.render(context.extensionUri, {}),
-            ir
-          );
           const instructionItem = instructionTree.selectItem(ir.inst);
           if (instructionItem !== undefined) {
             instructionView.reveal(instructionItem, {
@@ -253,7 +224,6 @@ function updateContext(
       statusBarItem.show();
       // Upload representation to context
       instructionTree.update(rvContext.getIR());
-      rvContext.uploadIR(ProgMemPanelView.render(uri, {}));
     } else {
       statusBarItem.text = 'RISCV: error';
       statusBarItem.backgroundColor = new ThemeColor(
@@ -285,10 +255,8 @@ function simulateProgram(
       window.showInformationMessage('Starting simulation');
       rvContext.startSimulation(
         simulator,
-        ProgMemPanelView.render(extensionUri, {}),
         DataMemPanelView.render(extensionUri, {}),
         RegisterPanelView.render(extensionUri, {}),
-        InstructionPanelView.render(extensionUri, {}),
         {
           sort: workspace
             .getConfiguration()
@@ -313,14 +281,6 @@ function exportProgMemJSON(extensionUri: Uri, rvContext: RVExtensionContext) {
         commands.executeCommand('editor.action.formatDocument');
       });
     });
-}
-
-function sendMessageToProgMemView(msg: any) {
-  console.log('sending message to progmemview', msg);
-  const progmem = ProgMemPanelView.currentview?.getWebView();
-  if (progmem) {
-    progmem.postMessage(msg);
-  }
 }
 
 function sendMessageToRegistersView(msg: any) {
