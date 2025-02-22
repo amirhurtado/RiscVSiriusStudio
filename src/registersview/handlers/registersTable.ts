@@ -16,7 +16,7 @@ import {
   validBinary,
   validAscii,
   toBinary
-} from '../utilities/conversions';
+} from '../../utilities/conversions';
 
 /**
  * Type definition for the possible views on a binary string.
@@ -40,7 +40,7 @@ type RegisterValue = {
   viewType: RegisterView;
 };
 
-const registersNames = [
+export const registersNames = [
   'x0 zero',
   'x1 ra',
   'x2 sp',
@@ -214,61 +214,6 @@ function isValidAs(value: string, valType: RegisterView) {
   return false;
 }
 
-export function setupImportRegisters(registersTable: Tabulator) {
-  document
-    .getElementById("importRegisterBtn")
-    ?.addEventListener("click", () => {
-      document.getElementById("fileInputImportRegister")?.click(); // Open file dialog
-    });
-
-  document
-    .getElementById("fileInputImportRegister")
-    ?.addEventListener("change", (event) => {
-      const input = event.target as HTMLInputElement;
-      const file = input.files?.[0];
-
-      if (!file) {
-        return;
-      }
-
-      const reader = new FileReader();
-
-      reader.onload = function (e) {
-        if (!e.target?.result) {
-          return;
-        }
-
-        const lines = (e.target.result as string)
-          .split("\n")
-          .map((line) => line.trim()) // delete leading and trailing spaces
-          .filter((line) => line !== ""); // delete empty lines
-
-        if (lines.length !== 32) {
-          console.error("Invalid number of lines");
-          return;
-        }
-
-        for (let i = 0; i < lines.length; i++) {
-          if (lines[i].length !== 32) {
-            console.error(`Invalid length in line ${i}`);
-            return;
-          }
-        }
-        const newData = registersNames.map((reg, index) => ({
-          name: reg,
-          rawName: reg.split(" ")[0],
-          value: index === 0 ? "00000000000000000000000000000000" : lines[index],
-          viewType: 2,
-          watched: false, // Todos los registros entran como "watched: true"
-          modified: 0,
-          id: index,
-        }));
-
-        registersTable.setData(newData);
-      };
-      reader.readAsText(file);
-    });
-}
 
 /**
  * Creates an editor for a value cell. This editor takes into account the
@@ -450,167 +395,8 @@ export function registersSetup(): Tabulator {
     table.setData(tableData);
   });
 
-  // table.on('rowDblClick', toggleWatched);
-  // table.on('cellEdited', modifiedCell);
-  // table.on('cellEdited', notifyExtension);
-  // table.on('tableBuilt', () => { log({ buildingTime: (Date.now() - startTime) / 1000, table: "Registers" }); });
   return table;
 }
 
 
 
-export function setupSearchInRegisterTable(registersTable: Tabulator) {
-  const searchRegisterInput = document.getElementById(
-    'searchRegisterInput'
-  ) as HTMLInputElement | null;
-
-  const searchMemoryInput = document.getElementById(
-    'searchMemoryInput'
-  ) as HTMLInputElement | null;
-
-  if (!searchRegisterInput || !searchMemoryInput) {
-    console.error('Search input for registers not found');
-    return;
-  }
-
-  searchRegisterInput.addEventListener('input', () => {
-    let searchValue = searchRegisterInput.value.trim();
-
-    if (searchValue === '') {
-      registersTable.clearFilter(true);
-      resetCellColors(registersTable); // Restablecer colores aquí
-      return;
-    }
-
-    searchValue = convertToBinary(searchValue);
-    filterTableData(registersTable, searchValue);
-  });
-
-  searchRegisterInput.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') {
-      searchRegisterInput.value = '';
-      registersTable.clearFilter(true);
-      resetCellColors(registersTable); 
-    }
-  });
-}
-
-
-function convertToBinary(value: string): string {
-  value = value.trim().toLowerCase();
-
-  if (value.startsWith('b')) {
-    return `isnumber${value.slice(1)}`;
-  }
-
-  if (value.startsWith('d')) {
-    let num = parseInt(value.slice(1), 10);
-
-    if (num < 0) {
-      let bits = 8;
-      num = (1 << bits) + num;
-      return `isnumber${num.toString(2).padStart(bits, '0')}`;
-    } else {
-      return `isnumber${num.toString(2)}`;
-    }
-  }
-
-  if (value.startsWith('h')) {
-    return `isnumber${parseInt(value.slice(1), 16).toString(2)}`;
-  }
-
-  if (value.startsWith('u')) {
-    let num = value.slice(1);
-    return `isnumber${num}`;
-  }
-
-  if (value.startsWith('s')) {
-    let num = value.slice(1);
-    return `both${num}`;
-  }
-
-  return value;
-}
-
-function filterTableData(table: Tabulator, searchValue: string) {
-  resetCellColors(table);
-
-  const isNumberSearch = searchValue.startsWith('isnumber');
-  const isBothSearch = searchValue.startsWith('both');
-
-  console.log('isNumberSearch', isNumberSearch);
-  console.log('isBothSearch', isBothSearch);
-
-  const cleanSearchValue = searchValue
-    .replace(/^(isnumber|both)\s*/, '')
-    .trim();
-  const searchTerms = cleanSearchValue.split(/\s+/);
-
-  table.setFilter((data: any) => {
-    const nameStr = data.name?.toLowerCase() || '';
-    const valueStr = data.value?.toString().toLowerCase() || '';
-
-    if (isNumberSearch) {
-      return valueStr.includes(cleanSearchValue);
-    } else if (isBothSearch) {
-      if (searchTerms.length === 1) {
-        const modifiedSearch = 's' + searchTerms[0];
-        return (
-          nameStr.includes(modifiedSearch) || valueStr.includes(searchTerms[0])
-        );
-      } else {
-        return searchTerms.every((term) => valueStr.includes(term));
-      }
-    } else {
-      return nameStr.includes(cleanSearchValue);
-    }
-  });
-
-  if (cleanSearchValue) {
-    table.getRows().forEach((row) => {
-      row.getCells().forEach((cell) => {
-        const field = cell.getField();
-        const cellValue = cell.getValue()?.toString().toLowerCase() || '';
-
-        if (
-          isNumberSearch &&
-          field === 'value' &&
-          cellValue.includes(cleanSearchValue)
-        ) {
-          cell.getElement().style.backgroundColor = '#D1E3E7';
-        } else if (isBothSearch) {
-          if (searchTerms.length === 1) {
-            const modifiedSearch = 's' + searchTerms[0];
-            if (
-              (field === 'name' && cellValue.includes(modifiedSearch)) ||
-              (field === 'value' && cellValue.includes(searchTerms[0]))
-            ) {
-              cell.getElement().style.backgroundColor = '#D1E3E7';
-            }
-          } else {
-            if (
-              field === 'value' &&
-              searchTerms.every((term) => cellValue.includes(term))
-            ) {
-              cell.getElement().style.backgroundColor = '#D1E3E7';
-            }
-          }
-        } else if (
-          !isBothSearch &&
-          field === 'name' &&
-          cellValue.includes(cleanSearchValue)
-        ) {
-          cell.getElement().style.backgroundColor = '#D1E3E7';
-        }
-      });
-    });
-  }
-}
-
-function resetCellColors(table: Tabulator) {
-  table.getRows().forEach((row) => {
-    row.getCells().forEach((cell) => {
-      cell.getElement().style.backgroundColor = '';
-    });
-  });
-}

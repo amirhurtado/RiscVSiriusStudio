@@ -4,19 +4,19 @@ import {
 } from '@vscode/webview-ui-toolkit';
 
 import {
-  CellComponent,
-  GroupComponent,
-  RowComponent,
   TabulatorFull as Tabulator
 } from 'tabulator-tables';
 
-import { registersSetup, setupImportRegisters, setupSearchInRegisterTable } from './registersTable';
-import { memorySetup, setupImportMemory, setUpMemoryConfig, enterInstructionsInMemoryTable } from './memoryTable';
-import { setUpConvert } from './convertTool';
-import { Console } from 'console';
+import { sendMessageToExtension } from './handlers/toolboxPanel/utils';
+
+import { setupToolboxPanel } from './handlers/toolboxPanel';
+
+import { registersSetup } from './handlers/registersTable';
+import { memorySetup, enterInstructionsInMemoryTable } from './handlers/memoryTable';
+
 provideVSCodeDesignSystem().register(allComponents);
 
-const vscode = acquireVsCodeApi();
+
 window.addEventListener('load', main, { passive: true });
 
 /**
@@ -31,23 +31,21 @@ function log(object: any = {}, level: string = 'info') {
   sendMessageToExtension({ level: level, command: 'log', object: object });
 }
 
+
 function main() {
   let registersTable = registersSetup();
   let memoryTable = memorySetup();
+
   window.addEventListener('message', (event) => {
     dispatch(event, registersTable, memoryTable);
   });
 
-  setupButtons();
-  setupSearchInRegisterTable(registersTable);
-  setUpMemoryConfig(memoryTable);
-  setupImportRegisters(registersTable);
-  setupImportMemory(memoryTable);
-  setUpConvert();
-  setupSettings();
-  setUpHelp();
-}
 
+  setupToolboxPanel(registersTable, memoryTable);
+
+
+  setupSettings(); //ESTA ES SUYA, LO DE CAMBIAR EL TAMAÑO DE LA MEMORIA, IMPORTAR REGISTROS O MEMORIA ESTAN DENTRO DE SETUPTOOLBOXPANEL/SETUPCONFIG  
+}
 
 
 function dispatch(
@@ -219,59 +217,6 @@ function dispatch(
   // }
 }
 
-function setupButtons(): void {
-  const sections: string[] = [
-    'openSearch',
-    'openSettings',
-    'openConvert1',
-    'openHelp'
-  ];
-  const buttons: string[] = [
-    'openSearchButton',
-    'openSettingsButton',
-    'openConvertButton',
-    'openHelpButton'
-  ];
-
-  function showOnly(targetId: string, buttonId: string): void {
-    // Ocultar todas las secciones
-    sections.forEach((id) => {
-      const element = document.getElementById(id);
-      if (element) {
-        element.className =
-          id === targetId
-            ? 'flex flex-1 flex-col max-h-dvh min-h-dvh overflow-y-scroll'
-            : 'hidden';
-      }
-    });
-
-    buttons.forEach((btnId) => {
-      document.getElementById(btnId)?.classList.remove('bg-active');
-    });
-
-    document.getElementById(buttonId)?.classList.add('bg-active');
-  }
-
-  // Asignar eventos a los botones
-  document
-    .getElementById('openSearchButton')
-    ?.addEventListener('click', () =>
-      showOnly('openSearch', 'openSearchButton')
-    );
-  document
-    .getElementById('openSettingsButton')
-    ?.addEventListener('click', () =>
-      showOnly('openSettings', 'openSettingsButton')
-    );
-  document
-    .getElementById('openConvertButton')
-    ?.addEventListener('click', () =>
-      showOnly('openConvert1', 'openConvertButton')
-    );
-  document
-    .getElementById('openHelpButton')
-    ?.addEventListener('click', () => showOnly('openHelp', 'openHelpButton'));
-}
 
 
 function setupSettings() {
@@ -294,36 +239,9 @@ function setupSettings() {
 
 
 
-function setUpHelp() {
-  const openShowCard = document.getElementById('openShowCard');
-
-  if (!openShowCard) {
-    console.error('Help button not found');
-    return;
-  }
-
-  openShowCard.addEventListener('click', () => {
-    sendMessageToExtension({
-      command: 'event',
-      object: { name: 'clickOpenRISCVCard', value: 'openHelp' }
-      // from: 'registerView',
-      // message: 'registerUpdate',
-      // name: rawName,
-      // value: value
-    });
-  });
-  
-
-}
 
 
-/**
- * View extension communication.
- * @param messageObject message to send to the extension
- */
-function sendMessageToExtension(messageObject: any) {
-  vscode.postMessage(messageObject);
-}
+
 
 
 
