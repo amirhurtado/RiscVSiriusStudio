@@ -11,4 +11,4 @@ loop:
     addi t1, t1, 1  # i++
     beq zero,zero, loop  # jump to loop
 end:
-    nop # result is in t0
+    beq zero, zero, end # program finished. Lopp for ever as there is no OS
