@@ -448,37 +448,6 @@ export class MemoryTable {
     });
   }
 
-  public uploadMemory(memory: string[], codeSize: number, symbols: any[]): void {
-    chunk(memory, 4).forEach((word : any, index : any) => {
-      const address = intToHex(index * 4).toUpperCase();
-      const hex = word
-        .slice()
-        .reverse()
-        .map((byte : any) => binaryToHex(byte).toUpperCase().padStart(2, "0"))
-        .join("-");
-      this.table.updateOrAddRow(address, {
-        address,
-        value0: word[0],
-        value1: word[2],
-        value2: word[1],
-        value3: word[3],
-        info: "",
-        hex,
-      });
-      if (index * 4 < codeSize) {
-        this.table.getRow(address).getElement().style.backgroundColor = "#FFF6E5";
-      }
-    });
-
-    const heapAddressHex = intToHex(codeSize).toUpperCase();
-    this.table.updateOrAddRow(heapAddressHex, {
-      info: `<span class="info-column-mem-table">Heap</span>`,
-    });
-
-    this.labelSymbols(symbols);
-    this.updatePC(0);
-  }
-
   public filterMemoryTableData(searchValue: string): void {
     this.resetMemoryCellColors();
     this.table.clearFilter(true);

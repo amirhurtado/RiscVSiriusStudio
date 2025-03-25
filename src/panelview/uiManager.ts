@@ -163,11 +163,10 @@ export class UIManager {
 
   public uploadMemory(
     memory: string[], codeSize: number, symbols: any[]): void {
+    // Creates the memory table along with its contents: instruction memory + data memory
     this._memoryTable = new MemoryTable(memory, codeSize, symbols, this.sendMessagetoExtension); 
-    this.showHexadecimalInMemory();
-    this.assignMemoryInputValue(memory.length-codeSize);
+    //this.assignMemoryInputValue(memory.length-codeSize);
     this.configuration();
-    this.memoryTable.uploadMemory(memory, codeSize, symbols);
   }
 
   private showPC(): void {
@@ -600,23 +599,11 @@ export class UIManager {
       });
   }
 
-  private showHexadecimalInMemory(): void {
-
-    console.log("Show hexadecimal in memory ENTROOO");
-   
-    const toggleColumn = () => {
-      console.log("ENTROOO");
-      const column = this.memoryTable.table.getColumn("hex");
-      if (column) {
-        this.checkShowHexadecimal.checked ? column.show() : column.hide();
-      } else {
-        console.log("Column not found");
-      }
-    };
-    this.checkShowHexadecimal.addEventListener("change", toggleColumn);
-    toggleColumn();
-    
-    
+  private showHexadecimalInMemory(): void {   
+    this.checkShowHexadecimal.addEventListener("change", () => {
+      debugger;
+      this.memoryTable.table.toggleColumn("hex");
+    });
   }
 
   private setUpSettings() {
