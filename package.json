@@ -20,6 +20,12 @@
         "when": "!ext.isSimulating"
       },
       {
+        "command": "rv-simulator.graphicsimulate",
+        "title": "RISCV simulator: graphic simulate program execution",
+        "icon": "$(circuit-board)",
+        "when": "!ext.isSimulating"
+      },
+      {
         "command": "rv-simulator.simulateStep",
         "title": "RISCV simulator: step simulation",
         "icon": "$(debug-step-over)",
@@ -148,6 +154,11 @@
       "editor/title": [
         {
           "command": "rv-simulator.build",
+          "group": "navigation",
+          "when": "editorLangId == riscvasm && !ext.isSimulating"
+        },
+        {
+          "command": "rv-simulator.graphicsimulate",
           "group": "navigation",
           "when": "editorLangId == riscvasm && !ext.isSimulating"
         },

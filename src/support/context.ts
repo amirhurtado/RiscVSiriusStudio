@@ -120,7 +120,6 @@ export class RVContext {
     this.disposables.push(
       
       commands.registerCommand("rv-simulator.simulate", () => {
-        SimulatorPanel.simulatorPanel(this.extensionContext.extensionUri);
         const editor = window.activeTextEditor;
         if (editor && RVDocument.isValid(editor.document)) {
           // We have an editor with a valid RiscV document open
@@ -176,6 +175,13 @@ export class RVContext {
           this._encoderDecorator = new EncoderDecorator();
         }
         this.buildCurrentDocument();
+      })
+    );
+
+    //  Graphicsimulate
+    this.disposables.push(
+      commands.registerCommand("rv-simulator.graphicsimulate", () => {
+        SimulatorPanel.simulatorPanel(this.extensionContext.extensionUri);
       })
     );
 
