@@ -1,117 +1,89 @@
+var scale = 0.2;
 
-console.log("IN JS")
+// hard coded for the purpose of example
+var minimapNavigatorPosition = {
+  minX: 0,
+  minY: 0,
+  maxX: 80,
+  maxY: 80,
+};
 
-
-document.addEventListener('DOMContentLoaded', function() {
-
-
-  const { dia, shapes } = joint;
-
-// Paper
-
-const paperContainer = document.getElementById("paper-container");
-
-const graph = new dia.Graph({}, { cellNamespace: shapes });
-const paper = new dia.Paper({
+var minimapPaper = new joint.dia.Paper({
+  el: document.getElementById('minimap-paper'),
   model: graph,
-  cellViewNamespace: shapes,
-  width: "100%",
-  height: "100%",
-  gridSize: 20,
-  drawGrid: { name: "mesh" },
-  async: true,
-  sorting: dia.Paper.sorting.APPROX,
-  background: { color: "#F3F7F6" }
+  width: config.paeprWidth * scale,
+  height: config.paperHeight * scale,
+  gridSize: 1,
 });
 
-paperContainer.appendChild(paper.el);
+minimapPaper.scale(scale);
 
-function setCounterValue(value) {
-  counterValueSpan.innerText = value;
-  counterRange.value = value;
-  graph.getElements().forEach((element) => {
-    element.set("counter", value);
-  });
-}
-
-const defaultCounterVal = 1;
-const counterValueSpan = document.querySelector("#counter-value");
-const counterRange = document.querySelector("#counter-range");
-setCounterValue(defaultCounterVal);
-
-counterRange.addEventListener("input", ({ target: { value } }) =>
-  setCounterValue(value)
-);
-
-const color = "#0057FF";
-const errorColor = "#FF0000";
-
-const CounterHighlighter = joint.dia.HighlighterView.extend({
-  UPDATE_ATTRIBUTES: ["counter"],
-  tagName: "g",
-  children: [
-    {
-      tagName: "rect",
-      selector: "background",
-      attributes: {
-        x: -10,
-        y: -10,
-        rx: 10,
-        ry: 10,
-        height: 20,
-        "stroke-width": 0
-      }
-    },
-    {
-      tagName: "text",
-      selector: "label",
-      attributes: {
-        x: 0,
-        y: ".3em",
-        fill: "#ffffff",
-        "font-size": 11,
-        "font-family": "monospace"
-      }
-    }
-  ],
-  highlight: function (cellView) {
-    this.renderChildren();
-    const { background, label } = this.childNodes;
-    const { model, el } = cellView;
-    const counter = model.get("counter");
-    const [body] = cellView.findBySelector("body");
-    if (counter == 0) {
-      background.setAttribute("width", 100);
-      background.setAttribute("fill", errorColor);
-      label.setAttribute("text-anchor", "start");
-      label.textContent = "Out of Stock";
-      // Override the stroke color of the cellView body using CSS.
-      body.style.stroke = errorColor;
-    } else {
-      background.setAttribute("width", 20);
-      background.setAttribute("fill", color);
-      label.setAttribute("text-anchor", "middle");
-      label.textContent = counter;
-      // Reset the stroke color of the cellView body.
-      // The color defined on the model will be used.
-      body.style.stroke = "";
-    }
-  }
-});
-
-const rect = new joint.shapes.standard.Rectangle({
-  size: { width: 100, height: 100 },
-  position: { x: 100, y: 100 },
-  counter: defaultCounterVal,
-  attrs: {
-    body: {
-      strokeWidth: 4
-    }
-  }
-});
-
+// Add elements to graph
 rect.addTo(graph);
+rect2.addTo(graph);
+link.addTo(graph);
+rect3.addTo(graph);
+rect4.addTo(graph);
+link2.addTo(graph);
 
-CounterHighlighter.add(rect.findView(paper), "root", "links");
+$('#minimap-container').height(config.paeprWidth * scale);
+$('#minimap-container').width(config.paperHeight * scale);
 
-})
+// Set minimap navigator width, height
+var containerWidthHeight = $('#container').width(); // height, width both are set to same in css
+$('#minimap-navigator').width(containerWidthHeight * scale);
+$('#minimap-navigator').height(containerWidthHeight * scale);
+
+// Bind container scrolling
+$('#container').scroll(function(e) {
+  $('#minimap-navigator').css(
+    'top',
+    minimapNavigatorPosition.minY + e.target.scrollTop * scale
+  );
+  $('#minimap-navigator').css(
+    'left',
+    minimapNavigatorPosition.minX + e.target.scrollLeft * scale
+  );
+});
+
+// Bind minimap navigator drag
+var dragFlag = false;
+var x = 0;
+var y = 0;
+var initialOffset = { x: 0, y: 0 };
+$('#minimap-navigator').mousedown(function(e) {
+  dragFlag = true;
+  x = e.clientX;
+  y = e.clientY;
+  initialOffset.x = e.target.offsetLeft;
+  initialOffset.y = e.target.offsetTop;
+});
+$('#minimap-navigator').mouseup(function() {
+  dragFlag = false;
+});
+$('#minimap-container').mouseleave(function() {
+  dragFlag = false;
+});
+$('#minimap-navigator').mousemove(function(e) {
+  if (dragFlag) {
+    var newX = initialOffset.x + e.clientX - x;
+    var newY = initialOffset.y + e.clientY - y;
+    if (minimapNavigatorPosition.minY > newY) {
+      newY = minimapNavigatorPosition.minY;
+    }
+    if (minimapNavigatorPosition.minX > newX) {
+      newX = minimapNavigatorPosition.minX;
+    }
+    if (minimapNavigatorPosition.maxY < newY) {
+      newY = minimapNavigatorPosition.maxY;
+    }
+    if (minimapNavigatorPosition.maxX < newX) {
+      newX = minimapNavigatorPosition.maxX;
+    }
+
+    $('#minimap-navigator').css('top', newY);
+    $('#minimap-navigator').css('left', newX);
+    $('#container').scrollLeft((newX - minimapNavigatorPosition.minX) / scale);
+    $('#container').scrollTop((newY - minimapNavigatorPosition.minY) / scale);
+  }
+});
