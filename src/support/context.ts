@@ -121,7 +121,20 @@ export class RVContext {
       
       commands.registerCommand("rv-simulator.simulate", () => {
         SimulatorPanel.simulatorPanel(this.extensionContext.extensionUri);
-        
+        const editor = window.activeTextEditor;
+        if (editor && RVDocument.isValid(editor.document)) {
+          // We have an editor with a valid RiscV document open
+          this._encoderDecorator = new EncoderDecorator();
+          this.buildCurrentDocument();
+          if (!this._currentDocument) {
+            throw new Error("There is no valid program to simulate");
+          }
+
+          this.simulateProgram(this._currentDocument);
+        } else {
+          // In case the command is invoked via the command palette
+          window.showErrorMessage("There is no a valid RiscV document open");
+        }
       })
     );
     //  Simulate-step
