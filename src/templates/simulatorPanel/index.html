@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JointJS Demo</title>
+    <!-- Polyfills para ES6 -->
+    <script src="https://cdn.jsdelivr.net/npm/core-js-bundle/minified.js"></script>
+    <!-- Cargar JointJS desde el CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jointjs/3.5.5/joint.min.js"></script>
+    <!-- Cargar tu script sin type="module" para usar el ámbito global -->
+    <script src="./assets/simulatorView.js"></script>
+    <link rel="stylesheet" href="./assets/simulatorView.css">
+  </head>
+  <body>
+    <div id="counter-control">
+      <span id="counter-value"></span>
+      <input id="counter-range" min="0" max="99" type="range">
+    </div>
+    <div id="paper-container"></div>
+    <a target="_blank" href="https://www.jointjs.com">
+      <img id="logo" src="https://assets.codepen.io/7589991/jointjs-logo.svg" width="200" height="50"></img>
+    </a>
+  </body>
+</html>
