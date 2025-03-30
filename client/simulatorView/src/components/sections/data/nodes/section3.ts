@@ -1,5 +1,5 @@
 /*
-* this file contains the nodes of the second section of the simulator
+* this file contains the nodes of the second third of the simulator
 */
 
 import {
@@ -24,10 +24,31 @@ export const section3: Node[] = [
     },
 
     {
+      id: 'title-IE',
+      type: 'title',
+      data: { label: 'Execute (IE)' },
+      position: { x: 0, y: 0 },
+      parentId: 'section-3',
+      extent: 'parent',
+      draggable: false,
+      style: {
+        width: 548,
+        height: 50,
+        backgroundColor: 'transparent',
+        border: 'none',
+        borderRadius: 0,
+        padding: 0,
+        boxShadow: 'none',
+      },
+    },
+
+ 
+
+    {
         id: 'muxA',
         type: 'muxA',
         data: { label: 'MUX A' },
-        position: { x: 120, y: 430 },
+        position: { x: 120, y: 465 },
         parentId: 'section-3',
         extent: 'parent',
         style: {
@@ -46,7 +67,7 @@ export const section3: Node[] = [
         id: 'aluASrc',
         type: 'aluASrc',
         data: { label: 'ALU A SRC' },
-        position: { x: 120, y: 325 },
+        position: { x: 120, y: 360 },
         parentId: 'section-3',
         extent: 'parent',
         style: {
@@ -64,7 +85,7 @@ export const section3: Node[] = [
         id: 'muxB',
         type: 'muxB',
         data: { label: 'MUX B' },
-        position: { x: 120, y: 625 },
+        position: { x: 120, y: 660 },
         parentId: 'section-3',
         extent: 'parent',
         style: {
@@ -82,7 +103,7 @@ export const section3: Node[] = [
         id: 'aluBSrc',
         type: 'aluBSrc',
         data: { label: 'ALU B SRC' },
-        position: { x: 120, y: 725 },
+        position: { x: 120, y: 760 },
         parentId: 'section-3',
         extent: 'parent',
         style: {
@@ -100,7 +121,7 @@ export const section3: Node[] = [
         id: 'alu',
         type: 'alu',
         data: { label: 'ALU' },
-        position: { x: 250, y: 430 },
+        position: { x: 250, y: 465 },
         parentId: 'section-3',
         extent: 'parent',
         style: {
@@ -118,7 +139,7 @@ export const section3: Node[] = [
         id: 'aluOp',
         type: 'aluOp',
         data: { label: 'ALU OPERATION' },
-        position: { x: 338, y: 726 },
+        position: { x: 338, y: 761 },
         parentId: 'section-3',
         extent: 'parent',
         style: {
@@ -136,7 +157,7 @@ export const section3: Node[] = [
         id: 'branchUnit',
         type: 'branchUnit',
         data: { label: 'Branch Unit' },
-        position: { x: 250, y: 200 },
+        position: { x: 250, y: 235 },
         parentId: 'section-3',
         extent: 'parent',
         style: {
@@ -157,7 +178,7 @@ export const section3: Node[] = [
       id: 'pivot2',
       type: 'pivot2',
       data: { label: '' },
-      position: { x: 60, y: 436 },
+      position: { x: 60, y: 471 },
       parentId: 'section-3',
       extent: 'parent',
       style: {

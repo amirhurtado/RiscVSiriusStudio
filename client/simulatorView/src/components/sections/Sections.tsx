@@ -14,6 +14,7 @@ import '@xyflow/react/dist/style.css';
 import { initialNodes } from './data/nodes/initialNodes'; // Nodes
 import { initialEdges } from './data/edges/initialEdges'; //Conecctions between npdes
 
+import TitleText from '../svgs/TittleText';
 
 //Section 1
 import PC from '../svgs/section1/PC';
@@ -51,6 +52,7 @@ import AnimatedSVGEdge from '../customs/AnimatedSVGEdge';
 
 const nodeTypes = {
 
+  title: TitleText,
   // Section 1
   pc: PC,
   adder4: Adder4,
@@ -106,7 +108,12 @@ export default function Sections() {
       style={{ backgroundColor: '#F7F9FB' }}
       fitView
     >
-      <Background color="#E6E6E6" />
+      <Background 
+         //color="#E6E6E6"
+         color="#FF0000"
+         variant='cross'
+         gap={20}
+         size={2} />
       <MiniMap />
       <Controls />
     </ReactFlow>
