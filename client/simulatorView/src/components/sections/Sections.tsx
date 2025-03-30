@@ -19,7 +19,7 @@ import { initialEdges } from './data/edges/initialEdges'; //Conecctions between 
 import PC from '../svgs/section1/PC';
 import Adder4 from '../svgs/section1/Adder4';
 import Four from '../svgs/section1/Four';
-import InstructionMemory from '../svgs/section1/InstructionMemory'; 
+import {InstructionMemory, IMAddress} from '../svgs/section1/InstructionMemory'; 
 
 
 // Section 2
@@ -34,13 +34,13 @@ import ALUBSrc from '../svgs/section3/ALUBSrc';
 import ALU from '../svgs/section3/ALU';
 import ALUOp from '../svgs/section3/ALUOp';
 
-//pivots
 import Pivot1 from '../svgs/pivots/Pivot1';
 import Pivot2 from '../svgs/pivots/Pivot2';
 import Pivot3 from '../svgs/pivots/Pivot3';
 
+import TitleText from '../svgs/TitleText';
 import ImmGenerator from '../svgs/section2/ImmGenerator';
-import ImmSrc from '../svgs/section2/ImmSrc';
+import ImmSrc from '../svgs/section2/ImmSRC';
 
 //jumps
 import PivotJump1 from '../svgs/pivots/jump/PivotJump1';
@@ -50,11 +50,13 @@ import AnimatedSVGEdge from '../customs/AnimatedSVGEdge';
 
 const nodeTypes = {
 
+  titleText: TitleText,
   // Section 1
   pc: PC,
   adder4: Adder4,
   instructionMemory: InstructionMemory, 
   four: Four,
+  imAddressInput: IMAddress,
 
   //Section 2
   registerUnit: RegistersUnit,
@@ -104,7 +106,12 @@ export default function Sections() {
       style={{ backgroundColor: '#F7F9FB' }}
       fitView
     >
-      <Background color="#E6E6E6" />
+      <Background 
+        //color="#E6E6E6"
+        color="#FF0000"
+        variant='cross'
+        gap={20}
+        size={2} />
       <MiniMap />
       <Controls />
     </ReactFlow>
