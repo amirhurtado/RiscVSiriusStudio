@@ -1,8 +1,8 @@
-// this file contains the edges for the IG_MUX2_1B component
+// this file contains the edges for the IMMGENERATOR_MUX2_1B component
 
 import { Edge, MarkerType  } from '@xyflow/react';
 
-export const IG_MUX2_1B: Edge[] = [
+export const IG_MUXB: Edge[] = [
 
     { id: 'immSrc->immGenerator',  source: 'immSrc', target: 'immGenerator', targetHandle: 'immSrc', type: 'smoothstep', animated: true,  markerEnd:
         {
@@ -14,9 +14,9 @@ export const IG_MUX2_1B: Edge[] = [
     },
 
     {
-        id: 'immGenerator->mux2_1B',  
+        id: 'immGenerator->mux2B',  
         source: 'immGenerator', 
-        target: 'mux2_1B', 
+        target: 'mux2B', 
         targetHandle: 'immGenerator', 
         type: 'smoothstep', 
         animated: true,  
