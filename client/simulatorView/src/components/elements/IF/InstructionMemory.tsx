@@ -23,7 +23,7 @@ export default function InstructionMemory() {
       <Handle  type="source"
         position={Position.Right}
         className='output'
-        style={{ top: '10rem'}} />
+        style={{ top: '10.1rem'}} />
       </div>
   );
 }
