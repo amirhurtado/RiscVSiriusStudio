@@ -28,7 +28,7 @@ import { chunk } from "lodash-es";
 import { ALU32 } from "./alu32";
 import { binaryToInt, intToBinary } from "../utilities/conversions";
 
-import { logger } from "../utilities/logger";
+// import { logger } from "../utilities/logger";
 
 class RegistersFile {
   private registers: Array<string>;
@@ -38,7 +38,7 @@ class RegistersFile {
 
   public printRegisters() {
     this.registers.forEach((val, idx) => {
-      logger().info({ msg: "PrintRegister", idx: "x" + idx, val: val });
+      // logger().info({ msg: "PrintRegister", idx: "x" + idx, val: val });
     });
   }
 
@@ -645,7 +645,7 @@ export class SCCPU {
       writeSignal: "1",
     };
     result.imm = { signal: "001", output: offset32Val };
-    console.log("Result of S instruction: ", result);
+    // console.log("Result of S instruction: ", result);
     return result;
   }
 
@@ -800,8 +800,8 @@ export class SCCPU {
   }
 
   public printInfo() {
-    logger().info("CPU state");
-    logger().info("Registers");
+    // logger().info("CPU state");
+    // logger().info("Registers");
     this.registers.printRegisters();
   }
 }
