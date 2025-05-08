@@ -9,17 +9,11 @@ import {
   usesRegister,
   writesDM,
   writesRU,
-} from "./instructions";
+} from "../utilities/instructions";
 
-// Sample program with a few RISC-V instructions
-const sampleProgram = [
-   "addi x2, x0, 5    # x2 = 5"
-//   0x00C00193,  // addi x3, x0, 12   # x3 = 12
-//   0x003100B3,  // add x1, x2, x3    # x1 = x2 + x3 = 17
-//   0x40310133,  // sub x2, x2, x3    # x2 = x2 - x3 = -7
-//   0x0021A023,  // sw x2, 0(x3)      # Store x2 at address x3 (12)
-//   0x00C12083,  // lw x1, 12(x2)     # Load from address x2+12 into x1
-];
+import { error, info, warn, showBanner } from './printer';
+import chalk from 'chalk';
+import Table from 'cli-table3';
 
 export class CPUTester {
   private cpu: SCCPU;
@@ -27,14 +21,14 @@ export class CPUTester {
   private programSize: number;
   private radix: number = 16;
   private soportedRadix = [2, 10, 16];
+  private debug: boolean;
+  private program: any[];
   
-  constructor(program: any[]) {
+  constructor(program: any[], debug: boolean = false) {
+    this.debug = debug;
+    this.program = program;
     this.programSize = program.length;
-    // Initialize CPU with sample program and 1024 bytes of memory
-    console.log(program);
-    this.cpu = new SCCPU(program, this.programSize);
-    
-    // Create readline interface
+    this.cpu = new SCCPU(program, this.programSize);    
     this.rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout
@@ -45,6 +39,7 @@ export class CPUTester {
   }
   
   private showHelp(): void {
+    showBanner();
     console.log('\n--- RISC-V CPU Tester CLI ---');
     console.log('Available commands:');
     console.log('  step       - Execute one instruction');
@@ -56,6 +51,9 @@ export class CPUTester {
     console.log('  help       - Show this help message');
     console.log('  size       - Show size of program');
     console.log('  radix [n]  - Change radix of values');
+    console.log('  watch [ms] - Run step-by-step with a delay in ms (default 1000)');
+    console.log('  unwatch    - Stop watching');
+    console.log('  debug      - Enable or disable debug output during execution');
     console.log('  exit       - Exit the program');
   }
   
@@ -78,13 +76,13 @@ export class CPUTester {
           this.runCPU(parts[1] ? parseInt(parts[1]) : 10); // Default to 10 instructions
           break;
         case 'reg':
-          this.showRegisters(parseInt(parts[1]));
+          this.showRegisters(parseInt(parts[1]!));
           break;
         case 'mem':
-          this.showMemory(parseInt(parts[1]));
+          this.showMemory(parseInt(parts[1]!));
           break;
         case 'pc':
-          console.log(`Program Counter: ${this.cpu.getPC()}`);
+          info(`Program Counter: ${this.cpu.getPC()}`);
           this.checkProgramBounds();
           break;
         case 'reset':
@@ -94,7 +92,13 @@ export class CPUTester {
           this.getSize();
           break;
         case 'radix':
-          this.changeRadix(parseInt(parts[1]));
+          this.changeRadix(parseInt(parts[1]!));
+          break;
+        case 'watch':
+          this.watchCPU(parts[1] ? parseInt(parts[1]) : 1000); // delay en ms
+          break;
+        case 'unwatch':
+          this.unwatchCPU();
           break;
         case 'help':
           this.showHelp();
@@ -103,11 +107,11 @@ export class CPUTester {
           this.rl.close();
           return;
         default:
-          console.log(`Unknown command: ${command}`);
+          warn(`Unknown command: ${command}`);
           break;
       }
     } catch (error: any) {
-      console.error(`Error: ${error.message}`);
+      error(`Error: ${error.message}`);
     }
     
     this.promptUser();
@@ -118,54 +122,52 @@ export class CPUTester {
     const programEndAddress = this.programSize * 4;
     
     if (pc >= programEndAddress) {
-      console.log('Note: Program counter is beyond the end of the program.');
+      warn('Note: Program counter is beyond the end of the program.');
       return false;
     }
     return true;
   }
 
   private getSize(): void {
-    console.log(`Program size: ${this.programSize}`);
+    info(`Program size: ${this.programSize}`);
   }
 
   private changeRadix(radix: number): void{
     if (isNaN(radix)){
-      console.log("Enter a valid value for radix");
+      warn("Enter a valid value for radix");
     }
     else if (this.soportedRadix.find(element => element === radix)){
       this.radix = radix;
+      info("Number radix changed successfully");
     }
     else{
-      console.log("Invalid radix, soported radix", this.soportedRadix);
+      error("Invalid radix, soported radix " + this.soportedRadix);
     }
   }
   
   private stepCPU(): void {
     const pc = this.cpu.getPC();
-    
+
     if (!this.checkProgramBounds()) {
-      console.log('Warning: Program counter is beyond the end of the program.');
-      console.log('Executing instruction may lead to undefined behavior.');
+      warn('⚠ Warning: PC is beyond the end of the program.');
     }
-    
-    console.log(`Executing instruction at PC=${pc}`);
     
     const instruction = this.cpu.currentInstruction();
-    console.log(`Instruction executed: ${instruction.asm}`);
+  
+    console.log(chalk.cyanBright(`\n🔧 Ejecutando @ PC=${pc}: ${instruction.asm}`));
+  
     const result = this.cpu.executeInstruction();
-
-    // Send messages to update the registers view.
+  
     if (writesRU(instruction.type, instruction.opcode)) {
       this.cpu.getRegisterFile().writeRegister(instruction.rd.regeq, result.wb.result);
-
     }
-
+  
     if (branchesOrJumps(instruction.type, instruction.opcode)) {
       this.cpu.jumpToInstruction(result.buMux.result);
     } else {
       this.cpu.nextInstruction();
     }
-
+  
     this.checkProgramBounds();
   }
   
@@ -175,21 +177,70 @@ export class CPUTester {
     }
   }
 
-  private showRegister(regNum: number): void {
-    const registers = this.cpu.getRegisterFile();
-    const value = registers.readRegister(regNum);
-    console.log(`x[${regNum.toString().padStart(2, '0')}] = 0${this.selectPrefix()}${BigInt(`0b${value}`).toString(this.radix)}`);
+  private watchInterval: NodeJS.Timeout | null = null;
+
+  private watchCPU(delay: number = 1000): void {
+    
+    if (this.watchInterval) {
+      info("Already watching. Use 'unwatch' to stop.");
+      return;
+    }
+
+    this.watchInterval = setInterval(() => {
+      const pc = this.cpu.getPC();
+      if (pc >= this.programSize * 4) {
+        info("Program finished. Stopping watch.");
+        this.unwatchCPU();
+        return;
+      }
+      this.stepCPU();
+    }, delay);
+
+    info(`Watching program execution every ${delay} ms...`);
+  }
+
+  private unwatchCPU(): void {
+    if (this.watchInterval) {
+      clearInterval(this.watchInterval);
+      this.watchInterval = null;
+      info("Stopped watching.");
+    } else {
+      info("Not currently watching.");
+    }
   }
   
   private showRegisters(regNum: number): void {
+    const registers = this.cpu.getRegisterFile();
+    const table = new Table({
+      head: ['Reg', 'Valor'],
+      colWidths: [10, 30],
+      style: { head: ['cyan'] }
+    });
+  
     if (isNaN(regNum)){
       for (let i = 0; i < 32; i++){
-        this.showRegister(i);
+        const value = registers.readRegister(i);
+        table.push([chalk.yellow(`x${i}`), this.formatValue(value)]);
       }
+    } else {
+      const value = registers.readRegister(regNum);
+      table.push([chalk.yellow(`x${regNum}`), this.formatValue(value)]);
     }
-    else {
-      this.showRegister(regNum);
+  
+    console.log(table.toString());
+  }
+  
+  private formatValue(binary: string): string {
+    return chalk.green(`0${this.selectPrefix()}${BigInt("0b" + binary).toString(this.radix)}`);
+  }
+  
+  private debugInfo(): void {
+    if (!this.debug){
+      return;
     }
+
+    // TODO: implementar la opcion de debug en una ejecucion. Tambien las opciones de ver especificamente un valor de entrada o salida de un
+    // componente del procesador --> ver libreria inquirer
   }
   
   private showMemory(address: number): void {
@@ -201,6 +252,7 @@ export class CPUTester {
     const value = memory.read(address, 4);
     const binString = value.join("");
     console.log(`[0x${address.toString(16).padStart(8, '0')}] = 0x${BigInt(`0b${binString}`).toString(this.radix)}`);
+    // TODO: imprimir toda la memoria
   }
 
   private selectPrefix(): string {
@@ -217,8 +269,8 @@ export class CPUTester {
   }
   
   private resetCPU(): void {
-    this.cpu = new SCCPU(sampleProgram, this.programSize);
-    console.log('CPU reset.');
+    this.cpu = new SCCPU(this.program, this.programSize);
+    info('CPU reset.');
   }
 }
 
