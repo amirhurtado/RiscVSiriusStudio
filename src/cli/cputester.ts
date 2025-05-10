@@ -4,16 +4,14 @@ import * as readline from 'readline';
 import { SCCPU } from '../vcpu/singlecycle';
 import {
   branchesOrJumps,
-  getFunct3,
-  readsDM,
-  usesRegister,
-  writesDM,
   writesRU,
 } from "../utilities/instructions";
-
+import { ParserResult, InternalRepresentation } from '../utilities/riscvc';
 import { error, info, warn, showBanner } from './printer';
+import { intToHex } from '../utilities/conversions';
 import chalk from 'chalk';
 import Table from 'cli-table3';
+import highlight from 'cli-highlight';
 
 export class CPUTester {
   private cpu: SCCPU;
@@ -22,13 +20,18 @@ export class CPUTester {
   private radix: number = 16;
   private soportedRadix = [2, 10, 16];
   private debug: boolean;
+  private compiledResult: ParserResult;
+  private lastResult: any;
+  private ir: InternalRepresentation | undefined;
   private program: any[];
   
-  constructor(program: any[], debug: boolean = false) {
+  constructor(result: ParserResult, debug: boolean = false) {
     this.debug = debug;
-    this.program = program;
-    this.programSize = program.length;
-    this.cpu = new SCCPU(program, this.programSize);    
+    this.compiledResult = result;
+    this.ir = this.compiledResult.ir;
+    this.program = this.ir!.instructions;
+    this.programSize = this.program.length;
+    this.cpu = new SCCPU(this.program, this.programSize);    
     this.rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout
@@ -42,19 +45,24 @@ export class CPUTester {
     showBanner();
     console.log('\n--- RISC-V CPU Tester CLI ---');
     console.log('Available commands:');
-    console.log('  step       - Execute one instruction');
-    console.log('  run [n]    - Execute n instructions');
-    console.log('  reg [n]    - Show register value (or all registers if n not specified)');
-    console.log('  mem [addr] - Show memory at address');
-    console.log('  pc         - Show current program counter');
-    console.log('  reset      - Reset the CPU');
-    console.log('  help       - Show this help message');
-    console.log('  size       - Show size of program');
-    console.log('  radix [n]  - Change radix of values');
-    console.log('  watch [ms] - Run step-by-step with a delay in ms (default 1000)');
-    console.log('  unwatch    - Stop watching');
-    console.log('  debug      - Enable or disable debug output during execution');
-    console.log('  exit       - Exit the program');
+    console.log('  step                  - Execute one instruction');
+    console.log('  run [n]               - Execute n instructions');
+    console.log('  reg [n]               - Show register value (or all registers if n not specified)');
+    console.log('  mem [addr]            - Show memory at address');
+    console.log('  pc                    - Show current program counter');
+    console.log('  reset                 - Reset the CPU');
+    console.log('  help                  - Show this help message');
+    console.log('  size                  - Show size of program');
+    console.log('  radix [n]             - Change radix of values');
+    console.log('  watch [ms]            - Run step-by-step with a delay in ms (default 1000)');
+    console.log('  unwatch               - Stop watching');
+    console.log('  result [...params]    - Show last result of the simulation');
+    console.log('  inst [n]              - Show number n compiled instructions (or all instructions if n not specified)');
+    console.log('  debug                 - Enable or disable debug output during execution');
+    console.log('  data [...params]      - Show data uploaded for any directive');
+    console.log('  directive [...params] - Show directives');
+    console.log('  clear                 - Clear the console');
+    console.log('  exit                  - Exit the program');
   }
   
   private promptUser(): void {
@@ -66,6 +74,7 @@ export class CPUTester {
   private processCommand(input: string): void {
     const parts = input.split(' ');
     const command = parts[0]!.toLowerCase();
+    const n = parts[1] ? parseInt(parts[1]) : NaN;
     
     try {
       switch (command) {
@@ -73,13 +82,13 @@ export class CPUTester {
           this.stepCPU();
           break;
         case 'run':
-          this.runCPU(parts[1] ? parseInt(parts[1]) : 10); // Default to 10 instructions
+          this.runCPU(!isNaN(n) ? n : 10); // Default to 10 instructions
           break;
         case 'reg':
-          this.showRegisters(parseInt(parts[1]!));
+          this.showRegisters(n);
           break;
         case 'mem':
-          this.showMemory(parseInt(parts[1]!));
+          this.showMemory(n);
           break;
         case 'pc':
           info(`Program Counter: ${this.cpu.getPC()}`);
@@ -92,16 +101,36 @@ export class CPUTester {
           this.getSize();
           break;
         case 'radix':
-          this.changeRadix(parseInt(parts[1]!));
+          this.changeRadix(n);
           break;
         case 'watch':
-          this.watchCPU(parts[1] ? parseInt(parts[1]) : 1000); // delay en ms
+          this.watchCPU(!isNaN(n) ? n : 1000); // delay en ms
           break;
         case 'unwatch':
           this.unwatchCPU();
           break;
+        case 'result':
+          this.showResult(parts.slice(1).flatMap(p => p.split('.')));
+          break;
         case 'help':
           this.showHelp();
+          break;
+        case 'clear':
+          this.clearConsole();
+          this.showHelp();
+          break;
+        case "inst":
+          const txt = isNaN(n) ? "Instructions" :`Instruction ${n}`;
+          this.printFormattedResult(!isNaN(n) ? this.program[n] : this.program, txt);
+          break;
+        case "debug":
+          this.debugInfo();
+          break;
+        case "data":
+          this.showDataDirective(parts.slice(1).flatMap(p => p.split('.')));
+          break;
+        case "directive":
+          this.showDirectives(parts.slice(1));
           break;
         case 'exit':
           this.rl.close();
@@ -154,16 +183,16 @@ export class CPUTester {
     
     const instruction = this.cpu.currentInstruction();
   
-    console.log(chalk.cyanBright(`\n🔧 Ejecutando @ PC=${pc}: ${instruction.asm}`));
+    console.log(chalk.cyanBright(`\n🔧 Executing @ PC=${pc}: ${instruction.asm}`));
   
-    const result = this.cpu.executeInstruction();
+    this.lastResult = this.cpu.executeInstruction();
   
     if (writesRU(instruction.type, instruction.opcode)) {
-      this.cpu.getRegisterFile().writeRegister(instruction.rd.regeq, result.wb.result);
+      this.cpu.getRegisterFile().writeRegister(instruction.rd.regeq, this.lastResult.wb.result);
     }
   
     if (branchesOrJumps(instruction.type, instruction.opcode)) {
-      this.cpu.jumpToInstruction(result.buMux.result);
+      this.cpu.jumpToInstruction(this.lastResult.buMux.result);
     } else {
       this.cpu.nextInstruction();
     }
@@ -175,6 +204,82 @@ export class CPUTester {
     for (let i = 0; i < count; i++){
       this.stepCPU();
     }
+  }
+
+private showResult(keys: string[]): void {
+  if (!this.lastResult) {
+    warn("No result available. Execute at least one instruction before showing results.");
+    return;
+  }
+
+  if (!keys || keys.length === 0) {
+    this.printFormattedResult(this.lastResult, "result");
+    return;
+  }
+
+  try {
+    const result = this.traverseObject(this.lastResult, keys);
+    this.printFormattedResult(result,  keys.join('.'));
+  } catch (err) {
+    if (err instanceof Error) {
+      error(`${err.message}`);
+    } else {
+      error("An unknown error occurred while processing the result.");
+    }
+  }
+}
+
+private traverseObject(obj: Record<string, any>, keys: string[]): any {
+  return keys.reduce((current, key) => {
+    if (current && key in current) {
+      return current[key];
+    }
+    throw new Error(`Key "${chalk.yellow(key)}" not found in result object.`);
+  }, obj);
+}
+
+private printFormattedResult(result: any, path: string): void {
+  console.log(chalk.gray(`┌─── Result path: ${chalk.italic(path)} ───`));
+    
+    if (result === null) {
+      console.log(chalk.magenta("null"));
+    } else if (result === undefined) {
+      console.log(chalk.gray("undefined"));
+    } else if (typeof result === 'object') {
+      const jsonString = JSON.stringify(result, null, 2);
+      console.log(highlight(jsonString, {
+        language: 'json',
+        theme: {
+          string: chalk.yellow,
+          number: chalk.blue,
+        }
+      }));
+    } else {
+      console.log(this.getValueWithType(result));
+    }
+    
+    console.log(chalk.gray("└─────────────────────────────"));
+  }
+
+  private getValueWithType(value: any): string {
+    const type = typeof value;
+    let coloredValue;
+    
+    switch (type) {
+      case 'string':
+        coloredValue = chalk.yellow(`"${value}"`);
+        break;
+      case 'number':
+        coloredValue = chalk.blue(value);
+        break;
+      case 'boolean':
+        coloredValue = chalk.green(value);
+        break;
+      default:
+        coloredValue = chalk.gray(value);
+    }
+    
+    return `${coloredValue} ${chalk.gray(`(${type})`)}`;
   }
 
   private watchInterval: NodeJS.Timeout | null = null;
@@ -238,21 +343,46 @@ export class CPUTester {
     if (!this.debug){
       return;
     }
-
-    // TODO: implementar la opcion de debug en una ejecucion. Tambien las opciones de ver especificamente un valor de entrada o salida de un
-    // componente del procesador --> ver libreria inquirer
+    warn("Not implemented yet");
   }
   
   private showMemory(address: number): void {
     if (isNaN(address)){
-      console.log("Enter a valid memory address");
+      this.showDataTable(this.cpu.getDataMemory().getMemory());
       return;
     }
     const memory = this.cpu.getDataMemory();
-    const value = memory.read(address, 4);
+    const value = memory.read(address, 1);
     const binString = value.join("");
-    console.log(`[0x${address.toString(16).padStart(8, '0')}] = 0x${BigInt(`0b${binString}`).toString(this.radix)}`);
-    // TODO: imprimir toda la memoria
+    this.showDataTable([binString]);
+  }
+
+  private showDataTable(array: any[]): void{
+    const table = new Table({
+      head: ["Address", "Value"],
+      colWidths: [10, 30],
+      style: { head: ['cyan'] }
+    });
+    for (let i = 0; i < array.length; i++){
+      const value = array[i];
+      table.push([chalk.yellow(`0x${intToHex(i)}`), this.formatValue(value)]);
+    }
+    console.log(table.toString());
+  }
+
+  private showDataDirective(keys: string[]): void{
+    const result = this.traverseObject(this.ir.dataTable, keys);
+    this.printFormattedResult(result, `Data Table ${keys.join('.')}`);
+  }
+
+  private showDirectives(keys: string[]): void {
+    if (keys.length > 1){
+      error("There can only be one directive");
+      return;
+    }
+    keys = keys.map((key) => key.startsWith(".")? key : "." + key);
+    const result = this.traverseObject(this.ir.directives, keys);
+    this.printFormattedResult(result, `Data Table ${keys.join('.')}`);
   }
 
   private selectPrefix(): string {
@@ -272,5 +402,16 @@ export class CPUTester {
     this.cpu = new SCCPU(this.program, this.programSize);
     info('CPU reset.');
   }
-}
 
+  private clearConsole(): void {
+    try {
+      const blank = '\n'.repeat(process.stdout.rows || 50);
+      console.log(blank);
+      readline.cursorTo(process.stdout, 0, 0);
+      readline.clearScreenDown(process.stdout);
+    } catch (error) {
+      console.clear();
+    }
+  }
+
+}

@@ -18,14 +18,16 @@ export function runCLI(options: any): void {
 
   try {
     const result = compile(code, options.input);
-    const instructions = result?.ir.instructions;
+    // const instructions = result?.ir?.instructions;
 
     if (options.dump) {
       info('Compiled instructions:');
     }
 
     if (options.run) {
-      new CPUTester(instructions, options.debug);
+      if (result){
+        new CPUTester(result, options.debug);
+      }
     }
 
   } catch (err: any) {

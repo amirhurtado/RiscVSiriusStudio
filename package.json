@@ -283,6 +283,7 @@
     "@vscode/vsce": "^3.3.0",
     "@vscode/webview-ui-toolkit": "^1.2.2",
     "chalk": "^5.4.1",
+    "cli-highlight": "^2.1.11",
     "cli-table3": "^0.6.5",
     "jspdf": "^2.5.1",
     "lodash-es": "^4.17.21",
