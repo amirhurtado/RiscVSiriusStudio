@@ -11,7 +11,7 @@ import { useSimulator } from "@/context/shared/SimulatorContext";
 import { useTheme } from "@/components/ui/theme/theme-provider";
 
 export default function ImmGenerator() {
-  const { operation, isEbreak, modeSimulator } = useSimulator();
+  const { operation, isEbreak, typeSimulator } = useSimulator();
   const { currentType, pipelineValuesStages } = useCurrentInst();
   const { theme } = useTheme();
 
@@ -26,7 +26,7 @@ export default function ImmGenerator() {
   };
 
   const isNop =
-    modeSimulator === "pipeline" ? pipelineValuesStages?.ID?.instruction?.pc === -1 : false;
+    typeSimulator === "pipeline" ? pipelineValuesStages?.ID?.instruction?.pc === -1 : false;
 
   const isTypeR = currentType === "R" || pipelineValuesStages?.ID?.instruction?.type === "R";
 
