@@ -43,7 +43,7 @@ export default function ImmGenerator() {
               }`}>
               Imm Generator
             </h2>
-            <ContainerSVG height={9.6} active={isFeatureEnabled } />
+            <ContainerSVG height={9.6} active={isFeatureEnabled || operation === "uploadMemory" } />
             {isFeatureEnabled && <LabelValueContainer />}
           </div>
           <Handle

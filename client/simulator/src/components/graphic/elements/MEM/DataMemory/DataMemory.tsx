@@ -39,7 +39,7 @@ export default function DataMemory() {
           }`}>
           Data Memory
         </h2>
-        <ContainerSVG height={19.9} active={isActive} />
+        <ContainerSVG height={19.9} active={isActive || operation === "uploadMemory"} />
         {operation !== "uploadMemory" && !isEbreak &&isActive && <LabelValueContainer />}
       </div>
 
