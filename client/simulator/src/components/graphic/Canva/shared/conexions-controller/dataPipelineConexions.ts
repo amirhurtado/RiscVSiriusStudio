@@ -10,6 +10,16 @@ export const four_adder4 = ["four->adder4"];
 export const pc_im = ["pc->pivot25", "pivot25->instMemory"];
 
 
+export const adder4_muxC = [
+  "adder4->pivot18",
+  "pivot18->pivotJump8",
+  "pivotJump8->pivotJump9",
+  "pivotJump9->pivot13",
+  "pivot13->muxC",
+];
+
+
+
 //IF-ID
 export const im_instID = ["instructionMemory->inst_id"]
 export const adder4_pcIncID = ["adder4->pivot18", "pivot18->pcinc_de"]
@@ -208,14 +218,6 @@ export const dmWr_dm = ["dmWr->dataMemory"];
 
 export const dmCtrl_dm = ["dmCtrl->dataMemory"];
 
-//MUX C
-export const adder4_muxC = [
-  "adder4->pivot18",
-  "pivot18->pivotJump8",
-  "pivotJump8->pivotJump9",
-  "pivotJump9->pivot13",
-  "pivot13->muxC",
-];
 
 export const dm_muxC = [
     "dataMemory->muxC"

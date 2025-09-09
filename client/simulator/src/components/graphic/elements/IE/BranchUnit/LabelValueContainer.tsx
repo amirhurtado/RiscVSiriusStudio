@@ -40,57 +40,52 @@ const LabelValueContainer = () => {
   useEffect(() => {
     if (typeSimulator === "pipeline") {
       const exStage = pipelineValuesStages?.EX;
-      if (exStage?.instruction) {
-        if (exStage.instruction.pc === -1) {
-          setShowInputs(true);
-          setShowResult(true);
-          setShowOp(true);
-          setBinA("--");
-          setBinB("--");
-          setResBin("-");
-          setHexA("--");
-          setHexB("--");
-          setResHex("-");
-          setDecA("--");
-          setDecB("--");
-          setResDec("-");
-          setOpBin("-----");
-          setOpHex("-----");
-          setOpDec("-----");
-          setOperationDesc(undefined);
-        } else {
-          const isBranch = exStage.instruction.type === "B" || exStage.instruction.type === "J";
+      
+      if (!exStage?.instruction) return;
 
-          setShowOp(true);
-          setShowResult(true);
-          setShowInputs(isBranch);
+      const isBubble = exStage.instruction.pc === -1;
+      const isBranch = exStage.instruction.type === "B" || exStage.instruction.type === "J";
+      
+      const rawResult = exStage.BranchResult;
+      const result = isBubble || rawResult === "X" ? "0" : rawResult;
+      
+      setResBin(result);
+      setResHex(parseInt(result, 2).toString(16).toUpperCase());
+      setResDec(result);
+      
+      setShowInputs(isBranch || isBubble);
+      setShowResult(true);
+      setShowOp(true);
 
-          const { BrOp: op } = exStage;
+      if (isBubble) {
+        setBinA("--");
+        setBinB("--");
+        setHexA("--");
+        setHexB("--");
+        setDecA("--");
+        setDecB("--");
+        setOpBin("-----");
+        setOpHex("-----");
+        setOpDec("-----");
+        setOperationDesc(undefined);
+      } else {
+        const { BrOp: op } = exStage;
+        setOpBin(op);
+        setOpHex(op.includes("X") ? op : binaryToHex(op).toUpperCase());
+        setOpDec(op.includes("X") ? op : binaryToInt(op));
+        setOperationDesc(branchOperations[op] || branchOperations[op.substring(0, 2) + "XXX"]);
 
-          setOpBin(op);
-          setOpHex(op.includes("X") ? op : binaryToHex(op).toUpperCase());
-          setOpDec(op.includes("X") ? op : binaryToInt(op));
-          setOperationDesc(branchOperations[op] || branchOperations[op.substring(0, 2) + "XXX"]);
-
-          const rawResult = exStage.BranchResult;
-          const displayResult = rawResult === "X" ? "0" : rawResult;
-
-          setResBin(displayResult);
-          setResHex(parseInt(displayResult, 2).toString(16).toUpperCase());
-          setResDec(displayResult);
-
-          if (isBranch) {
-            const { BranchInputRS1: a, BranchInputRS2: b } = exStage;
-            setBinA(a);
-            setHexA(binaryToHex(a).toUpperCase());
-            setDecA(binaryToInt(a));
-            setBinB(b);
-            setHexB(binaryToHex(b).toUpperCase());
-            setDecB(binaryToInt(b));
-          }
+        if (isBranch) {
+          const { BranchInputRS1: a, BranchInputRS2: b } = exStage;
+          setBinA(a);
+          setHexA(binaryToHex(a).toUpperCase());
+          setDecA(binaryToInt(a));
+          setBinB(b);
+          setHexB(binaryToHex(b).toUpperCase());
+          setDecB(binaryToInt(b));
         }
       }
-    } else {
+    } else { 
       setShowOp(true);
       setShowInputs(currentType === "B");
       setShowResult(true);

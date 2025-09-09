@@ -15,6 +15,17 @@ export const useDataPipelineConexions = () => {
   const disabledEdges = useMemo(() => {
     const enabledEdges: string[] = [];
 
+
+    if(!IFType && !IDType && !IEType) return []
+
+     enabledEdges.push(...conexion.bu_muxD);
+
+     if(pipelineValuesStages.EX.BranchResult === "1"){
+        enabledEdges.push(...conexion.alu_muxD)
+      }else{
+        enabledEdges.push(...conexion.adder4_muxD)
+      }
+
     if (IFType) {
       enabledEdges.push(
         ...conexion.muxD_pc,
@@ -123,11 +134,8 @@ export const useDataPipelineConexions = () => {
     }
 
     if (IEType) {
-      enabledEdges.push(...conexion.bu_muxD);
-
-      if(pipelineValuesStages.EX.BranchResult === "1"){
-        enabledEdges.push(...conexion.alu_muxD)
-      }
+     
+      
 
       console.log()
       switch (IEType) {
