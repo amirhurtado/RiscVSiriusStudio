@@ -5,7 +5,7 @@ import LabelValueContainer from "./LabelValueContainer";
 import { useSimulator } from "@/context/shared/SimulatorContext";
 
 export default function InstructionMemory() {
-    const { operation } = useSimulator();
+    const { operation, typeSimulator } = useSimulator();
   
   return (
     <div className="w-full h-full">
@@ -19,8 +19,8 @@ export default function InstructionMemory() {
 
           {operation !== "uploadMemory"  && (
             <>
-              <div className="absolute bottom-[7.4rem] right-[-2.5rem]">
-                <LabelSlash number={32} />
+              <div className={`absolute bottom-[7.4rem] ${typeSimulator === "pipeline" ? "right-[-1.1rem]" : "right-[-2.5rem]"} `}>
+                <LabelSlash number={32} /> 
               </div>
               <LabelValueContainer />
             </>
