@@ -12,6 +12,7 @@ export const useDataPipelineConexions = () => {
   const IDType = pipelineValuesStages.ID.instruction?.type;
   const IEType = pipelineValuesStages.EX.instruction?.type;
   const MEMtype = pipelineValuesStages.MEM.instruction?.type;
+  const WBtype = pipelineValuesStages.WB.instruction?.type;
 
   const disabledEdges = useMemo(() => {
     const enabledEdges: string[] = [];
@@ -144,7 +145,7 @@ export const useDataPipelineConexions = () => {
             ...conexion.aluBSrc_muxB,
             ...conexion.rs2_muxB,
             ...conexion.rdIE_rdMEM,
-            ...conexion.alu_aluresMEM
+            ...conexion.alu_aluResMEM
           );
 
           break;
@@ -157,7 +158,7 @@ export const useDataPipelineConexions = () => {
             ...conexion.aluBSrc_muxB,
             ...conexion.immGen_muxB,
             ...conexion.rdIE_rdMEM,
-            ...conexion.alu_aluresMEM
+            ...conexion.alu_aluResMEM
           );
 
           break;
@@ -171,7 +172,7 @@ export const useDataPipelineConexions = () => {
             ...conexion.aluBSrc_muxB,
             ...conexion.immGen_muxB,
             ...conexion.rs2_ruRs2Mem,
-            ...conexion.alu_aluresMEM
+            ...conexion.alu_aluResMEM
           );
           break;
 
@@ -198,7 +199,7 @@ export const useDataPipelineConexions = () => {
             ...conexion.immGen_muxB,
             ...conexion.pcIncIE_pcIncMEM,
             ...conexion.rdIE_rdMEM,
-            ...conexion.alu_aluresMEM
+            ...conexion.alu_aluResMEM
           );
           break;
 
@@ -208,7 +209,7 @@ export const useDataPipelineConexions = () => {
             ...conexion.muxB_aluB,
             ...conexion.immGen_muxB,
             ...conexion.rdIE_rdMEM,
-            ...conexion.alu_aluresMEM
+            ...conexion.alu_aluResMEM
           );
 
           if (pipelineValuesStages.EX.instruction.opcode === "0110111") {
@@ -231,7 +232,11 @@ export const useDataPipelineConexions = () => {
           enabledEdges.push(...conexion.rdMEM_rdWB);
 
           if (pipelineValuesStages.MEM.instruction.opcode === "0000011") {
-            enabledEdges.push(...conexion.dmCtrl_dm, ...conexion.AluResMEM_dm, ...conexion.dm_DMdatard_WB);
+            enabledEdges.push(
+              ...conexion.dmCtrl_dm,
+              ...conexion.aluResMEM_dm,
+              ...conexion.dm_dmDatardWB
+            );
           } else {
             enabledEdges.push(...conexion.AluResMEM_AluResWB);
           }
@@ -242,13 +247,9 @@ export const useDataPipelineConexions = () => {
           enabledEdges.push(
             ...conexion.dmWr_dm,
             ...conexion.dmCtrl_dm,
-            ...conexion.AluResMEM_dm,
+            ...conexion.aluResMEM_dm,
             ...conexion.RUrs2MEM_dm
           );
-          break;
-
-        case "B":
-          enabledEdges.push();
           break;
 
         case "J":
@@ -262,9 +263,38 @@ export const useDataPipelineConexions = () => {
       }
     }
 
+    if (WBtype) {
+      switch (WBtype) {
+        case "R":
+          enabledEdges.push(...conexion.aluResWB_muxC, ...conexion.muxC_rd, ...conexion.rdWB_rd, ...conexion.ruDataWrSrc_muxC);
+
+          break;
+        case "I":
+          enabledEdges.push(...conexion.muxC_rd,  ...conexion.rdWB_rd,  ...conexion.ruDataWrSrc_muxC);
+
+          if (pipelineValuesStages.WB.instruction.opcode === "0000011") {
+            //L
+            enabledEdges.push(...conexion.dmDatardWB_muxC);
+          } else {
+            enabledEdges.push(...conexion.aluResWB_muxC);
+          }
+
+          break;
+
+        case "J":
+          enabledEdges.push(...conexion.pcIncWB_muxC, ...conexion.muxC_rd,  ...conexion.rdWB_rd,  ...conexion.ruDataWrSrc_muxC);
+          break;
+
+        case "U":
+          enabledEdges.push(...conexion.aluResWB_muxC, ...conexion.muxC_rd,  ...conexion.rdWB_rd,  ...conexion.ruDataWrSrc_muxC);
+
+          break;
+      }
+    }
+
     const enabledSet = new Set(enabledEdges);
     return allEdges.filter((edge) => !enabledSet.has(edge));
-  }, [IFType, IDType, IEType]);
+  }, [IFType, IDType, IEType, MEMtype, WBtype]);
 
   return disabledEdges;
 };

@@ -9,14 +9,12 @@ export const four_adder4 = ["four->adder4"];
 
 export const pc_im = ["pc->pivot25", "pivot25->instMemory"];
 
+export const adder4_muxD = [
+    "adder4->pivot18",
+    "pivot18->pivot19",
+    "pivot19->muxD"
+]
 
-export const adder4_muxC = [
-  "adder4->pivot18",
-  "pivot18->pivotJump8",
-  "pivotJump8->pivotJump9",
-  "pivotJump9->pivot13",
-  "pivot13->muxC",
-];
 
 
 
@@ -147,7 +145,7 @@ export const bu_muxD = [
 
  //alu
 
- export const alu_aluresMEM = ["alu->pivot7", "pivot7->alures_mem"]
+ export const alu_aluResMEM = ["alu->pivot7", "pivot7->alures_mem"]
 
  export const muxA_aluA = ["muxA->alu"]
  export const muxB_aluB = ["muxB->alu"]
@@ -182,7 +180,7 @@ export const dmWr_dm = ["dmWr->dataMemory"];
 
 export const dmCtrl_dm = ["dmCtrl->dataMemory"];
 
-export const AluResMEM_dm = ["alures_mem->pivot34", "pivot34->dataMemory"]
+export const aluResMEM_dm = ["alures_mem->pivot34", "pivot34->dataMemory"]
 
 export const RUrs2MEM_dm = [
   "rurs2_mem->pivot6",
@@ -204,22 +202,36 @@ export const rdMEM_rdWB = [
 ]
 
 
-export const dm_DMdatard_WB =[
+export const dm_dmDatardWB =[
   "dataMemory->dmdatard_wb"
 ]
 
 
+//WB
+
+export const pcIncWB_muxC = [
+  "pcinc_wb->pivot13",
+  "pivot13->muxC"
+]
+
+export const dmDatardWB_muxC = [
+  "dmdatard_wb->muxC"
+
+]
 
 
-
-
-
-
+export const aluResWB_muxC = [
+  "alures_wb->pivot9",
+  "pivot9->muxC"
+]
 
 
 export const muxC_rd = ["muxC->pivot11", "pivot11->pivot12", "pivot12->registersUnit"];
 
-export const RUWr_wb = ["ruWr->registersUnit"];
+export const rdWB_rd = ["rd_wb->pivot37", "pivot37->pivot36", "pivot36->pivot35", "pivot35->registersUnit[11:7]"]
+
+
+export const ruDataWrSrc_muxC = ["ruDataWrSrc->muxC"]
 
 
 
@@ -228,26 +240,4 @@ export const RUWr_wb = ["ruWr->registersUnit"];
 
 
 
-
-
-
-
-export const dm_muxC = [
-    "dataMemory->muxC"
-]
-
-
-
-export const ruDataWrSrc_muxC = [
-    "ruDataWrSrc->muxC"
-]
-
-
-
-
-export const adder4_muxD = [
-    "adder4->pivot18",
-    "pivot18->pivot19",
-    "pivot19->muxD"
-]
 
