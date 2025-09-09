@@ -30,7 +30,6 @@ const LabelValueContainer = () => {
       const memStage = pipelineValuesStages?.MEM;
       if (memStage?.instruction) {
         if (memStage.instruction.pc === -1) {
-          // --- Caso 1: Es un NOP ---
           setShowComponent(true); setShowWriteData(true); setShowReadData(true);
           setAddressBin('--'); setAddressHex('--'); setAddressDec('--');
           setDataWrBin('--'); setDataWrHex('--'); setDataWrDec('--');
