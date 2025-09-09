@@ -11,20 +11,20 @@ export const useDataPipelineConexions = () => {
   const IFType = pipelineValuesStages.IF.instruction?.type;
   const IDType = pipelineValuesStages.ID.instruction?.type;
   const IEType = pipelineValuesStages.EX.instruction?.type;
+  const MEMtype = pipelineValuesStages.MEM.instruction?.type;
 
   const disabledEdges = useMemo(() => {
     const enabledEdges: string[] = [];
 
+    if (!IFType && !IDType && !IEType && !MEMtype) return [];
 
-    if(!IFType && !IDType && !IEType) return []
+    enabledEdges.push(...conexion.bu_muxD);
 
-     enabledEdges.push(...conexion.bu_muxD);
-
-     if(pipelineValuesStages.EX.BranchResult === "1"){
-        enabledEdges.push(...conexion.alu_muxD)
-      }else{
-        enabledEdges.push(...conexion.adder4_muxD)
-      }
+    if (pipelineValuesStages.EX.BranchResult === "1") {
+      enabledEdges.push(...conexion.alu_muxD);
+    } else {
+      enabledEdges.push(...conexion.adder4_muxD);
+    }
 
     if (IFType) {
       enabledEdges.push(
@@ -134,30 +134,30 @@ export const useDataPipelineConexions = () => {
     }
 
     if (IEType) {
-     
-      
-
-      console.log()
       switch (IEType) {
         case "R":
           enabledEdges.push(
             ...conexion.aluASrc_muxA,
+            ...conexion.muxA_aluA,
+            ...conexion.muxB_aluB,
             ...conexion.rs1_muxA,
             ...conexion.aluBSrc_muxB,
             ...conexion.rs2_muxB,
             ...conexion.rdIE_rdMEM,
-            ...conexion.alu_aluresMem,
+            ...conexion.alu_aluresMEM
           );
 
           break;
         case "I":
           enabledEdges.push(
             ...conexion.aluASrc_muxA,
+            ...conexion.muxA_aluA,
+            ...conexion.muxB_aluB,
             ...conexion.rs1_muxA,
             ...conexion.aluBSrc_muxB,
             ...conexion.immGen_muxB,
             ...conexion.rdIE_rdMEM,
-            ...conexion.alu_aluresMem
+            ...conexion.alu_aluresMEM
           );
 
           break;
@@ -165,17 +165,21 @@ export const useDataPipelineConexions = () => {
         case "S":
           enabledEdges.push(
             ...conexion.aluASrc_muxA,
+            ...conexion.muxA_aluA,
+            ...conexion.muxB_aluB,
             ...conexion.rs1_muxA,
             ...conexion.aluBSrc_muxB,
             ...conexion.immGen_muxB,
             ...conexion.rs2_ruRs2Mem,
-            ...conexion.alu_aluresMem
+            ...conexion.alu_aluresMEM
           );
           break;
 
         case "B":
           enabledEdges.push(
             ...conexion.aluASrc_muxA,
+            ...conexion.muxA_aluA,
+            ...conexion.muxB_aluB,
             ...conexion.pc_muxA,
             ...conexion.aluBSrc_muxB,
             ...conexion.immGen_muxB,
@@ -187,28 +191,73 @@ export const useDataPipelineConexions = () => {
         case "J":
           enabledEdges.push(
             ...conexion.aluASrc_muxA,
+            ...conexion.muxA_aluA,
+            ...conexion.muxB_aluB,
             ...conexion.pc_muxA,
             ...conexion.aluBSrc_muxB,
             ...conexion.immGen_muxB,
-            ...conexion.pcIncIE_pcIncMem,
+            ...conexion.pcIncIE_pcIncMEM,
             ...conexion.rdIE_rdMEM,
-            ...conexion.alu_aluresMem,
+            ...conexion.alu_aluresMEM
           );
           break;
 
         case "U":
           enabledEdges.push(
             ...conexion.aluBSrc_muxB,
+            ...conexion.muxB_aluB,
             ...conexion.immGen_muxB,
             ...conexion.rdIE_rdMEM,
-            ...conexion.alu_aluresMem
+            ...conexion.alu_aluresMEM
           );
 
           if (pipelineValuesStages.EX.instruction.opcode === "0110111") {
+            //LUI
             enabledEdges.push();
           } else {
-            enabledEdges.push(...conexion.aluASrc_muxA, ...conexion.pc_muxA);
+            enabledEdges.push(...conexion.aluASrc_muxA, ...conexion.pc_muxA, ...conexion.muxA_aluA);
           }
+          break;
+      }
+    }
+
+    if (MEMtype) {
+      switch (MEMtype) {
+        case "R":
+          enabledEdges.push(...conexion.AluResMEM_AluResWB, ...conexion.rdMEM_rdWB);
+
+          break;
+        case "I":
+          enabledEdges.push(...conexion.rdMEM_rdWB);
+
+          if (pipelineValuesStages.MEM.instruction.opcode === "0000011") {
+            enabledEdges.push(...conexion.dmCtrl_dm, ...conexion.AluResMEM_dm, ...conexion.dm_DMdatard_WB);
+          } else {
+            enabledEdges.push(...conexion.AluResMEM_AluResWB);
+          }
+
+          break;
+
+        case "S":
+          enabledEdges.push(
+            ...conexion.dmWr_dm,
+            ...conexion.dmCtrl_dm,
+            ...conexion.AluResMEM_dm,
+            ...conexion.RUrs2MEM_dm
+          );
+          break;
+
+        case "B":
+          enabledEdges.push();
+          break;
+
+        case "J":
+          enabledEdges.push(...conexion.pcIncMEM_pcIncWB, ...conexion.rdMEM_rdWB);
+          break;
+
+        case "U":
+          enabledEdges.push(...conexion.AluResMEM_AluResWB, ...conexion.rdMEM_rdWB);
+
           break;
       }
     }

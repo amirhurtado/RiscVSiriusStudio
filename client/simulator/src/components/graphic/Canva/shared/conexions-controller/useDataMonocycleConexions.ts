@@ -131,7 +131,6 @@ export const useDataMonocycleConexions = () => {
             ...conexion.brOp_bu,
 
             ...conexion.alu_dm,
-            ...conexion.dmWr_dm,
             ...conexion.dmCtrl_dm,
 
             ...conexion.dm_muxC,
