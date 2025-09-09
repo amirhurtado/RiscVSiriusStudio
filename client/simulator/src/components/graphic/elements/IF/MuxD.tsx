@@ -30,6 +30,7 @@ function MuxD() {
         <MuxContainer
           signal={signal === "0" ? "1" : signal === "1" ? "0" : signal}
           isEbreak={isEbreak}
+          muxD={true} 
         />
 
         {operation !== "uploadMemory" && (

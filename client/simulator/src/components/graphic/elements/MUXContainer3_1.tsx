@@ -4,6 +4,9 @@ function Mux3_1({ signal, isEbreak }: { signal: string, isEbreak: boolean }) {
   const { operation } = useSimulator();
   const isUploadMemory = operation === "uploadMemory";
 
+
+  console.log("ACA ESTA LLEGANDO SIGNAL EN", signal)
+
   return (
     <div className="relative">
       <svg

@@ -15,6 +15,7 @@ export default function MuxC() {
   const { currentMonocycleResult, currentType, pipelineValuesStages } = useCurrentInst();
   const { operation, isEbreak, typeSimulator } = useSimulator();
 
+
   let signal: string;
   let activeCurrentType: string;
 
